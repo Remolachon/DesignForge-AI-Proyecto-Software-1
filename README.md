@@ -71,23 +71,10 @@ Este flujo permite mantener una base estable mientras el proyecto se encuentra e
   ```bash
   git log --oneline --graph --all
   ```
-- Verificar la cuenta de GitHub utilizada:  
-  ```bash
-  git remote -v
-  ssh -T git@github.com
-  ```
-- Recuperación de la autenticación SSH (en caso de fallo):  
-  ```bash
-  eval "$(ssh-agent -s)"
-  ssh-add ~/.ssh/id_ed25519_remolachon
-  ```
-
-Nota: este proyecto utiliza autenticación mediante SSH para evitar conflictos entre múltiples cuentas de GitHub en un mismo equipo.
-
 ---
 
 ## 📄 Consideraciones finales
 
-- El repositorio se encuentra en una fase inicial.
 - La rama **main** puede no contener código funcional hasta que se alcance una versión estable.
 - Todas las contribuciones deben seguir el flujo de trabajo descrito anteriormente.
+- De nuevo, la rama sobre la que se trabaja es **develop** bajo ninguna circunstancia se ejecutan commits directos a la rama main.
