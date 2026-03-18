@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+import app.models 
+
 from app.controllers.user_controller import router as user_router
 from app.controllers.auth_controller import router as auth_router
 

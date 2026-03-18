@@ -1,9 +1,9 @@
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    DATABASE_URL: str
-    SUPABASE_URL: str
-    SUPABASE_KEY: str
+    DATABASE_URL: str = "postgresql://postgres:didierduvankevin@db.ttfwjexqplbbcfdfhxsg.supabase.co:5432/postgres"
+    SUPABASE_URL: str = "https://ttfwjexqplbbcfdfhxsg.supabase.co"
+    SUPABASE_KEY: str = "sb_publishable_jN_oAj7BZ7PQhe079gdtZg_cvNM5vnG"
 
     JWT_SECRET: str | None = None
     EMAIL_HOST: str | None = None
