@@ -1,0 +1,17 @@
+from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, ForeignKey
+from sqlalchemy.orm import relationship
+from app.database.database import Base
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    company_id = Column(Integer, ForeignKey("companies.id"))
+    first_name = Column(String(50), nullable=False)
+    last_name = Column(String(50), nullable=False)
+    email = Column(String(150), unique=True, nullable=False)
+    phone = Column(String(20))
+    start_date = Column(TIMESTAMP)
+    is_active = Column(Boolean, default=True)
+
+    company = relationship("Company")

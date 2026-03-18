@@ -1,12 +1,15 @@
-# dependencies
+
 node_modules/
 
-# build
+
 dist/
 build/
 
-# vite
+
 .vite/
 
-# env
+
 .env
+
+__pycache__/
+*.pyc
