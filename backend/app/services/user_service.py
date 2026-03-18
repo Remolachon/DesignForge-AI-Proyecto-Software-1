@@ -4,8 +4,8 @@ from app.models.user import User
 class UserService:
 
     @staticmethod
-    def get_user_by_email(db: Session, email: str):
-        return db.query(User).filter(User.email == email).first()
+    def get_user_by_supabase_id(db, supabase_id: str):
+        return db.query(User).filter(User.supabase_id == supabase_id).first()
 
     @staticmethod
     def create_user(db: Session, email: str, first_name: str, last_name: str):

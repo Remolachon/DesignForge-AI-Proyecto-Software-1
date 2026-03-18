@@ -13,5 +13,6 @@ class User(Base):
     phone = Column(String(20))
     start_date = Column(TIMESTAMP)
     is_active = Column(Boolean, default=True)
+    supabase_id = Column(String, unique=True)
 
     company = relationship("Company")
