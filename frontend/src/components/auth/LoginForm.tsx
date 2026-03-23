@@ -9,14 +9,13 @@ import { Input } from "@/components/ui/input";
 
 import { Package, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@/context/AuthContext";
+import { login } from "@/services/auth.service";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { login } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,7 +28,10 @@ export default function LoginForm() {
 
     setLoading(true);
     try {
-      await login(email, password);
+      const res = await login(email, password);
+
+      localStorage.setItem("token", res.access_token);
+
       toast.success("¡Bienvenido de vuelta!");
 
       if (email.includes("funcionario") || email.includes("admin")) {
@@ -37,8 +39,12 @@ export default function LoginForm() {
       } else {
         router.push("/cliente/dashboard");
       }
-    } catch {
-      toast.error("Error al iniciar sesión");
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.detail ||
+        error?.message ||
+        "Error al iniciar sesión"
+      );
     } finally {
       setLoading(false);
     }
@@ -58,11 +64,28 @@ export default function LoginForm() {
           Iniciar Sesión
         </h2>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6 bg-white p-6 rounded-xl shadow-lg border border-border">
-          <Input label="Correo" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <Input label="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <form
+          onSubmit={handleSubmit}
+          className="mt-8 space-y-6 bg-white p-6 rounded-xl shadow-lg border border-border"
+        >
+          <Input
+            label="Correo"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
-          <Button className="w-full" disabled={loading}>
+          <Input
+            label="Contraseña"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={loading}
+          >
             {loading && <Loader2 className="animate-spin w-4 h-4" />}
             Iniciar sesión
           </Button>
