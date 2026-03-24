@@ -51,45 +51,81 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4">
-      <div className="max-w-md mx-auto w-full">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <Link href="/" className="flex items-center justify-center gap-2 mb-6">
           <div className="w-12 h-12 bg-gradient-to-br from-accent to-accent-magenta rounded-lg flex items-center justify-center">
             <Package className="w-7 h-7 text-white" />
           </div>
           <span className="text-2xl font-semibold text-primary">LukArt</span>
         </Link>
-
         <h2 className="text-center text-3xl font-semibold text-primary">
           Iniciar Sesión
         </h2>
+        <p className="mt-2 text-center text-muted-foreground">
+          ¿No tienes cuenta?{" "}
+          <Link href="/register" className="text-accent hover:underline">
+            Regístrate aquí
+          </Link>
+        </p>
+      </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="mt-8 space-y-6 bg-white p-6 rounded-xl shadow-lg border border-border"
-        >
-          <Input
-            label="Correo"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-6 shadow-lg rounded-xl border border-border">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <Input
+              label="Correo electrónico"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tu@email.com"
+              disabled={loading}
+            />
 
-          <Input
-            label="Contraseña"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+            <Input
+              label="Contraseña"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              disabled={loading}
+            />
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading}
-          >
-            {loading && <Loader2 className="animate-spin w-4 h-4" />}
-            Iniciar sesión
-          </Button>
-        </form>
+            <div className="flex items-center justify-between">
+              <Link
+                href="/recuperar-contrasena"
+                className="text-sm text-accent hover:underline"
+              >
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+              {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
+            </Button>
+          </form>
+
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-muted-foreground">
+                  Cuentas de prueba
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-3 text-sm">
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-muted-foreground">kevin123@gmail.com</p>
+                <p className="font-medium text-primary">123456</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
