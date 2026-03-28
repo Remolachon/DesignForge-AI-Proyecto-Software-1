@@ -41,7 +41,7 @@ export default function Landing() {
             Tu imaginación, nuestra artesanía.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link href="/register" className="sm:w-auto w-full">
+            <Link href="/cliente/crear-pedido" className="sm:w-auto w-full">
               <Button size="lg" className="w-full sm:w-auto">
                 Crear mi primer pedido
               </Button>
