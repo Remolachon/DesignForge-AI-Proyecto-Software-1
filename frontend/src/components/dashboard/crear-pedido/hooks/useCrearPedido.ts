@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { ProductType } from "@/types/types";
 
@@ -15,23 +15,29 @@ interface State {
 const STORAGE_KEY = "crear-pedido";
 
 export function useCrearPedido() {
-  const [state, setState] = useState<State>({
-    currentStep: 1,
-    productType: null,
-    uploadedImage: null,
+  
+  const [state, setState] = useState<State>(() => {
+    if (typeof window === "undefined") {
+      return {
+        currentStep: 1,
+        productType: null,
+        uploadedImage: null,
+      };
+    }
+
+    const saved = localStorage.getItem(STORAGE_KEY);
+
+    return saved
+      ? JSON.parse(saved)
+      : {
+          currentStep: 1,
+          productType: null,
+          uploadedImage: null,
+        };
   });
 
   const [loading, setLoading] = useState(false);
 
-  // 🔥 cargar desde localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      setState(JSON.parse(saved));
-    }
-  }, []);
-
-  // 🔥 guardar automáticamente
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state]);
@@ -41,7 +47,11 @@ export function useCrearPedido() {
   // -------------------------
 
   const setProductType = (type: ProductType) => {
-    setState((prev) => ({ ...prev, productType: type }));
+    setState((prev) => ({
+      ...prev,
+      productType: type,
+      uploadedImage: null, // limpia imagen
+    }));
   };
 
   const setUploadedImage = (img: string) => {

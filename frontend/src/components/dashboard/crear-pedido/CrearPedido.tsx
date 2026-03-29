@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-
 import { useCrearPedido } from "@/components/dashboard/crear-pedido/hooks/useCrearPedido";
 
 import { Card } from "@/components/ui/card";
@@ -23,17 +21,21 @@ import { toast } from "sonner";
 import Step1ProductType from "@/components/dashboard/crear-pedido/Step1ProductType";
 import Step2Upload from "@/components/dashboard/crear-pedido/Step2Upload";
 
-import { ProductType } from "@/types/types";
-
-type WizardStep = 1 | 2 | 3 | 4 | 5;
-
 export default function CrearPedido() {
   const router = useRouter();
 
-  const [currentStep, setCurrentStep] = useState<WizardStep>(1);
-  const [productType, setProductType] = useState<ProductType | null>(null);
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const {
+    currentStep,
+    productType,
+    uploadedImage,
+    loading,
+    setProductType,
+    handleFileUpload,
+    nextStep,
+    prevStep,
+    canProceed,
+    setLoading,
+  } = useCrearPedido();
 
   const steps = [
     { number: 1, title: "Tipo de Producto", icon: Settings },
@@ -41,47 +43,6 @@ export default function CrearPedido() {
     { number: 3, title: "Resultados IA", icon: Sparkles },
     { number: 4, title: "Confirmar", icon: CheckCircle },
   ];
-
-  const canProceed = () => {
-    switch (currentStep) {
-      case 1:
-        return productType !== null;
-      case 2:
-        return uploadedImage !== null;
-      default:
-        return true;
-    }
-  };
-
-  const handleNext = () => {
-    if (canProceed() && currentStep < 5) {
-      setCurrentStep((prev) => (prev + 1) as WizardStep);
-    }
-  };
-
-  const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep((prev) => (prev - 1) as WizardStep);
-    }
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-
-    if (!file) return;
-
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("El archivo es demasiado grande. Máximo 10 MB");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      setUploadedImage(reader.result as string);
-      toast.success("Imagen cargada exitosamente");
-    };
-    reader.readAsDataURL(file);
-  };
 
   const handleConfirmOrder = async () => {
     setLoading(true);
@@ -160,7 +121,7 @@ export default function CrearPedido() {
       <div className="flex items-center justify-between mt-6">
         <Button
           variant="secondary"
-          onClick={handleBack}
+          onClick={prevStep}
           disabled={currentStep === 1}
         >
           <ChevronLeft className="w-5 h-5" />
@@ -168,7 +129,7 @@ export default function CrearPedido() {
         </Button>
 
         {currentStep < 5 ? (
-          <Button onClick={handleNext} disabled={!canProceed()}>
+          <Button onClick={nextStep} disabled={!canProceed()}>
             Siguiente
             <ChevronRight className="w-5 h-5" />
           </Button>
