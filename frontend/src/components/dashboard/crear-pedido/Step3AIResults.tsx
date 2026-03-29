@@ -2,11 +2,11 @@
 
 import { Sparkles, CheckCircle } from "lucide-react";
 
-interface Props {
+type Props = {
   selectedVariant: number | null;
-  setSelectedVariant: (v: number) => void;
+  setSelectedVariant: (variant: number) => void;
   uploadedImage: string | null;
-}
+};
 
 export default function Step3AIResults({
   selectedVariant,
@@ -21,34 +21,41 @@ export default function Step3AIResults({
         Selecciona una variante
       </h2>
 
-      <div className="grid md:grid-cols-3 gap-4">
+      <p className="text-muted-foreground mb-6">
+        La IA ha generado estas variantes de tu diseño
+      </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {variants.map((variant) => (
           <div
             key={variant}
             onClick={() => setSelectedVariant(variant)}
-            className={`cursor-pointer border-2 rounded-lg overflow-hidden ${
+            className={`cursor-pointer rounded-lg border-2 overflow-hidden transition-all ${
               selectedVariant === variant
-                ? "border-accent scale-105"
-                : ""
+                ? "border-accent shadow-lg scale-105"
+                : "border-border hover:border-accent/50"
             }`}
           >
-            <div className="aspect-square flex items-center justify-center bg-gray-100 relative">
+            <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center relative">
               {uploadedImage ? (
                 <img
                   src={uploadedImage}
+                  alt={`Variante ${variant}`}
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <Sparkles />
+                <Sparkles className="w-12 h-12 text-muted-foreground" />
               )}
 
               {selectedVariant === variant && (
-                <CheckCircle className="absolute top-2 right-2 text-green-500" />
+                <div className="absolute top-2 right-2 w-8 h-8 bg-accent rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 text-white" />
+                </div>
               )}
             </div>
 
-            <div className="p-3 font-semibold">
-              Variante {variant}
+            <div className="p-4">
+              <p className="font-semibold">Variante {variant}</p>
             </div>
           </div>
         ))}

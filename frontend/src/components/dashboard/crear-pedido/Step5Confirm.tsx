@@ -1,64 +1,104 @@
 "use client";
 
-import { ProductType, DesignSettings } from "@/types/types";
+import { ProductType } from "@/types/types";
 
-interface Props {
+type DesignSettings = {
+  color: string;
+  size: "small" | "medium" | "large" | "xlarge";
+  material: "standard" | "premium" | "deluxe";
+};
+
+type Props = {
   productType: ProductType | null;
   designSettings: DesignSettings;
-  loading: boolean;
-  onConfirm: () => void;
-}
+};
 
 export default function Step5Confirm({
   productType,
   designSettings,
 }: Props) {
-  const base = 10000;
+  // 🔥 lógica separada (más limpia)
+  const basePrice = 10000;
 
-  const sizeMap = {
+  const sizeMultiplierMap = {
     small: 1,
     medium: 1.5,
     large: 2,
     xlarge: 2.5,
   };
 
-  const materialMap = {
+  const materialMultiplierMap = {
     standard: 1,
     premium: 1.3,
     deluxe: 1.6,
   };
 
-  const total = Math.round(
-    base *
-      sizeMap[designSettings.size] *
-      materialMap[designSettings.material]
+  const totalPrice = Math.round(
+    basePrice *
+      sizeMultiplierMap[designSettings.size] *
+      materialMultiplierMap[designSettings.material]
   );
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold mb-6">
+      <h2 className="text-2xl font-semibold mb-2">
         Resumen del pedido
       </h2>
 
-      <div className="space-y-3">
-        <Row label="Producto" value={productType} />
-        <Row label="Tamaño" value={designSettings.size} />
-        <Row label="Material" value={designSettings.material} />
+      <p className="text-muted-foreground mb-6">
+        Revisa los detalles antes de confirmar
+      </p>
 
-        <div className="flex justify-between text-xl font-bold mt-4">
-          <span>Total</span>
-          <span>${total.toLocaleString()}</span>
+      <div className="space-y-4">
+        <div className="flex justify-between py-3 border-b border-border">
+          <span className="text-muted-foreground">
+            Tipo de producto
+          </span>
+          <span className="font-semibold capitalize">
+            {productType}
+          </span>
+        </div>
+
+        <div className="flex justify-between py-3 border-b border-border">
+          <span className="text-muted-foreground">Tamaño</span>
+          <span className="font-semibold capitalize">
+            {designSettings.size}
+          </span>
+        </div>
+
+        <div className="flex justify-between py-3 border-b border-border">
+          <span className="text-muted-foreground">Material</span>
+          <span className="font-semibold capitalize">
+            {designSettings.material}
+          </span>
+        </div>
+
+        <div className="flex justify-between py-3 border-b border-border">
+          <span className="text-muted-foreground">Color</span>
+          <div className="flex items-center gap-2">
+            <div
+              className="w-6 h-6 rounded border border-border"
+              style={{ backgroundColor: designSettings.color }}
+            />
+            <span className="font-semibold">
+              {designSettings.color}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex justify-between py-4 text-lg">
+          <span className="font-semibold">Total</span>
+          <span className="font-bold text-accent text-2xl">
+            ${totalPrice.toLocaleString()}
+          </span>
         </div>
       </div>
-    </div>
-  );
-}
 
-function Row({ label, value }: any) {
-  return (
-    <div className="flex justify-between border-b py-2">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="capitalize font-medium">{value}</span>
+      <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+        <p className="text-sm text-primary">
+          <strong>Tiempo estimado de entrega:</strong> 7-10 días hábiles
+        </p>
+      </div>
     </div>
   );
 }

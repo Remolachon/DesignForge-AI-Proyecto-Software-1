@@ -20,6 +20,9 @@ import { toast } from "sonner";
 
 import Step1ProductType from "@/components/dashboard/crear-pedido/Step1ProductType";
 import Step2Upload from "@/components/dashboard/crear-pedido/Step2Upload";
+import Step3AIResults from "@/components/dashboard/crear-pedido/Step3AIResults"; // Nuevo paso para mostrar resultados de IA, no entra en el MVP pero se deja preparado para el futuro
+//import Step5Confirm from "@/components/dashboard/crear-pedido/Step4Confirm"; // Paso de confirmación final, no entra en el MVP pero se deja preparado para el futuro
+import Step5Confirm from "@/components/dashboard/crear-pedido/Step5Confirm";
 
 export default function CrearPedido() {
   const router = useRouter();
@@ -28,6 +31,7 @@ export default function CrearPedido() {
     currentStep,
     productType,
     uploadedImage,
+    selectedVariant, 
     loading,
     setProductType,
     handleFileUpload,
@@ -35,7 +39,15 @@ export default function CrearPedido() {
     prevStep,
     canProceed,
     setLoading,
+    setSelectedVariant,
   } = useCrearPedido();
+
+  // placeholder temporal solo para saltar el step 4 que no esta en uso y no entra en el MVP, se deja preparado para el futuro
+  const designSettings = {
+    color: "#00E5C2",
+    size: "medium",
+    material: "standard",
+  } as const;
 
   const steps = [
     { number: 1, title: "Tipo de Producto", icon: Settings },
@@ -115,6 +127,21 @@ export default function CrearPedido() {
             handleFileUpload={handleFileUpload}
           />
         )}
+
+        {currentStep === 3 && (
+          <Step3AIResults
+            selectedVariant={selectedVariant}
+            setSelectedVariant={setSelectedVariant}
+            uploadedImage={uploadedImage}
+          />
+        )}
+
+        {currentStep === 5 && (
+          <Step5Confirm
+            productType={productType}
+            designSettings={designSettings}
+          />
+        )}
       </Card>
 
       {/* Navigation */}
@@ -143,3 +170,91 @@ export default function CrearPedido() {
     </div>
   );
 }
+
+/* =========================================================
+   🚀 FUTURAS MEJORAS / FEATURES PENDIENTES
+
+   Este componente actualmente implementa un flujo simplificado:
+   1 → Tipo de producto
+   2 → Subir imagen
+   3 → Selección de variante (simulada)
+   5 → Confirmación
+
+   ⚠️ Step 4 (Editor 3D) está temporalmente deshabilitado.
+
+   ---------------------------------------------------------
+   🧩 FEATURES PENDIENTES
+   ---------------------------------------------------------
+
+   🔹 STEP 3 - RESULTADOS IA (ACTUALMENTE MOCK)
+   - Actualmente las variantes (1, 2, 3) son simuladas.
+   - Futuro:
+     • Integrar generación real con IA
+     • Consumir endpoint backend (Stable Diffusion / OpenAI / etc.)
+     • Mostrar previews reales de variantes
+
+   ---------------------------------------------------------
+
+   🔹 STEP 4 - EDITOR 3D (DESHABILITADO)
+   - Aún no se ha definido si será parte del producto final.
+   - Posible implementación futura:
+     • Three.js / React Three Fiber
+     • Configuración de materiales, tamaños y colores
+     • Preview interactivo
+
+   ---------------------------------------------------------
+
+   🔹 STEP 5 - CONFIGURACIÓN REAL
+   - Actualmente usa `designSettings` hardcodeado:
+     {
+       color: "#00E5C2",
+       size: "medium",
+       material: "standard"
+     }
+
+   - Futuro:
+     • Conectar con Step 4 (si se implementa)
+     • Permitir personalización real del usuario
+
+   ---------------------------------------------------------
+
+   🔹 SUBIDA DE IMÁGENES (IMPORTANTE)
+   - Actualmente:
+     • Se usa base64 (FileReader)
+     • Se guarda en localStorage
+
+   - Futuro (CRÍTICO):
+     • Subir imágenes a Supabase Storage
+     • Obtener URL pública
+     • Guardar solo la URL en el estado
+     • Mejorar rendimiento y escalabilidad
+
+   ---------------------------------------------------------
+
+   🔹 PERSISTENCIA / BACKEND
+   - Actualmente:
+     • Estado guardado en localStorage
+
+   - Futuro:
+     • Guardar pedidos en base de datos (Supabase)
+     • Asociar pedidos a usuario autenticado
+     • Manejar estados de pedido (pendiente, en producción, etc.)
+
+   ---------------------------------------------------------
+
+   🔹 VALIDACIONES
+   - Pendiente:
+     • Validar tipo de archivo (SVG, PNG, etc.)
+     • Manejar errores de subida
+     • Feedback visual más robusto
+
+   ---------------------------------------------------------
+
+   🔹 UX / MEJORAS VISUALES
+   - Posibles mejoras:
+     • Skeleton loaders en Step 3 (IA)
+     • Drag & drop real en Step 2
+     • Animaciones entre steps
+     • Mejor feedback de selección
+
+   ========================================================= */
