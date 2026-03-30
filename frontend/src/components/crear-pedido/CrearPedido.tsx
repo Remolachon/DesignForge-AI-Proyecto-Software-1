@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCrearPedido } from "@/components/dashboard/crear-pedido/hooks/useCrearPedido";
+import { useCrearPedido } from "@/components/crear-pedido/hooks/useCrearPedido";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,11 +18,11 @@ import {
 
 import { toast } from "sonner";
 
-import Step1ProductType from "@/components/dashboard/crear-pedido/Step1ProductType";
-import Step2Upload from "@/components/dashboard/crear-pedido/Step2Upload";
-import Step3AIResults from "@/components/dashboard/crear-pedido/Step3AIResults"; // Nuevo paso para mostrar resultados de IA, no entra en el MVP pero se deja preparado para el futuro
-//import Step5Confirm from "@/components/dashboard/crear-pedido/Step4Confirm"; // Paso de confirmación final, no entra en el MVP pero se deja preparado para el futuro
-import Step5Confirm from "@/components/dashboard/crear-pedido/Step5Confirm";
+import Step1ProductType from "@/components/crear-pedido/steps/Step1ProductType";
+import Step2Upload from "@/components/crear-pedido/steps/Step2Upload";
+import Step3AIResults from "@/components/crear-pedido/steps/Step3AIResults"; // Nuevo paso para mostrar resultados de IA, no entra en el MVP pero se deja preparado para el futuro
+//import Step5Confirm from "@/components/dashboard/crear-pedido/steps/Step4Confirm"; // Paso de confirmación final, no entra en el MVP pero se deja preparado para el futuro
+import Step5Confirm from "@/components/crear-pedido/steps/Step5Confirm";
 
 export default function CrearPedido() {
   const router = useRouter();
