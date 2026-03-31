@@ -11,10 +11,33 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
 def register(payload: RegisterRequest, db: Session = Depends(get_db)):
-    """
-    Crea un usuario en Supabase Auth y luego lo registra en la base de datos local.
-    """
-    # 1. Crear usuario en Supabase Auth
+
+    if not payload.first_name.strip() or not payload.last_name.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Nombre y apellido son obligatorios.",
+        )
+
+    if len(payload.password) < 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La contraseña debe tener al menos 6 caracteres.",
+        )
+
+    if payload.password != payload.confirm_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Las contraseñas no coinciden.",
+        )
+
+    # 🔥 Validación phone opcional
+    if payload.phone is not None and payload.phone.strip() != "":
+        if not payload.phone.isdigit():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El teléfono debe contener solo números.",
+            )
+
     try:
         response = supabase.auth.sign_up(
             {
@@ -28,7 +51,6 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
             detail=f"Error al registrar en Supabase: {exc}",
         )
 
-    # sign_up devuelve None en user si el email ya existe sin confirmar
     if response.user is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -37,36 +59,39 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
 
     supabase_user = response.user
 
-    # 2. Guardar en la base de datos local (idempotente)
     db_user = UserService.get_user_by_supabase_id(db, supabase_user.id)
     if db_user is None:
-        UserService.create_user(
+        db_user = UserService.create_user(
             db,
             email=supabase_user.email,
             first_name=payload.first_name,
             last_name=payload.last_name,
+            phone=payload.phone,  # 🔥 NUEVO
             supabase_id=supabase_user.id,
         )
 
-    # 3. Si Supabase requiere confirmación de email, session puede ser None
     if response.session is None:
-        # El usuario fue creado pero aún no confirmó el correo.
-        # Devolvemos un token vacío o un mensaje orientativo.
         raise HTTPException(
             status_code=status.HTTP_202_ACCEPTED,
             detail="Registro exitoso. Revisa tu correo para confirmar la cuenta.",
         )
 
-    return AuthResponse(access_token=response.session.access_token)
+    return AuthResponse(
+        access_token=response.session.access_token,
+        first_name=db_user.first_name,
+        last_name=db_user.last_name
+    )
 
 
 @router.post("/login", response_model=AuthResponse)
 def login(payload: LoginRequest, db: Session = Depends(get_db)):
-    """
-    Autentica al usuario contra Supabase y, si no existe en la BD local,
-    lo crea automáticamente (útil para usuarios migrados directamente en Supabase).
-    """
-    # 1. Autenticar en Supabase
+
+    if not payload.email.strip() or not payload.password.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Correo y contraseña son obligatorios.",
+        )
+
     try:
         response = supabase.auth.sign_in_with_password(
             {
@@ -74,7 +99,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
                 "password": payload.password,
             }
         )
-    except Exception as exc:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciales incorrectas.",
@@ -88,29 +113,29 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 
     supabase_user = response.user
 
-    # 2. Sincronizar con la base de datos local
     db_user = UserService.get_user_by_supabase_id(db, supabase_user.id)
+
     if db_user is None:
-        # Extraer nombre del campo user_metadata si existe
         metadata = supabase_user.user_metadata or {}
-        UserService.create_user(
+        db_user = UserService.create_user(
             db,
             email=supabase_user.email,
             first_name=metadata.get("first_name", ""),
             last_name=metadata.get("last_name", ""),
+            phone=metadata.get("phone", None),  # 🔥 NUEVO
             supabase_id=supabase_user.id,
         )
 
-    return AuthResponse(access_token=response.session.access_token)
+    return AuthResponse(
+        access_token=response.session.access_token,
+        first_name=db_user.first_name,
+        last_name=db_user.last_name
+    )
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout():
-    """
-    Cierra la sesión en Supabase (invalida el token del lado del servidor).
-    El cliente debe eliminar el token almacenado localmente.
-    """
     try:
         supabase.auth.sign_out()
     except Exception:
-        pass  # Si ya expiró, no importa
+        pass
