@@ -60,7 +60,7 @@ export default function CrearPedido() {
     setLoading(true);
     await new Promise((r) => setTimeout(r, 1500));
     toast.success("¡Pedido creado exitosamente!");
-    router.push("/cliente/dashboard");
+    router.push("/cliente/pedidos");
   };
 
   return (

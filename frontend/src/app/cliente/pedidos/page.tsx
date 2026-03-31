@@ -1,5 +1,39 @@
-import ClientePedidos from "@/components/dashboard/ClientePedidos";
+'use client';
 
-export default function Page() {
-  return <ClientePedidos />;
+import { PedidoFilters } from '@/components/Pedidos/PedidoFilters';
+import { PedidoList } from '@/components/Pedidos/PedidoList';
+import { usePedidos } from '@/components/Pedidos/hooks/usePedidos';
+
+export default function ClientePedidosPage() {
+  const {
+    searchTerm,
+    setSearchTerm,
+    filterStatus,
+    setFilterStatus,
+    filteredPedidos,
+  } = usePedidos();
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+        <div>
+          <h1 className="text-3xl font-semibold mb-2">
+            Mis Pedidos
+          </h1>
+          <p className="text-muted-foreground">
+            Historial y seguimiento de tus pedidos
+          </p>
+        </div>
+
+        <PedidoFilters
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          filterStatus={filterStatus}
+          setFilterStatus={setFilterStatus}
+        />
+
+        <PedidoList pedidos={filteredPedidos} />
+      </div>
+    </div>
+  );
 }

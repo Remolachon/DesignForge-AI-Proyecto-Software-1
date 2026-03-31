@@ -29,7 +29,7 @@ export const Marketplace = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
       <div>
         <h1 className="text-3xl font-semibold">Marketplace</h1>
         <p className="text-gray-500">
@@ -44,7 +44,7 @@ export const Marketplace = () => {
         setFilterType={setFilterType}
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filtered.map((p) => (
           <ProductCard key={p.id} product={p} onBuy={handleBuy} />
         ))}
