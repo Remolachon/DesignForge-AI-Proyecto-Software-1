@@ -1,13 +1,13 @@
 from pydantic import BaseModel, EmailStr
 
 
-# ── Requests ──────────────────────────────────────────────────────────────────
-
 class RegisterRequest(BaseModel):
     first_name: str
     last_name: str
+    phone: str | None = None
     email: EmailStr
     password: str
+    confirm_password: str
 
 
 class LoginRequest(BaseModel):
@@ -15,11 +15,12 @@ class LoginRequest(BaseModel):
     password: str
 
 
-# ── Responses ─────────────────────────────────────────────────────────────────
-
 class AuthResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    first_name: str
+    last_name: str
+    role: str  # 🔥 NUEVO
 
 
 class UserResponse(BaseModel):

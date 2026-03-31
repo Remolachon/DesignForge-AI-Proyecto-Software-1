@@ -1,5 +1,11 @@
-import Marketplace from "@/components/marketplace/Marketplace";
+import Header from "@/components/Header";
+import { Marketplace } from "@/components/marketplace/Marketplace";
 
 export default function Page() {
-  return <Marketplace />;
+  return (
+    <>
+      <Header />
+      <Marketplace />
+    </>
+  );
 }

@@ -16,6 +16,8 @@ El repositorio se encuentra en una etapa temprana de desarrollo y seguirá evolu
 
 ## ▶️ Ejecución del proyecto
 
+# ▶️ Ejecución del Frontend
+
 Antes de ejecutar el proyecto, asegúrate de tener instalado **Node.js**.
 
 1. Instalar las dependencias:
@@ -26,6 +28,17 @@ Antes de ejecutar el proyecto, asegúrate de tener instalado **Node.js**.
 2. Iniciar el servidor de desarrollo:
    ```bash
    npm run dev
+   ```
+# ▶️ Ejecución del Frontend
+
+1. Activar el entorno virtual:
+   ```bash
+   venv\Scripts\activate
+   ```
+
+2. Iniciar el servidor de desarrollo:
+   ```bash
+   uvicorn app.main:app --reload
    ```
 
 Una vez iniciado, el proyecto estará disponible en el navegador según la configuración mostrada en la terminal.

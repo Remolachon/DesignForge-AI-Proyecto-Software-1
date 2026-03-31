@@ -13,4 +13,9 @@ build/
 __pycache__/
 *.pyc
 
+<<<<<<< HEAD
+=======
+backend/venv/
+
+>>>>>>> feature/frontend/CrearPedido
 venv/

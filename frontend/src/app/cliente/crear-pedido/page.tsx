@@ -1,5 +1,11 @@
-import CrearPedido from "@/components/dashboard/CrearPedido";
+import CrearPedido from "@/components/crear-pedido/CrearPedido";
+import Header from "@/components/Header";
 
 export default function Page() {
-  return <CrearPedido />;
+  return (
+    <>
+      <Header />
+      <CrearPedido />
+    </>
+  );
 }
