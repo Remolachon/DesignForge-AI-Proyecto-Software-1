@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, ForeignKey, func
 from sqlalchemy.orm import relationship
 from app.database.database import Base
 
@@ -11,7 +11,7 @@ class User(Base):
     last_name = Column(String(50), nullable=False)
     email = Column(String(150), unique=True, nullable=False)
     phone = Column(String(20))
-    start_date = Column(TIMESTAMP)
+    start_date = Column(TIMESTAMP, server_default=func.now())
     is_active = Column(Boolean, default=True)
     supabase_id = Column(String, unique=True)
 

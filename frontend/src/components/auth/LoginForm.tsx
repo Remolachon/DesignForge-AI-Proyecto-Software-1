@@ -55,6 +55,7 @@ export default function LoginForm() {
 
       localStorage.setItem("token", res.access_token);
       localStorage.setItem("user_name", `${res.first_name} ${res.last_name}`);
+      localStorage.setItem("role", res.role);
 
       toast.success("¡Bienvenido de vuelta!");
       router.push("/");

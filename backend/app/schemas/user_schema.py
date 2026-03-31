@@ -1,29 +1,26 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr
 
-
-# ── Requests ──────────────────────────────────────────────────────────────────
 
 class RegisterRequest(BaseModel):
-    first_name: str = Field(min_length=1)
-    last_name: str = Field(min_length=1)
+    first_name: str
+    last_name: str
     phone: str | None = None
     email: EmailStr
-    password: str = Field(min_length=6)
-    confirm_password: str = Field(min_length=6)
+    password: str
+    confirm_password: str
 
 
 class LoginRequest(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=1)
+    password: str
 
-
-# ── Responses ─────────────────────────────────────────────────────────────────
 
 class AuthResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     first_name: str
     last_name: str
+    role: str  # 🔥 NUEVO
 
 
 class UserResponse(BaseModel):

@@ -14,10 +14,11 @@ export const login = async (email: string, password: string) => {
     }
   );
 
-  const { access_token, first_name, last_name } = response.data;
+  const { access_token, first_name, last_name, role } = response.data;
 
   localStorage.setItem("token", access_token);
   localStorage.setItem("user_name", `${first_name} ${last_name}`);
+  localStorage.setItem("role", role);
 
   return response.data;
 };
@@ -59,4 +60,5 @@ export const logout = async () => {
 
   localStorage.removeItem("token");
   localStorage.removeItem("user_name");
+  localStorage.removeItem("role");
 };

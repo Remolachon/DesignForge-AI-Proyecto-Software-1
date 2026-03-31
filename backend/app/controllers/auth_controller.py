@@ -15,27 +15,26 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     if not payload.first_name.strip() or not payload.last_name.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Nombre y apellido son obligatorios.",
+            detail="Hay campos vacíos",
         )
 
     if len(payload.password) < 6:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="La contraseña debe tener al menos 6 caracteres.",
+            detail="La contraseña debe tener mínimo 6 caracteres",
         )
 
     if payload.password != payload.confirm_password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Las contraseñas no coinciden.",
+            detail="Las contraseñas no coinciden",
         )
 
-    # 🔥 Validación phone opcional
     if payload.phone is not None and payload.phone.strip() != "":
         if not payload.phone.isdigit():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="El teléfono debe contener solo números.",
+                detail="El teléfono debe contener solo números",
             )
 
     try:
@@ -46,15 +45,23 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
             }
         )
     except Exception as exc:
+        msg = str(exc).lower()
+
+        if "already registered" in msg or "user already registered" in msg:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El correo ya existe",
+            )
+
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error al registrar en Supabase: {exc}",
+            detail="Error al registrar usuario",
         )
 
     if response.user is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El correo ya está registrado o no es válido.",
+            detail="El correo ya existe",
         )
 
     supabase_user = response.user
@@ -66,9 +73,12 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
             email=supabase_user.email,
             first_name=payload.first_name,
             last_name=payload.last_name,
-            phone=payload.phone,  # 🔥 NUEVO
+            phone=payload.phone,
             supabase_id=supabase_user.id,
         )
+
+        # 🔥 ASIGNAR ROL CLIENTE POR DEFECTO
+        UserService.assign_default_role(db, db_user.id)
 
     if response.session is None:
         raise HTTPException(
@@ -76,10 +86,14 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
             detail="Registro exitoso. Revisa tu correo para confirmar la cuenta.",
         )
 
+    # 🔥 DEVOLVER ROL
+    role_name = UserService.get_user_role_name(db, db_user.id)
+
     return AuthResponse(
         access_token=response.session.access_token,
         first_name=db_user.first_name,
-        last_name=db_user.last_name
+        last_name=db_user.last_name,
+        role=role_name
     )
 
 
@@ -89,7 +103,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     if not payload.email.strip() or not payload.password.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Correo y contraseña son obligatorios.",
+            detail="Hay campos vacíos",
         )
 
     try:
@@ -102,13 +116,13 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales incorrectas.",
+            detail="Credenciales incorrectas",
         )
 
     if response.session is None or response.user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales incorrectas.",
+            detail="Credenciales incorrectas",
         )
 
     supabase_user = response.user
@@ -122,14 +136,19 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
             email=supabase_user.email,
             first_name=metadata.get("first_name", ""),
             last_name=metadata.get("last_name", ""),
-            phone=metadata.get("phone", None),  # 🔥 NUEVO
+            phone=metadata.get("phone", None),
             supabase_id=supabase_user.id,
         )
+
+        UserService.assign_default_role(db, db_user.id)
+
+    role_name = UserService.get_user_role_name(db, db_user.id)
 
     return AuthResponse(
         access_token=response.session.access_token,
         first_name=db_user.first_name,
-        last_name=db_user.last_name
+        last_name=db_user.last_name,
+        role=role_name
     )
 
 
