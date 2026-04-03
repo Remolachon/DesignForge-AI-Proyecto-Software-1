@@ -12,12 +12,18 @@ export const ProductCard = ({ product, onBuy }: Props) => {
   return (
     <div className="border rounded-xl p-4 flex flex-col hover:shadow-lg transition">
       <div className="relative aspect-square mb-4 overflow-hidden rounded-lg">
-        <Image
-          src={product.imageUrl}
-          alt={product.title}
-          fill
-          className="object-cover hover:scale-105 transition"
-        />
+        {product.imageUrl ? (
+          <Image
+            src={product.imageUrl}
+            alt={product.title}
+            fill
+            className="object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gray-100">
+            <span className="text-sm text-gray-400">Sin imagen</span>
+          </div>
+        )}
         {!product.inStock && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white">
             Agotado

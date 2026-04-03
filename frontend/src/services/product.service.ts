@@ -1,18 +1,13 @@
-// /services/product.service.ts
-import { Product } from '@/types/product';
-import { mockProducts } from '@/features/mockProducts';
+import { Product } from "@/types/product";
 
-export const ProductService = {
-  async getProducts(): Promise<Product[]> {
-    // 🔥 HOY (mock)
-    return mockProducts;
+export class ProductService {
+  static async getProducts(): Promise<Product[]> {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`);
 
-    // 🔥 MAÑANA (Backend Python) le tocara a didier xd
-    // const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`);
-    // return res.json();
+    if (!res.ok) {
+      throw new Error("Error fetching products");
+    }
 
-    // 🔥 OPCIÓN SUPABASE
-    // const { data } = await supabase.from('products').select('*');
-    // return data;
-  },
-};
+    return res.json();
+  }
+}
