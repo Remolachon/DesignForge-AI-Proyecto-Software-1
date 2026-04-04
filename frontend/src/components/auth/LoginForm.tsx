@@ -58,7 +58,14 @@ export default function LoginForm() {
       localStorage.setItem("role", res.role);
 
       toast.success("¡Bienvenido de vuelta!");
-      router.push("/");
+      const redirectPath = localStorage.getItem("redirect_after_login");
+
+      if (redirectPath) {
+        localStorage.removeItem("redirect_after_login");
+        router.push(redirectPath);
+      } else {
+        router.push("/");
+      }
     } catch (error: any) {
       const message = extractBackendError(error);
       setErrorMsg(message);

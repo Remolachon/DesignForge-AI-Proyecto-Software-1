@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useCrearPedido } from "@/components/crear-pedido/hooks/useCrearPedido";
 
 import { Card } from "@/components/ui/card";
@@ -20,18 +21,30 @@ import { toast } from "sonner";
 
 import Step1ProductType from "@/components/crear-pedido/steps/Step1ProductType";
 import Step2Upload from "@/components/crear-pedido/steps/Step2Upload";
-import Step3AIResults from "@/components/crear-pedido/steps/Step3AIResults"; // Nuevo paso para mostrar resultados de IA, no entra en el MVP pero se deja preparado para el futuro
-//import Step5Confirm from "@/components/dashboard/crear-pedido/steps/Step4Confirm"; // Paso de confirmación final, no entra en el MVP pero se deja preparado para el futuro
+import Step3AIResults from "@/components/crear-pedido/steps/Step3AIResults";
 import Step5Confirm from "@/components/crear-pedido/steps/Step5Confirm";
 
 export default function CrearPedido() {
   const router = useRouter();
 
+  // 🔥 FIX navegación hacia atrás (evita bug)
+  useEffect(() => {
+    const handlePopState = () => {
+      window.location.reload();
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
+
   const {
     currentStep,
     productType,
     uploadedImage,
-    selectedVariant, 
+    selectedVariant,
     loading,
     setProductType,
     handleFileUpload,
@@ -40,9 +53,10 @@ export default function CrearPedido() {
     canProceed,
     setLoading,
     setSelectedVariant,
+    reset,
+    setUploadedImage,
   } = useCrearPedido();
 
-  // placeholder temporal solo para saltar el step 4 que no esta en uso y no entra en el MVP, se deja preparado para el futuro
   const designSettings = {
     color: "#00E5C2",
     size: "medium",
@@ -56,11 +70,54 @@ export default function CrearPedido() {
     { number: 4, title: "Confirmar", icon: CheckCircle },
   ];
 
+  // ✅ FUNCIÓN CORRECTA
   const handleConfirmOrder = async () => {
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    toast.success("¡Pedido creado exitosamente!");
-    router.push("/cliente/pedidos");
+    try {
+      setLoading(true);
+
+      const token = localStorage.getItem("token");
+
+      // 🚨 SI NO ESTÁ LOGUEADO
+      if (!token) {
+        localStorage.setItem(
+          "redirect_after_login",
+          "/cliente/crear-pedido"
+        );
+
+        toast.error("Debes iniciar sesión");
+
+        router.push("/login");
+        return;
+      }
+
+      const response = await fetch("http://localhost:8000/orders/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          product_type: productType,
+          image_url: uploadedImage,
+          size: designSettings.size,
+          material: designSettings.material,
+          color: designSettings.color,
+        }),
+      });
+
+      if (!response.ok) throw new Error();
+
+      // 🔥 LIMPIAR TODO
+      reset();
+
+      toast.success("¡Pedido creado exitosamente!");
+
+      router.push("/");
+    } catch (error) {
+      toast.error("Error al crear pedido");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -125,6 +182,7 @@ export default function CrearPedido() {
           <Step2Upload
             uploadedImage={uploadedImage}
             handleFileUpload={handleFileUpload}
+            setUploadedImage={setUploadedImage}
           />
         )}
 
@@ -170,91 +228,3 @@ export default function CrearPedido() {
     </div>
   );
 }
-
-/* =========================================================
-   🚀 FUTURAS MEJORAS / FEATURES PENDIENTES
-
-   Este componente actualmente implementa un flujo simplificado:
-   1 → Tipo de producto
-   2 → Subir imagen
-   3 → Selección de variante (simulada)
-   5 → Confirmación
-
-   ⚠️ Step 4 (Editor 3D) está temporalmente deshabilitado.
-
-   ---------------------------------------------------------
-   🧩 FEATURES PENDIENTES
-   ---------------------------------------------------------
-
-   🔹 STEP 3 - RESULTADOS IA (ACTUALMENTE MOCK)
-   - Actualmente las variantes (1, 2, 3) son simuladas.
-   - Futuro:
-     • Integrar generación real con IA
-     • Consumir endpoint backend (Stable Diffusion / OpenAI / etc.)
-     • Mostrar previews reales de variantes
-
-   ---------------------------------------------------------
-
-   🔹 STEP 4 - EDITOR 3D (DESHABILITADO)
-   - Aún no se ha definido si será parte del producto final.
-   - Posible implementación futura:
-     • Three.js / React Three Fiber
-     • Configuración de materiales, tamaños y colores
-     • Preview interactivo
-
-   ---------------------------------------------------------
-
-   🔹 STEP 5 - CONFIGURACIÓN REAL
-   - Actualmente usa `designSettings` hardcodeado:
-     {
-       color: "#00E5C2",
-       size: "medium",
-       material: "standard"
-     }
-
-   - Futuro:
-     • Conectar con Step 4 (si se implementa)
-     • Permitir personalización real del usuario
-
-   ---------------------------------------------------------
-
-   🔹 SUBIDA DE IMÁGENES (IMPORTANTE)
-   - Actualmente:
-     • Se usa base64 (FileReader)
-     • Se guarda en localStorage
-
-   - Futuro (CRÍTICO):
-     • Subir imágenes a Supabase Storage
-     • Obtener URL pública
-     • Guardar solo la URL en el estado
-     • Mejorar rendimiento y escalabilidad
-
-   ---------------------------------------------------------
-
-   🔹 PERSISTENCIA / BACKEND
-   - Actualmente:
-     • Estado guardado en localStorage
-
-   - Futuro:
-     • Guardar pedidos en base de datos (Supabase)
-     • Asociar pedidos a usuario autenticado
-     • Manejar estados de pedido (pendiente, en producción, etc.)
-
-   ---------------------------------------------------------
-
-   🔹 VALIDACIONES
-   - Pendiente:
-     • Validar tipo de archivo (SVG, PNG, etc.)
-     • Manejar errores de subida
-     • Feedback visual más robusto
-
-   ---------------------------------------------------------
-
-   🔹 UX / MEJORAS VISUALES
-   - Posibles mejoras:
-     • Skeleton loaders en Step 3 (IA)
-     • Drag & drop real en Step 2
-     • Animaciones entre steps
-     • Mejor feedback de selección
-
-   ========================================================= */

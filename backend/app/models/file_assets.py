@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy.orm import relationship
 from app.database.database import Base
 
 class FileAsset(Base):
@@ -10,3 +11,6 @@ class FileAsset(Base):
     file_type = Column(String, nullable=False)
     product_id = Column(Integer, ForeignKey("products.id"))
     is_active = Column(Boolean, default=True)
+    order_item_id = Column(Integer, ForeignKey("order_items.id"))
+    
+    order_item = relationship("OrderItem")

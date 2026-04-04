@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button";
 type Props = {
   uploadedImage: string | null;
   handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  setUploadedImage: (img: string | null) => void; // 🔥 IMPORTANTE
 };
 
 export default function Step2Upload({
   uploadedImage,
   handleFileUpload,
+  setUploadedImage, // 🔥 IMPORTANTE
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -35,13 +37,24 @@ export default function Step2Upload({
               className="max-w-full max-h-64 mx-auto rounded-lg mb-4"
             />
 
-            <button
-              type="button"
-              onClick={openFilePicker}
-              className="text-accent hover:underline"
-            >
-              Cambiar imagen
-            </button>
+            {/* 🔥 BOTONES */}
+            <div className="flex justify-center gap-6">
+              <button
+                type="button"
+                onClick={openFilePicker}
+                className="text-accent hover:underline"
+              >
+                Cambiar imagen
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setUploadedImage(null)} // ✅ YA FUNCIONA
+                className="text-red-500 hover:underline"
+              >
+                Quitar imagen
+              </button>
+            </div>
 
             <input
               ref={inputRef}

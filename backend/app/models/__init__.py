@@ -3,3 +3,6 @@
 from app.models.company import Company  # noqa: F401
 from app.models.role import Role        # noqa: F401
 from app.models.user import User        # noqa: F401
+from app.models.order import Order
+from app.models.order_item import OrderItem
+from app.models.parameters import Parameters

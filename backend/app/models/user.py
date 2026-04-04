@@ -16,3 +16,5 @@ class User(Base):
     supabase_id = Column(String, unique=True)
 
     company = relationship("Company")
+    orders = relationship("Order", back_populates="user")
+    
