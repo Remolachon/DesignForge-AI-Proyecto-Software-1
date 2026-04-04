@@ -5,6 +5,9 @@ from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.parameters import Parameters
 from app.models.file_assets import FileAsset
+from app.models.productionStage import ProductionStage
+from app.models.statusHistory import StatusHistory
+from app.models.product_type import ProductType
 
 
 class OrderService:
@@ -23,6 +26,22 @@ class OrderService:
         if not data.size or not data.material:
             raise ValueError("Faltan datos de configuración")
 
+        # 🔴 NUEVO: buscar stage "En diseño"
+        initial_stage = db.query(ProductionStage).filter(
+            ProductionStage.name == "En diseño"
+        ).first()
+
+        if not initial_stage:
+            raise ValueError("No existe el stage 'En diseño' en la BD")
+
+        # 🔴 NUEVO: buscar tipo de producto
+        product_type_obj = db.query(ProductType).filter(
+            ProductType.name == data.product_type
+        ).first()
+
+        if not product_type_obj:
+            raise ValueError("Tipo de producto no válido")
+
         # 1. Crear orden
         order = Order(
             user_id=user_id,
@@ -32,30 +51,31 @@ class OrderService:
         db.add(order)
         db.flush()
 
-        # 2. Crear item
+        # 2. Crear item (🔴 MODIFICADO)
         item = OrderItem(
             order_id=order.id,
             product_id=None,
-            quantity=1
+            quantity=1,
+            current_stage_id=initial_stage.id,     # 🔴 NUEVO
+            product_type_id=product_type_obj.id    # 🔴 NUEVO
         )
         db.add(item)
         db.flush()
 
-        # 🔥 3. GUARDAR IMAGEN EN file_assets
-        # Extraer path desde la URL firmada
-        # Ejemplo URL:
-        # https://.../object/sign/order-references/1/temp/xxx.png?token=...
+        # 🔴 NUEVO: guardar en status_history
+        status = StatusHistory(
+            order_item_id=item.id,
+            production_stage_id=initial_stage.id
+        )
+        db.add(status)
 
+        # 🔥 3. GUARDAR IMAGEN EN file_assets
         image_url = data.image_url
 
-        # 🔥 EXTRAER SOLO EL PATH REAL
-        # order-references/1/temp/xxx.png
         storage_path = image_url.split("/object/sign/")[1].split("?")[0]
 
-        # bucket
         bucket_name = storage_path.split("/")[0]
 
-        # path sin bucket
         storage_path_clean = "/".join(storage_path.split("/")[1:])
 
         file = FileAsset(

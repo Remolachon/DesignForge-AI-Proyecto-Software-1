@@ -6,3 +6,7 @@ from app.models.user import User        # noqa: F401
 from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.parameters import Parameters
+from app.models.productionStage import ProductionStage
+from app.models.statusHistory import StatusHistory
+from app.models.product_type import ProductType
+from app.models.file_assets import FileAsset
