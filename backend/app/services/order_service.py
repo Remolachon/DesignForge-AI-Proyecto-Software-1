@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
-from datetime import datetime
+from sqlalchemy.orm import joinedload
+from datetime import datetime, timedelta
 
 from app.models.order import Order
 from app.models.order_item import OrderItem
@@ -8,9 +9,164 @@ from app.models.file_assets import FileAsset
 from app.models.productionStage import ProductionStage
 from app.models.statusHistory import StatusHistory
 from app.models.product_type import ProductType
+from app.providers.supabase_provider import supabase_admin
 
 
 class OrderService:
+
+    @staticmethod
+    def _now_local() -> datetime:
+        # UTC-5 fijo para evitar dependencia de tzdata en Windows
+        return datetime.utcnow() - timedelta(hours=5)
+
+    @staticmethod
+    def _normalize_status(value: str | None) -> str:
+        if not value:
+            return ""
+
+        return value.strip().lower()
+
+    @staticmethod
+    def _canonical_status(value: str | None) -> str:
+        normalized = OrderService._normalize_status(value)
+
+        if normalized == "en diseño":
+            return "En diseño"
+        if normalized == "en produccion" or normalized == "en producción":
+            return "En producción"
+        if normalized == "listo para entrega" or normalized == "listo para entregar":
+            return "Listo para entregar"
+        if normalized == "entregado":
+            return "Entregado"
+
+        return value.strip() if value else "En diseño"
+
+    @staticmethod
+    def _safe_signed_url(bucket_name: str | None, storage_path: str | None) -> str | None:
+        if not bucket_name or not storage_path:
+            return None
+
+        try:
+            data = supabase_admin.storage.from_(bucket_name).create_signed_url(
+                storage_path,
+                3600,
+            )
+            return data.get("signedURL") or data.get("signedUrl")
+        except Exception:
+            return None
+
+    @staticmethod
+    def _serialize_order(order: Order, include_client: bool = False):
+        item = (
+            order.items[0]
+            if hasattr(order, "items") and order.items
+            else None
+        )
+        asset = item.assets[0] if item and hasattr(item, "assets") and item.assets else None
+
+        stage_name = (
+            item.current_stage.name
+            if item and item.current_stage and item.current_stage.name
+            else "En diseño"
+        )
+        stage_name = OrderService._canonical_status(stage_name)
+        title = (
+            item.product_type.name
+            if item and item.product_type and item.product_type.name
+            else "Pedido personalizado"
+        )
+
+        created_at = order.created_at or OrderService._now_local()
+        delivery_date = created_at + timedelta(days=7)
+
+        bucket_name = asset.bucket_name if asset else ""
+        storage_path = asset.storage_path if asset else ""
+
+        payload = {
+            "id": str(order.id),
+            "title": title,
+            "status": stage_name,
+            "price": float(order.total_amount or 0),
+            "deliveryDate": delivery_date.isoformat(),
+            "createdAt": created_at.isoformat(),
+            "image": {
+                "bucket": bucket_name,
+                "path": storage_path,
+            },
+            "imageUrl": OrderService._safe_signed_url(bucket_name, storage_path),
+        }
+
+        if include_client:
+            first_name = order.user.first_name if order.user else ""
+            last_name = order.user.last_name if order.user else ""
+            payload["clientName"] = f"{first_name} {last_name}".strip() or "Cliente"
+
+        return payload
+
+    @staticmethod
+    def get_dashboard_data(db: Session, user_id: int, role_name: str):
+        is_funcionario = role_name == "funcionario"
+
+        query = (
+            db.query(Order)
+            .options(
+                joinedload(Order.user),
+                joinedload(Order.items)
+                .joinedload(OrderItem.current_stage),
+                joinedload(Order.items)
+                .joinedload(OrderItem.product_type),
+                joinedload(Order.items)
+                .joinedload(OrderItem.assets),
+            )
+            .order_by(Order.created_at.desc())
+        )
+
+        if not is_funcionario:
+            query = query.filter(Order.user_id == user_id)
+
+        orders = query.all()
+
+        serialized_orders = [
+            OrderService._serialize_order(order, include_client=is_funcionario)
+            for order in orders
+        ]
+
+        stats = {
+            "total": len(serialized_orders),
+            "design": len([o for o in serialized_orders if OrderService._canonical_status(o["status"]) == "En diseño"]),
+            "production": len([o for o in serialized_orders if OrderService._canonical_status(o["status"]) == "En producción"]),
+            "ready": len([o for o in serialized_orders if OrderService._canonical_status(o["status"]) == "Listo para entregar"]),
+            "active": len([
+                o for o in serialized_orders
+                if OrderService._canonical_status(o["status"]) != "Entregado"
+            ]),
+        }
+
+        return {
+            "orders": serialized_orders,
+            "stats": stats,
+        }
+
+    @staticmethod
+    def get_user_orders(db: Session, user_id: int):
+        query = (
+            db.query(Order)
+            .options(
+                joinedload(Order.user),
+                joinedload(Order.items)
+                .joinedload(OrderItem.current_stage),
+                joinedload(Order.items)
+                .joinedload(OrderItem.product_type),
+                joinedload(Order.items)
+                .joinedload(OrderItem.assets),
+            )
+            .filter(Order.user_id == user_id)
+            .order_by(Order.created_at.desc())
+        )
+
+        orders = query.all()
+
+        return [OrderService._serialize_order(order, include_client=False) for order in orders]
 
     @staticmethod
     def create_order(db: Session, user_id: int, data):
@@ -45,7 +201,7 @@ class OrderService:
         # 1. Crear orden
         order = Order(
             user_id=user_id,
-            created_at=datetime.utcnow(),
+            created_at=OrderService._now_local(),
             total_amount=0
         )
         db.add(order)
@@ -56,6 +212,7 @@ class OrderService:
             order_id=order.id,
             product_id=None,
             quantity=1,
+            order_date=OrderService._now_local(),
             current_stage_id=initial_stage.id,     # 🔴 NUEVO
             product_type_id=product_type_obj.id    # 🔴 NUEVO
         )
@@ -65,7 +222,8 @@ class OrderService:
         # 🔴 NUEVO: guardar en status_history
         status = StatusHistory(
             order_item_id=item.id,
-            production_stage_id=initial_stage.id
+            production_stage_id=initial_stage.id,
+            changed_at=OrderService._now_local(),
         )
         db.add(status)
 

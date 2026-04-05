@@ -14,3 +14,4 @@ class Order(Base):
     total_amount = Column(Numeric)
 
     user = relationship("User", back_populates="orders")
+    items = relationship("OrderItem", back_populates="order")

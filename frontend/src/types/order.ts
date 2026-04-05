@@ -1,7 +1,7 @@
 export type OrderStatus =
   | 'En diseño'
   | 'En producción'
-  | 'Listo para entrega'
+  | 'Listo para entregar'
   | 'Entregado';
 
 export interface BaseOrder {
@@ -11,6 +11,7 @@ export interface BaseOrder {
   price: number;
   deliveryDate: string;
   createdAt: string;
+  imageUrl?: string | null;
   image: {
     bucket: string;
     path: string;

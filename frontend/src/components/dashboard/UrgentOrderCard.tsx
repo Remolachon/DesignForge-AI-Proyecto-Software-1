@@ -12,6 +12,16 @@ export function UrgentOrderCard({ order }: { order: AdminOrder }) {
   const [imageUrl, setImageUrl] = useState('');
   
     useEffect(() => {
+      if (order.imageUrl) {
+        setImageUrl(order.imageUrl);
+        return;
+      }
+
+      if (!order.image?.bucket || !order.image?.path) {
+        setImageUrl('');
+        return;
+      }
+
       getImageUrl(order.image.bucket, order.image.path).then((url) => {
         if (url) {
           setImageUrl(url);
@@ -26,7 +36,11 @@ export function UrgentOrderCard({ order }: { order: AdminOrder }) {
       <CardContent className="pt-6">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative w-full sm:w-24 h-24 rounded-lg overflow-hidden">
-            <Image src={imageUrl} alt={order.title} fill className="object-cover" />
+            {imageUrl ? (
+              <Image src={imageUrl} alt={order.title} fill className="object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gray-100" />
+            )}
           </div>
 
           <div className="flex-1">

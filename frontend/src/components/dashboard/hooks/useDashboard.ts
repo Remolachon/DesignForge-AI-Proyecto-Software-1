@@ -8,25 +8,31 @@ type Role = 'cliente' | 'funcionario';
 
 export function useDashboard(role: Role) {
   const [orders, setOrders] = useState<(BaseOrder | AdminOrder)[]>([]);
+  const [stats, setStats] = useState({
+    total: 0,
+    design: 0,
+    production: 0,
+    ready: 0,
+    active: 0,
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
-      const data = await dashboardService.getOrders(role);
-      setOrders(data);
-      setLoading(false);
+      try {
+        const data = await dashboardService.getDashboardData();
+        setOrders(data.orders);
+        setStats(data.stats);
+      } catch {
+        setOrders([]);
+        setStats({ total: 0, design: 0, production: 0, ready: 0, active: 0 });
+      } finally {
+        setLoading(false);
+      }
     };
 
     load();
   }, [role]);
-
-  // 📊 lógica centralizada
-  const stats = {
-    total: orders.length,
-    design: orders.filter((o) => o.status === 'En diseño').length,
-    production: orders.filter((o) => o.status === 'En producción').length,
-    ready: orders.filter((o) => o.status === 'Listo para entrega').length,
-  };
 
   return {
     orders,

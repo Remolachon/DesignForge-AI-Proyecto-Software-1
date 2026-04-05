@@ -14,7 +14,8 @@ const statuses: (OrderStatus | 'all')[] = [
   'all',
   'En diseño',
   'En producción',
-  'Listo para entrega',
+  'Listo para entregar',
+  'Entregado',
 ];
 
 export function PedidoFilters({

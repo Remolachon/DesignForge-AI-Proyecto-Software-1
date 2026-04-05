@@ -13,4 +13,4 @@ class FileAsset(Base):
     is_active = Column(Boolean, default=True)
     order_item_id = Column(Integer, ForeignKey("order_items.id"))
     
-    order_item = relationship("OrderItem")
+    order_item = relationship("OrderItem", back_populates="assets")

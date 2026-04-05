@@ -61,22 +61,20 @@ export function DashboardView({ role }: { role: Role }) {
         </div>
 
         {/* STATS */}
-        <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {isCliente ? (
-            <>
-              <StatCard label="Activos" value={stats.production} icon={<Package />} colorClass="bg-blue-100" />
-              <StatCard label="Totales" value={stats.total} icon={<TrendingUp />} colorClass="bg-green-100" />
-              <StatCard label="Pendientes" value={stats.ready} icon={<Clock />} colorClass="bg-amber-100" />
-            </>
-          ) : (
-            <>
-              <StatCard label="En Diseño" value={stats.design} icon={<AlertCircle />} colorClass="bg-blue-100" />
-              <StatCard label="En Producción" value={stats.production} icon={<Clock />} colorClass="bg-amber-100" />
-              <StatCard label="Listos" value={stats.ready} icon={<CheckCircle />} colorClass="bg-green-100" />
-              <StatCard label="Total Pedidos" value={stats.total} icon={<Package />} colorClass="bg-purple-100" />
-            </>
-          )}
-        </div>
+        {isCliente ? (
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            <StatCard label="Activos" value={stats.active} icon={<Package />} colorClass="bg-blue-100" />
+            <StatCard label="Pendientes" value={stats.ready} icon={<Clock />} colorClass="bg-amber-100" />
+            <StatCard label="Totales" value={stats.total} icon={<TrendingUp />} colorClass="bg-green-100" />
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <StatCard label="En Diseño" value={stats.design} icon={<AlertCircle />} colorClass="bg-blue-100" />
+            <StatCard label="En Producción" value={stats.production} icon={<Clock />} colorClass="bg-amber-100" />
+            <StatCard label="Listos" value={stats.ready} icon={<CheckCircle />} colorClass="bg-green-100" />
+            <StatCard label="Total Pedidos" value={stats.total} icon={<Package />} colorClass="bg-purple-100" />
+          </div>
+        )}
 
         {/* ACCESOS RÁPIDOS */}
         <section>

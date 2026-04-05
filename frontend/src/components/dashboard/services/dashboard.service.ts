@@ -1,17 +1,41 @@
 import { BaseOrder, AdminOrder } from '@/types/order';
-import { mockPedidos } from '@/features/mockPedidos';
-import { mockOrdersAdmin } from '@/features/Mockordersadmin';
 
-const USE_MOCK = true;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+type DashboardStats = {
+  total: number;
+  design: number;
+  production: number;
+  ready: number;
+  active: number;
+};
+
+type DashboardResponse = {
+  orders: (BaseOrder | AdminOrder)[];
+  stats: DashboardStats;
+};
 
 export const dashboardService = {
-  async getOrders(role: 'cliente' | 'funcionario'): Promise<(BaseOrder | AdminOrder)[]> {
-    if (USE_MOCK) {
-      return role === 'cliente' ? mockPedidos : mockOrdersAdmin;
+  async getDashboardData(): Promise<DashboardResponse> {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      return {
+        orders: [],
+        stats: { total: 0, design: 0, production: 0, ready: 0, active: 0 },
+      };
     }
 
-    // 🔥 FUTURO: backend Python
-    const res = await fetch(`/api/orders?role=${role}`);
+    const res = await fetch(`${API_URL}/orders/dashboard`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error('Error cargando dashboard');
+    }
+
     return res.json();
   },
 };

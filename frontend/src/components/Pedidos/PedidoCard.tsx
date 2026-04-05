@@ -14,10 +14,10 @@ function getStatusStyles(status: string) {
       return 'bg-blue-100 text-blue-700';
     case 'En producción':
       return 'bg-yellow-100 text-yellow-700';
-    case 'Listo para entrega':
+    case 'Listo para entregar':
       return 'bg-green-100 text-green-700';
     case 'Entregado':
-      return 'bg-green-500 text-white';
+      return 'bg-emerald-600 text-white';
     default:
       return 'bg-gray-100 text-gray-600';
   }
@@ -30,13 +30,17 @@ export function PedidoCard({ pedido }: Props) {
         
         {/* Imagen */}
         <div className="shrink-0">
-          <Image
-            src={pedido.imageUrl}
-            alt={pedido.title}
-            width={180}
-            height={140}
-            className="object-cover rounded-xl w-[180px] h-[140px]"
-          />
+          {pedido.imageUrl ? (
+            <Image
+              src={pedido.imageUrl}
+              alt={pedido.title}
+              width={180}
+              height={140}
+              className="object-cover rounded-xl w-[180px] h-[140px]"
+            />
+          ) : (
+            <div className="w-[180px] h-[140px] rounded-xl bg-gray-100" />
+          )}
         </div>
 
         {/* Contenido */}
