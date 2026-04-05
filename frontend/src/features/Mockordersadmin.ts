@@ -6,7 +6,10 @@ export interface AdminOrder {
   description?: string;
   status: OrderStatus;
   price: number;
-  imageUrl: string;
+  image: {
+    bucket: string;
+    path: string;
+  };
   clientName: string;
   createdAt: string;
   deliveryDate: string;
@@ -26,7 +29,10 @@ export const mockOrdersAdmin: AdminOrder[] = [
     description: 'Nombre en neon azul para local comercial',
     status: 'En diseño',
     price: 120000,
-    imageUrl: IMG_NEON,
+        image: {
+      bucket: 'product-catalog',
+      path: 'mock/neon.jpg',
+    },
     clientName: 'María García',
     createdAt: '2025-03-01',
     deliveryDate: '2025-03-10',
@@ -37,7 +43,10 @@ export const mockOrdersAdmin: AdminOrder[] = [
     description: 'Logo corporativo con corte láser',
     status: 'En producción',
     price: 85000,
-    imageUrl: IMG_ACRILICO,
+    image: {
+      bucket: 'product-catalog',
+      path: 'mock/neon.jpg',
+    },
     clientName: 'Carlos López',
     createdAt: '2025-03-02',
     deliveryDate: '2025-03-12',
@@ -48,7 +57,10 @@ export const mockOrdersAdmin: AdminOrder[] = [
     description: 'Uniformes con logo bordado',
     status: 'Listo para entrega',
     price: 60000,
-    imageUrl: IMG_BORDADO,
+        image: {
+      bucket: 'product-catalog',
+      path: 'mock/neon.jpg',
+    },
     clientName: 'Ana Martínez',
     createdAt: '2025-02-28',
     deliveryDate: '2025-03-08',
@@ -59,7 +71,10 @@ export const mockOrdersAdmin: AdminOrder[] = [
     description: 'Placa de identificación de área',
     status: 'En producción',
     price: 45000,
-    imageUrl: IMG_ACRILICO,
+        image: {
+      bucket: 'product-catalog',
+      path: 'mock/neon.jpg',
+    },
     clientName: 'Pedro Ramírez',
     createdAt: '2025-03-03',
     deliveryDate: '2025-03-15',
@@ -70,7 +85,10 @@ export const mockOrdersAdmin: AdminOrder[] = [
     description: 'Letrero decorativo para bar temático',
     status: 'Entregado',
     price: 200000,
-    imageUrl: IMG_NEON,
+        image: {
+      bucket: 'product-catalog',
+      path: 'mock/neon.jpg',
+    },
     clientName: 'Laura Torres',
     createdAt: '2025-02-20',
     deliveryDate: '2025-03-01',

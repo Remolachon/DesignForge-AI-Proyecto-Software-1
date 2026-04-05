@@ -58,7 +58,7 @@ export default function LoginForm() {
       localStorage.setItem("role", res.role);
 
       toast.success("¡Bienvenido de vuelta!");
-      router.push("/");
+      router.push("/cliente/dashboard");
     } catch (error: any) {
       const message = extractBackendError(error);
       setErrorMsg(message);
