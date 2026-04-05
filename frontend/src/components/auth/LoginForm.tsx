@@ -68,6 +68,7 @@ export default function LoginForm() {
       localStorage.setItem("role", res.role);
 
       toast.success("¡Bienvenido de vuelta!");
+<<<<<<< HEAD
       const redirectPath = localStorage.getItem("redirect_after_login");
       const roleDashboard = getDashboardByRole(res.role);
 
@@ -77,6 +78,9 @@ export default function LoginForm() {
       } else {
         router.push(roleDashboard);
       }
+=======
+      router.push("/cliente/dashboard");
+>>>>>>> avances-duvan
     } catch (error: any) {
       const message = extractBackendError(error);
       setErrorMsg(message);
