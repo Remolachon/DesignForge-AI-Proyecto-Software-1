@@ -1,5 +1,5 @@
-import FuncionarioDashboard from "@/components/admin/FuncionarioDashboard";
+import { DashboardView } from '@/components/dashboard/DashboardView';
 
 export default function Page() {
-  return <FuncionarioDashboard />;
+  return <DashboardView role="funcionario" />;
 }

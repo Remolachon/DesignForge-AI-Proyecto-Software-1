@@ -1,5 +1,5 @@
-import ClienteDashboard from "@/components/dashboard/ClienteDashboard";
+import { DashboardView } from '@/components/dashboard/DashboardView';
 
 export default function Page() {
-  return <ClienteDashboard />;
+  return <DashboardView role="cliente" />;
 }

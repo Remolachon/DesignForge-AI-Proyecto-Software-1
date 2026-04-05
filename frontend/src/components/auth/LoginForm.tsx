@@ -64,7 +64,7 @@ export default function LoginForm() {
         localStorage.removeItem("redirect_after_login");
         router.push(redirectPath);
       } else {
-        router.push("/");
+        router.push("/cliente/dashboard");
       }
     } catch (error: any) {
       const message = extractBackendError(error);

@@ -1,0 +1,60 @@
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
+import { getImageUrl } from '@/lib/supabase/getImageUrl';
+import { Card, CardContent } from '@/components/ui/card';
+import { getStatusColor } from '@/lib/utils/statusColors';
+import { BaseOrder  } from '@/types/order';
+
+interface OrderCardProps {
+  order: BaseOrder ;
+}
+
+export function OrderCard({ order }: OrderCardProps) {
+
+const [imageUrl, setImageUrl] = useState('');
+
+  useEffect(() => {
+    getImageUrl(order.image.bucket, order.image.path).then((url) => {
+      if (url) {
+        setImageUrl(url);
+      } else {
+        setImageUrl(''); // fallback
+      }
+    });
+  }, [order]);
+
+  return (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardContent className="pt-6">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative w-full sm:w-24 h-24 rounded-lg overflow-hidden">
+            <Image src={imageUrl} alt={order.title} fill className="object-cover" />
+          </div>
+
+          <div className="flex-1">
+            <div className="flex justify-between mb-2">
+              <div>
+                <h3 className="font-semibold">{order.title}</h3>
+                <p className="text-sm text-muted-foreground">Pedido #{order.id}</p>
+              </div>
+
+              <span className={`px-2 py-1 text-xs rounded-full font-medium whitespace-nowrap ${getStatusColor(order.status)}`}>
+                {order.status}
+              </span>
+            </div>
+
+            <div className="flex gap-6 text-sm text-muted-foreground">
+              <span>
+                Entrega:{' '}
+                {new Date(order.deliveryDate).toLocaleDateString('es-ES')}
+              </span>
+              <span className="font-semibold text-primary">
+                ${order.price.toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
