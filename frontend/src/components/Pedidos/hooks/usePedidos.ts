@@ -11,7 +11,7 @@ function canonicalStatus(value: string): OrderStatus | string {
 
   if (normalized === 'en diseño') return 'En diseño';
   if (normalized === 'en produccion' || normalized === 'en producción') return 'En producción';
-  if (normalized === 'listo para entrega' || normalized === 'listo para entregar') {
+  if (normalized === 'listo para entregar') {
     return 'Listo para entregar';
   }
   if (normalized === 'entregado') return 'Entregado';
@@ -23,43 +23,63 @@ export function usePedidos() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<OrderStatus | 'all'>('all');
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
+      setLoading(true);
       try {
-        const data = await pedidosService.getMyOrders();
-        setPedidos(data);
+        const data = await pedidosService.getMyOrdersPage({
+          page,
+          pageSize: 10,
+          search: searchTerm,
+          status: filterStatus,
+        });
+        setPedidos(data.items);
+        setTotalPages(data.totalPages);
+        setTotalItems(data.totalItems);
       } catch {
         setPedidos([]);
+        setTotalPages(1);
+        setTotalItems(0);
       } finally {
         setLoading(false);
       }
     };
 
     load();
-  }, []);
+  }, [page, searchTerm, filterStatus]);
 
   const filteredPedidos = useMemo(() => {
-    return pedidos.filter((order: Pedido) => {
-      const matchesSearch =
-        order.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.id.includes(searchTerm);
+    return pedidos.map((order: Pedido) => ({
+      ...order,
+      status: canonicalStatus(order.status) as Pedido['status'],
+    }));
+  }, [pedidos]);
 
-      const matchesFilter =
-        filterStatus === 'all' ||
-        canonicalStatus(order.status) === canonicalStatus(filterStatus);
+  const setSearchAndReset = (value: string) => {
+    setPage(1);
+    setSearchTerm(value);
+  };
 
-      return matchesSearch && matchesFilter;
-    });
-  }, [searchTerm, filterStatus, pedidos]);
+  const setFilterAndReset = (value: OrderStatus | 'all') => {
+    setPage(1);
+    setFilterStatus(value);
+  };
 
   return {
     searchTerm,
-    setSearchTerm,
+    setSearchTerm: setSearchAndReset,
     filterStatus,
-    setFilterStatus,
+    setFilterStatus: setFilterAndReset,
     filteredPedidos,
     loading,
+    page,
+    setPage,
+    totalPages,
+    totalItems,
   };
 }

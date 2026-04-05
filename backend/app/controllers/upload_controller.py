@@ -1,6 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, status
 from uuid import uuid4
 from app.providers.supabase_provider import supabase_admin
+from app.config.settings import settings
 
 router = APIRouter(tags=["Upload"])
 
@@ -39,4 +40,39 @@ async def upload_image(file: UploadFile = File(...)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error al subir la imagen",
+        )
+
+
+@router.post("/upload-product-image")
+async def upload_product_image(file: UploadFile = File(...)):
+    try:
+        file_ext = file.filename.split(".")[-1]
+        file_name = f"{uuid4()}.{file_ext}"
+
+        company_id = 1
+        file_path = f"{company_id}/products/{file_name}"
+
+        contents = await file.read()
+
+        bucket_name = "product-catalog"
+
+        supabase_admin.storage.from_(bucket_name).upload(
+            path=file_path,
+            file=contents,
+            file_options={"content-type": file.content_type}
+        )
+
+        public_url = f"{settings.SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{file_path}"
+
+        return {
+            "bucket": bucket_name,
+            "storage_path": file_path,
+            "url": public_url,
+        }
+
+    except Exception as e:
+        print("ERROR UPLOAD PRODUCT:", e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error al subir imagen de producto",
         )

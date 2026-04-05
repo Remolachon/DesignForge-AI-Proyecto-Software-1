@@ -17,6 +17,8 @@ export const ProductCard = ({ product, onBuy }: Props) => {
             src={product.imageUrl}
             alt={product.title}
             fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            unoptimized
             className="object-cover"
           />
         ) : (

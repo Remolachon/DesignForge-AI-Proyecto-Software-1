@@ -71,7 +71,7 @@ export function DashboardView({ role }: { role: Role }) {
           <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
             <StatCard label="En Diseño" value={stats.design} icon={<AlertCircle />} colorClass="bg-blue-100" />
             <StatCard label="En Producción" value={stats.production} icon={<Clock />} colorClass="bg-amber-100" />
-            <StatCard label="Listos" value={stats.ready} icon={<CheckCircle />} colorClass="bg-green-100" />
+            <StatCard label="Listo para entregar" value={stats.ready} icon={<CheckCircle />} colorClass="bg-green-100" />
             <StatCard label="Total Pedidos" value={stats.total} icon={<Package />} colorClass="bg-purple-100" />
           </div>
         )}

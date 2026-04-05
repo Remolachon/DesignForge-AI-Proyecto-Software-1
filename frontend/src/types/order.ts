@@ -20,4 +20,6 @@ export interface BaseOrder {
 
 export interface AdminOrder extends BaseOrder {
   clientName: string;
+  imageUrl?: string | null;
+  productType?: 'bordado' | 'neon-flex' | 'acrilico';
 }

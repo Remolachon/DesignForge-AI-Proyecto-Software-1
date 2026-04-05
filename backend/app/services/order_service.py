@@ -1,9 +1,11 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
+from sqlalchemy import cast, String
 from datetime import datetime, timedelta
 
 from app.models.order import Order
 from app.models.order_item import OrderItem
+from app.models.user import User
 from app.models.parameters import Parameters
 from app.models.file_assets import FileAsset
 from app.models.productionStage import ProductionStage
@@ -34,12 +36,32 @@ class OrderService:
             return "En diseño"
         if normalized == "en produccion" or normalized == "en producción":
             return "En producción"
-        if normalized == "listo para entrega" or normalized == "listo para entregar":
+        if normalized == "listo para entregar":
             return "Listo para entregar"
         if normalized == "entregado":
             return "Entregado"
 
         return value.strip() if value else "En diseño"
+
+    @staticmethod
+    def _status_candidates(value: str | None) -> list[str]:
+        canonical = OrderService._canonical_status(value)
+
+        if canonical == "Listo para entregar":
+            return ["Listo para entregar"]
+
+        return [canonical]
+
+    @staticmethod
+    def _resolve_target_stage(db: Session, requested_status: str | None) -> ProductionStage | None:
+        target_canonical = OrderService._canonical_status(requested_status)
+
+        stages = db.query(ProductionStage).all()
+        for stage in stages:
+            if OrderService._canonical_status(stage.name) == target_canonical:
+                return stage
+
+        return None
 
     @staticmethod
     def _safe_signed_url(bucket_name: str | None, storage_path: str | None) -> str | None:
@@ -75,6 +97,7 @@ class OrderService:
             if item and item.product_type and item.product_type.name
             else "Pedido personalizado"
         )
+        product_type = item.product_type.name if item and item.product_type else None
 
         created_at = order.created_at or OrderService._now_local()
         delivery_date = created_at + timedelta(days=7)
@@ -94,6 +117,7 @@ class OrderService:
                 "path": storage_path,
             },
             "imageUrl": OrderService._safe_signed_url(bucket_name, storage_path),
+            "productType": product_type,
         }
 
         if include_client:
@@ -167,6 +191,199 @@ class OrderService:
         orders = query.all()
 
         return [OrderService._serialize_order(order, include_client=False) for order in orders]
+
+    @staticmethod
+    def _paginate(query, page: int, page_size: int):
+        safe_page = max(1, page)
+        safe_page_size = max(1, min(page_size, 100))
+
+        total_items = query.count()
+        total_pages = max(1, (total_items + safe_page_size - 1) // safe_page_size)
+
+        if safe_page > total_pages:
+            safe_page = total_pages
+
+        offset = (safe_page - 1) * safe_page_size
+        items = query.offset(offset).limit(safe_page_size).all()
+
+        return {
+            "items": items,
+            "page": safe_page,
+            "page_size": safe_page_size,
+            "total_items": total_items,
+            "total_pages": total_pages,
+        }
+
+    @staticmethod
+    def get_user_orders_page(
+        db: Session,
+        user_id: int,
+        page: int,
+        page_size: int,
+        search: str | None = None,
+        status: str | None = None,
+    ):
+        query = (
+            db.query(Order)
+            .options(
+                joinedload(Order.user),
+                joinedload(Order.items).joinedload(OrderItem.current_stage),
+                joinedload(Order.items).joinedload(OrderItem.product_type),
+                joinedload(Order.items).joinedload(OrderItem.assets),
+            )
+            .filter(Order.user_id == user_id)
+            .order_by(Order.created_at.desc())
+        )
+
+        if search:
+            term = f"%{search.strip()}%"
+            query = query.filter(cast(Order.id, String).ilike(term))
+
+        if status and status != "all":
+            candidates = OrderService._status_candidates(status)
+            matching_ids = (
+                db.query(Order.id)
+                .join(Order.items)
+                .join(OrderItem.current_stage)
+                .filter(ProductionStage.name.in_(candidates))
+                .distinct()
+            )
+            query = query.filter(Order.id.in_(matching_ids))
+
+        page_data = OrderService._paginate(query, page, page_size)
+        serialized = [OrderService._serialize_order(o, include_client=False) for o in page_data["items"]]
+
+        return {
+            "items": serialized,
+            "page": page_data["page"],
+            "pageSize": page_data["page_size"],
+            "totalItems": page_data["total_items"],
+            "totalPages": page_data["total_pages"],
+        }
+
+    @staticmethod
+    def get_funcionario_orders_page(
+        db: Session,
+        page: int,
+        page_size: int,
+        search: str | None = None,
+        status: str | None = None,
+    ):
+        query = (
+            db.query(Order)
+            .options(
+                joinedload(Order.user),
+                joinedload(Order.items).joinedload(OrderItem.current_stage),
+                joinedload(Order.items).joinedload(OrderItem.product_type),
+                joinedload(Order.items).joinedload(OrderItem.assets),
+            )
+            .order_by(Order.created_at.desc())
+        )
+
+        if search:
+            raw = search.strip()
+            term = f"%{raw}%"
+            term_numeric = raw.replace("#", "")
+
+            matching_ids = (
+                db.query(Order.id)
+                .join(User, Order.user_id == User.id)
+                .filter(
+                    (cast(Order.id, String).ilike(term))
+                    | (cast(Order.id, String).ilike(f"%{term_numeric}%"))
+                    | (User.first_name.ilike(term))
+                    | (User.last_name.ilike(term))
+                    | (User.email.ilike(term))
+                )
+                .distinct()
+            )
+
+            query = query.filter(Order.id.in_(matching_ids))
+
+        if status and status != "all":
+            candidates = OrderService._status_candidates(status)
+            matching_ids = (
+                db.query(Order.id)
+                .join(Order.items)
+                .join(OrderItem.current_stage)
+                .filter(ProductionStage.name.in_(candidates))
+                .distinct()
+            )
+            query = query.filter(Order.id.in_(matching_ids))
+
+        page_data = OrderService._paginate(query, page, page_size)
+        serialized = [OrderService._serialize_order(o, include_client=True) for o in page_data["items"]]
+
+        return {
+            "items": serialized,
+            "page": page_data["page"],
+            "pageSize": page_data["page_size"],
+            "totalItems": page_data["total_items"],
+            "totalPages": page_data["total_pages"],
+        }
+
+    @staticmethod
+    def update_order_status(
+        db: Session,
+        order_id: int,
+        new_status: str,
+        changed_by_user_id: int,
+    ):
+        order = (
+            db.query(Order)
+            .options(
+                joinedload(Order.user),
+                joinedload(Order.items).joinedload(OrderItem.current_stage),
+                joinedload(Order.items).joinedload(OrderItem.product_type),
+                joinedload(Order.items).joinedload(OrderItem.assets),
+            )
+            .filter(Order.id == order_id)
+            .first()
+        )
+
+        if not order or not order.items:
+            raise ValueError("Pedido no encontrado")
+
+        item = order.items[0]
+
+        prev_stage_id = item.current_stage_id
+        prev_status = item.current_stage.name if item.current_stage else None
+
+        target_stage = OrderService._resolve_target_stage(db, new_status)
+
+        if not target_stage:
+            raise ValueError("Estado no válido")
+
+        if prev_status and OrderService._canonical_status(prev_status) == OrderService._canonical_status(target_stage.name):
+            return OrderService._serialize_order(order, include_client=True)
+
+        item.current_stage_id = target_stage.id
+
+        history = StatusHistory(
+            order_item_id=item.id,
+            production_stage_id=prev_stage_id,
+            new_stage_id=target_stage.id,
+            changed_by=changed_by_user_id,
+            changed_at=OrderService._now_local(),
+        )
+        db.add(history)
+
+        db.commit()
+        db.refresh(order)
+
+        updated_order = (
+            db.query(Order)
+            .options(
+                joinedload(Order.user),
+                joinedload(Order.items).joinedload(OrderItem.current_stage),
+                joinedload(Order.items).joinedload(OrderItem.product_type),
+                joinedload(Order.items).joinedload(OrderItem.assets),
+            )
+            .filter(Order.id == order_id)
+            .first()
+        )
+
+        return OrderService._serialize_order(updated_order, include_client=True)
 
     @staticmethod
     def create_order(db: Session, user_id: int, data):

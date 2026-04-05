@@ -1,7 +1,7 @@
 export type OrderStatus =
   | 'En diseño'
   | 'En producción'
-  | 'Listo para entrega'
+  | 'Listo para entregar'
   | 'Entregado';
 
 export type ProductType = 'bordado' | 'neon-flex' | 'acrilico';
@@ -12,6 +12,7 @@ export interface AdminOrder {
   description?: string;
   status: OrderStatus;
   price: number;
+  imageUrl?: string;
   image: {
     bucket: string;
     path: string;
@@ -64,7 +65,7 @@ export const mockOrdersAdmin: AdminOrder[] = [
     id: '003',
     title: 'Bordado Corporativo',
     description: 'Uniformes con logo bordado x10 unidades',
-    status: 'Listo para entrega',
+    status: 'Listo para entregar',
     price: 60000,
         image: {
       bucket: 'product-catalog',
@@ -111,6 +112,10 @@ export const mockOrdersAdmin: AdminOrder[] = [
     description: 'Gorras con logo del equipo deportivo',
     status: 'En diseño',
     price: 35000,
+    image: {
+      bucket: 'product-catalog',
+      path: 'mock/neon.jpg',
+    },
     imageUrl: IMG_BORDADO,
     clientName: 'Diego Sánchez',
     productType: 'bordado',

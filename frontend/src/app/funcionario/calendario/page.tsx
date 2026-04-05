@@ -1,23 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   addDays,
   startOfWeek,
   format,
   isSameDay,
-  isSameMonth,
   addWeeks,
   subWeeks,
 } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-
-import { mockOrdersAdmin, type AdminOrder } from '@/features/Mockordersadmin';
+import { funcionarioOrderService } from '@/services/funcionario-order.service';
+import { type AdminOrder } from '@/types/order';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 type CalendarView = 'week' | 'day';
@@ -39,7 +39,7 @@ function getStatusDotColor(status: AdminOrder['status']): string {
       return 'bg-blue-500';
     case 'En producción':
       return 'bg-amber-500';
-    case 'Listo para entrega':
+    case 'Listo para entregar':
       return 'bg-green-500';
     case 'Entregado':
       return 'bg-gray-400';
@@ -60,9 +60,10 @@ function OrderChip({ order }: { order: AdminOrder }) {
 interface WeekViewProps {
   weekDays: Date[];
   today: Date;
+  orders: AdminOrder[];
 }
 
-function WeekView({ weekDays, today }: WeekViewProps) {
+function WeekView({ weekDays, today, orders }: WeekViewProps) {
   return (
     <div className="min-w-[700px]">
       {/* Cabecera de días */}
@@ -95,15 +96,15 @@ function WeekView({ weekDays, today }: WeekViewProps) {
             <span className="text-xs text-muted-foreground">{time}</span>
           </div>
           {weekDays.map((day) => {
-            const orders = time === ORDERS_DISPLAY_HOUR ? getOrdersForDay(day, mockOrdersAdmin) : [];
+            const dayOrders = time === ORDERS_DISPLAY_HOUR ? getOrdersForDay(day, orders) : [];
             return (
               <div
                 key={`${day.toISOString()}-${time}`}
                 className="p-1.5 border-r border-border min-h-[72px] hover:bg-muted/30 transition-colors"
               >
-                {orders.length > 0 && (
+                {dayOrders.length > 0 && (
                   <div className="space-y-1">
-                    {orders.map((order) => (
+                    {dayOrders.map((order) => (
                       <OrderChip key={order.id} order={order} />
                     ))}
                   </div>
@@ -120,10 +121,11 @@ function WeekView({ weekDays, today }: WeekViewProps) {
 // ─── Sub-componente: vista diaria ─────────────────────────────────────────────
 interface DayViewProps {
   currentDate: Date;
+  orders: AdminOrder[];
 }
 
-function DayView({ currentDate }: DayViewProps) {
-  const dayOrders = getOrdersForDay(currentDate, mockOrdersAdmin);
+function DayView({ currentDate, orders }: DayViewProps) {
+  const dayOrders = getOrdersForDay(currentDate, orders);
 
   return (
     <div>
@@ -164,8 +166,25 @@ function DayView({ currentDate }: DayViewProps) {
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 export default function FuncionarioCalendario() {
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [view, setView] = useState<CalendarView>('week');
+
+  useEffect(() => {
+    const loadOrders = async () => {
+      try {
+        const data = await funcionarioOrderService.getOrders();
+        setOrders(data);
+      } catch (error: any) {
+        toast.error(error?.message || 'No se pudieron cargar los pedidos del calendario');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadOrders();
+  }, []);
 
   const today = new Date();
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
@@ -185,18 +204,18 @@ export default function FuncionarioCalendario() {
   const statusSummary = [
     {
       label: 'En Diseño',
-      count: mockOrdersAdmin.filter((o) => o.status === 'En diseño').length,
+      count: orders.filter((o) => o.status === 'En diseño').length,
       dotColor: getStatusDotColor('En diseño'),
     },
     {
       label: 'En Producción',
-      count: mockOrdersAdmin.filter((o) => o.status === 'En producción').length,
+      count: orders.filter((o) => o.status === 'En producción').length,
       dotColor: getStatusDotColor('En producción'),
     },
     {
-      label: 'Listos',
-      count: mockOrdersAdmin.filter((o) => o.status === 'Listo para entrega').length,
-      dotColor: getStatusDotColor('Listo para entrega'),
+      label: 'Listo para entregar',
+      count: orders.filter((o) => o.status === 'Listo para entregar').length,
+      dotColor: getStatusDotColor('Listo para entregar'),
     },
   ];
 
@@ -260,10 +279,14 @@ export default function FuncionarioCalendario() {
         {/* Grid del calendario */}
         <Card>
           <CardContent className="pt-4 pb-0 px-0 overflow-x-auto">
-            {view === 'week' ? (
-              <WeekView weekDays={weekDays} today={today} />
+            {loading ? (
+              <div className="py-16 text-center text-sm text-muted-foreground">
+                Cargando calendario...
+              </div>
+            ) : view === 'week' ? (
+              <WeekView weekDays={weekDays} today={today} orders={orders} />
             ) : (
-              <DayView currentDate={currentDate} />
+              <DayView currentDate={currentDate} orders={orders} />
             )}
           </CardContent>
         </Card>

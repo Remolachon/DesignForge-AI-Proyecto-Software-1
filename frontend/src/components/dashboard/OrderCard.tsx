@@ -14,6 +14,8 @@ export function OrderCard({ order }: OrderCardProps) {
 const [imageUrl, setImageUrl] = useState('');
 
   useEffect(() => {
+    let cancelled = false;
+
     if (order.imageUrl) {
       setImageUrl(order.imageUrl);
       return;
@@ -25,13 +27,18 @@ const [imageUrl, setImageUrl] = useState('');
     }
 
     getImageUrl(order.image.bucket, order.image.path).then((url) => {
+      if (cancelled) return;
       if (url) {
         setImageUrl(url);
       } else {
         setImageUrl(''); // fallback
       }
     });
-  }, [order]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [order.imageUrl, order.image?.bucket, order.image?.path]);
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -39,7 +46,7 @@ const [imageUrl, setImageUrl] = useState('');
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative w-full sm:w-24 h-24 rounded-lg overflow-hidden">
             {imageUrl ? (
-              <Image src={imageUrl} alt={order.title} fill className="object-cover" />
+              <Image src={imageUrl} alt={order.title} fill sizes="(max-width: 640px) 100vw, 96px" unoptimized className="object-cover" />
             ) : (
               <div className="w-full h-full bg-gray-100" />
             )}

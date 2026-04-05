@@ -29,6 +29,7 @@ class DashboardOrder(BaseModel):
     image: DashboardImage
     imageUrl: str | None = None
     clientName: str | None = None
+    productType: str | None = None
 
 
 class DashboardStats(BaseModel):
@@ -42,3 +43,20 @@ class DashboardStats(BaseModel):
 class DashboardResponse(BaseModel):
     orders: list[DashboardOrder]
     stats: DashboardStats
+
+
+class OrdersPageResponse(BaseModel):
+    items: list[DashboardOrder]
+    page: int
+    pageSize: int
+    totalItems: int
+    totalPages: int
+
+
+class UpdateOrderStatusRequest(BaseModel):
+    status: str
+
+
+class UpdateOrderStatusResponse(BaseModel):
+    message: str
+    order: DashboardOrder

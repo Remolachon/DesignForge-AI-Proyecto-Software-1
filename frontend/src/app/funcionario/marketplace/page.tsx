@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import Image from 'next/image';
 import {
   Plus,
@@ -18,9 +18,12 @@ import { toast } from 'sonner';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  funcionarioMarketplaceService,
+  type MarketplaceSavePayload,
+} from '@/services/funcionario-marketplace.service';
 
 import {
-  mockMarketplaceProducts,
   type MarketplaceProduct,
 } from '@/features/Mockmarketplace';
 import { type ProductType, getProductTypeLabel } from '@/features/Mockordersadmin';
@@ -34,6 +37,10 @@ type ProductFormData = {
   basePrice: string;
   productType: ProductType;
   stock: string;
+};
+
+type ProductFormSubmit = ProductFormData & {
+  imageFile: File | null;
 };
 
 const EMPTY_FORM: ProductFormData = {
@@ -70,7 +77,7 @@ function TypeBadge({ type }: { type: ProductType }) {
 interface FieldProps {
   label: string;
   error?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 function FormField({ label, error, children }: FieldProps) {
@@ -87,13 +94,26 @@ function FormField({ label, error, children }: FieldProps) {
 interface ProductModalProps {
   mode: 'create' | 'edit';
   initialData?: ProductFormData;
+  initialImageUrl?: string | null;
   onClose: () => void;
-  onSave: (data: ProductFormData) => void;
+  onSave: (data: ProductFormData & { imageFile: File | null }) => void;
 }
 
-function ProductModal({ mode, initialData, onClose, onSave }: ProductModalProps) {
+function ProductModal({ mode, initialData, initialImageUrl, onClose, onSave }: ProductModalProps) {
   const [form, setForm] = useState<ProductFormData>(initialData ?? EMPTY_FORM);
   const [errors, setErrors] = useState<Partial<ProductFormData>>({});
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(initialImageUrl ?? null);
+  const [imageError, setImageError] = useState('');
+  const [fileInputKey, setFileInputKey] = useState(0);
+
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+    };
+  }, [imagePreviewUrl]);
 
   const set = (key: keyof ProductFormData, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -108,13 +128,46 @@ function ProductModal({ mode, initialData, onClose, onSave }: ProductModalProps)
       newErrors.basePrice = 'Ingresa un precio válido mayor a 0.';
     if (!form.stock || isNaN(Number(form.stock)) || Number(form.stock) < 0)
       newErrors.stock = 'Ingresa un stock válido (0 o más).';
+
+    const hasImage = Boolean(imagePreviewUrl || imageFile);
+
+    if (!hasImage) {
+      setImageError('La imagen es obligatoria para agregar un producto.');
+    } else {
+      setImageError('');
+    }
+
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return Object.keys(newErrors).length === 0 && hasImage;
+  };
+
+  const onFileChange = (file?: File) => {
+    if (!file) return;
+
+    if (imagePreviewUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreviewUrl);
+    }
+
+    const nextPreview = URL.createObjectURL(file);
+    setImageFile(file);
+    setImagePreviewUrl(nextPreview);
+    setImageError('');
+  };
+
+  const clearSelectedImage = () => {
+    if (imagePreviewUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreviewUrl);
+    }
+
+    setImageFile(null);
+    setImagePreviewUrl(null);
+    setFileInputKey((prev) => prev + 1);
+    setImageError('La imagen es obligatoria para agregar un producto.');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (validate()) onSave(form);
+    if (validate()) onSave({ ...form, imageFile });
   };
 
   return (
@@ -197,6 +250,46 @@ function ProductModal({ mode, initialData, onClose, onSave }: ProductModalProps)
             </select>
           </FormField>
 
+          <FormField label="Imagen del producto" error={imageError}>
+            <div className="space-y-3">
+              <div className="relative w-full h-40 rounded-lg overflow-hidden border border-dashed border-border bg-muted/20">
+                {imagePreviewUrl ? (
+                  <Image src={imagePreviewUrl} alt="Vista previa del producto" fill sizes="100vw" unoptimized className="object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                    Sin imagen seleccionada
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label className="px-3 py-2 text-sm border border-border rounded-lg cursor-pointer hover:bg-muted transition-colors">
+                  {imagePreviewUrl ? 'Cambiar imagen' : 'Seleccionar imagen'}
+                  <input
+                    key={fileInputKey}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      onFileChange(e.target.files?.[0]);
+                      e.currentTarget.value = '';
+                    }}
+                  />
+                </label>
+
+                {imagePreviewUrl && (
+                  <button
+                    type="button"
+                    onClick={clearSelectedImage}
+                    className="px-3 py-2 text-sm border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                  >
+                    Quitar imagen
+                  </button>
+                )}
+              </div>
+            </div>
+          </FormField>
+
           {/* Acciones */}
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={onClose}>
@@ -249,19 +342,68 @@ function DeleteModal({ productName, onConfirm, onCancel }: DeleteModalProps) {
   );
 }
 
+interface ConfirmActionModalProps {
+  title: string;
+  description: string;
+  confirmLabel: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+function ConfirmActionModal({
+  title,
+  description,
+  confirmLabel,
+  onConfirm,
+  onCancel,
+}: ConfirmActionModalProps) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 text-center">
+        <h3 className="text-lg font-semibold mb-2">{title}</h3>
+        <p className="text-sm text-muted-foreground mb-6">{description}</p>
+        <div className="flex gap-3">
+          <Button variant="outline" className="flex-1" onClick={onCancel}>
+            Cancelar
+          </Button>
+          <Button className="flex-1" onClick={onConfirm}>
+            {confirmLabel}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 export default function FuncionarioMarketplace() {
-  const [products, setProducts] = useState<MarketplaceProduct[]>(
-    mockMarketplaceProducts,
-  );
+  const [products, setProducts] = useState<MarketplaceProduct[]>([]);
   const [searchTerm, setSearchTerm]   = useState('');
   const [filterType, setFilterType]   = useState<FilterType>('all');
+  const [loading, setLoading] = useState(true);
 
   // Modales
   const [showModal, setShowModal]         = useState(false);
   const [modalMode, setModalMode]         = useState<'create' | 'edit'>('create');
   const [editingProduct, setEditingProduct] = useState<MarketplaceProduct | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<MarketplaceProduct | null>(null);
+  const [pendingSave, setPendingSave] = useState<ProductFormSubmit | null>(null);
+  const [pendingVisibility, setPendingVisibility] = useState<MarketplaceProduct | null>(null);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const data = await funcionarioMarketplaceService.getProducts();
+        setProducts(data);
+      } catch (error: any) {
+        toast.error(error?.message || 'No se pudieron cargar los productos');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
 
   // ── Filtrado ──────────────────────────────────────────────────────────────
   const filtered = products.filter((p) => {
@@ -291,69 +433,86 @@ export default function FuncionarioMarketplace() {
     setShowModal(true);
   };
 
-  const handleSave = (data: ProductFormData) => {
-    const price = Number(data.basePrice);
-    const stock = Number(data.stock);
+  const handleSave = (data: ProductFormSubmit) => {
+    setPendingSave(data);
+  };
 
-    if (modalMode === 'create') {
-      const newProduct: MarketplaceProduct = {
-        id:          `prod-${Date.now()}`,
-        name:        data.name.trim(),
-        description: data.description.trim(),
-        basePrice:   price,
-        productType: data.productType,
-        imageUrl:    '/placeholder-product.jpg', // se reemplazará con Supabase Storage
-        inStock:     stock > 0,
-        stock,
-        isActive:    true,
-        rating:      0,
-        reviews:     0,
-        createdAt:   new Date().toISOString().split('T')[0],
-      };
-      setProducts((prev) => [newProduct, ...prev]);
-      toast.success('Producto agregado al marketplace.');
-    } else if (editingProduct) {
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === editingProduct.id
-            ? {
-                ...p,
-                name:        data.name.trim(),
-                description: data.description.trim(),
-                basePrice:   price,
-                productType: data.productType,
-                stock,
-                inStock:     stock > 0,
-              }
-            : p,
-        ),
-      );
-      toast.success('Producto actualizado correctamente.');
+  const confirmSave = async () => {
+    if (!pendingSave) return;
+
+    const price = Number(pendingSave.basePrice);
+    const stock = Number(pendingSave.stock);
+
+    const payload: MarketplaceSavePayload = {
+      name: pendingSave.name.trim(),
+      description: pendingSave.description.trim(),
+      basePrice: price,
+      productType: pendingSave.productType,
+      stock,
+    };
+
+    try {
+      if (pendingSave.imageFile) {
+        const uploaded = await funcionarioMarketplaceService.uploadProductImage(pendingSave.imageFile);
+        payload.imageStoragePath = uploaded.storage_path;
+      }
+
+      if (modalMode === 'create') {
+        const created = await funcionarioMarketplaceService.createProduct(payload);
+        setProducts((prev) => [created, ...prev]);
+        toast.success('Producto agregado al marketplace.');
+      } else if (editingProduct) {
+        const updated = await funcionarioMarketplaceService.updateProduct(editingProduct.id, payload);
+        setProducts((prev) =>
+          prev.map((p) => (p.id === editingProduct.id ? updated : p)),
+        );
+        toast.success('Producto actualizado correctamente.');
+      }
+
+      setPendingSave(null);
+      setShowModal(false);
+    } catch (error: any) {
+      toast.error(error?.message || 'No se pudo guardar el producto');
     }
-    setShowModal(false);
   };
 
   const toggleActive = (productId: string) => {
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === productId ? { ...p, isActive: !p.isActive } : p,
-      ),
-    );
     const product = products.find((p) => p.id === productId);
-    if (product) {
-      toast.success(
-        product.isActive
-          ? `"${product.name}" desactivado del marketplace.`
-          : `"${product.name}" activado en el marketplace.`,
+    if (!product) return;
+    setPendingVisibility(product);
+  };
+
+  const confirmToggleActive = async () => {
+    if (!pendingVisibility) return;
+
+    try {
+      const updated = await funcionarioMarketplaceService.setVisibility(
+        pendingVisibility.id,
+        !pendingVisibility.isActive,
       );
+      setProducts((prev) => prev.map((p) => (p.id === pendingVisibility.id ? updated : p)));
+      toast.success(
+        pendingVisibility.isActive
+          ? `"${pendingVisibility.name}" desactivado del marketplace.`
+          : `"${pendingVisibility.name}" activado en el marketplace.`,
+      );
+      setPendingVisibility(null);
+    } catch (error: any) {
+      toast.error(error?.message || 'No se pudo cambiar visibilidad');
     }
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deletingProduct) return;
-    setProducts((prev) => prev.filter((p) => p.id !== deletingProduct.id));
-    toast.success(`"${deletingProduct.name}" eliminado.`);
-    setDeletingProduct(null);
+
+    try {
+      await funcionarioMarketplaceService.deleteProduct(deletingProduct.id);
+      setProducts((prev) => prev.filter((p) => p.id !== deletingProduct.id));
+      toast.success(`"${deletingProduct.name}" eliminado.`);
+      setDeletingProduct(null);
+    } catch (error: any) {
+      toast.error(error?.message || 'No se pudo eliminar el producto');
+    }
   };
 
   // Forma tipada para el modal de edición
@@ -447,7 +606,13 @@ export default function FuncionarioMarketplace() {
         </Card>
 
         {/* Grid de productos */}
-        {filtered.length === 0 ? (
+        {loading ? (
+          <Card>
+            <CardContent className="py-16 text-center">
+              <p className="text-muted-foreground text-sm">Cargando productos...</p>
+            </CardContent>
+          </Card>
+        ) : filtered.length === 0 ? (
           <Card>
             <CardContent className="py-16 text-center">
               <p className="text-muted-foreground text-sm">
@@ -466,12 +631,18 @@ export default function FuncionarioMarketplace() {
               >
                 {/* Imagen */}
                 <div className="relative aspect-video">
-                  <Image
-                    src={product.imageUrl}
-                    alt={product.name}
-                    fill
-                    className="object-cover"
-                  />
+                  {product.imageUrl ? (
+                    <Image
+                      src={product.imageUrl}
+                      alt={product.name}
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 33vw"
+                      unoptimized
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-100" />
+                  )}
                   {/* Overlay de estado */}
                   {!product.isActive && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -593,8 +764,37 @@ export default function FuncionarioMarketplace() {
         <ProductModal
           mode={modalMode}
           initialData={editInitialData}
+          initialImageUrl={editingProduct?.imageUrl}
           onClose={() => setShowModal(false)}
           onSave={handleSave}
+        />
+      )}
+
+      {pendingSave && (
+        <ConfirmActionModal
+          title={modalMode === 'create' ? 'Confirmar nuevo producto' : 'Confirmar cambios'}
+          description={
+            modalMode === 'create'
+              ? 'Se creará un nuevo producto en el marketplace con la información diligenciada.'
+              : 'Se guardarán los cambios realizados a este producto.'
+          }
+          confirmLabel={modalMode === 'create' ? 'Crear producto' : 'Guardar cambios'}
+          onConfirm={confirmSave}
+          onCancel={() => setPendingSave(null)}
+        />
+      )}
+
+      {pendingVisibility && (
+        <ConfirmActionModal
+          title={pendingVisibility.isActive ? 'Desactivar producto' : 'Activar producto'}
+          description={
+            pendingVisibility.isActive
+              ? `"${pendingVisibility.name}" dejará de mostrarse en el marketplace público.`
+              : `"${pendingVisibility.name}" volverá a mostrarse en el marketplace público.`
+          }
+          confirmLabel={pendingVisibility.isActive ? 'Desactivar' : 'Activar'}
+          onConfirm={confirmToggleActive}
+          onCancel={() => setPendingVisibility(null)}
         />
       )}
 
