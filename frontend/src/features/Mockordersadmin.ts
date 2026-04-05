@@ -1,4 +1,10 @@
-export type OrderStatus = 'En diseño' | 'En producción' | 'Listo para entrega' | 'Entregado';
+export type OrderStatus =
+  | 'En diseño'
+  | 'En producción'
+  | 'Listo para entrega'
+  | 'Entregado';
+
+export type ProductType = 'bordado' | 'neon-flex' | 'acrilico';
 
 export interface AdminOrder {
   id: string;
@@ -8,6 +14,7 @@ export interface AdminOrder {
   price: number;
   imageUrl: string;
   clientName: string;
+  productType: ProductType;
   createdAt: string;
   deliveryDate: string;
 }
@@ -28,8 +35,9 @@ export const mockOrdersAdmin: AdminOrder[] = [
     price: 120000,
     imageUrl: IMG_NEON,
     clientName: 'María García',
+    productType: 'neon-flex',
     createdAt: '2025-03-01',
-    deliveryDate: '2025-03-10',
+    deliveryDate: '2025-04-10',
   },
   {
     id: '002',
@@ -39,19 +47,21 @@ export const mockOrdersAdmin: AdminOrder[] = [
     price: 85000,
     imageUrl: IMG_ACRILICO,
     clientName: 'Carlos López',
+    productType: 'acrilico',
     createdAt: '2025-03-02',
-    deliveryDate: '2025-03-12',
+    deliveryDate: '2025-04-12',
   },
   {
     id: '003',
     title: 'Bordado Corporativo',
-    description: 'Uniformes con logo bordado',
+    description: 'Uniformes con logo bordado x10 unidades',
     status: 'Listo para entrega',
     price: 60000,
     imageUrl: IMG_BORDADO,
     clientName: 'Ana Martínez',
+    productType: 'bordado',
     createdAt: '2025-02-28',
-    deliveryDate: '2025-03-08',
+    deliveryDate: '2025-04-08',
   },
   {
     id: '004',
@@ -61,8 +71,9 @@ export const mockOrdersAdmin: AdminOrder[] = [
     price: 45000,
     imageUrl: IMG_ACRILICO,
     clientName: 'Pedro Ramírez',
+    productType: 'acrilico',
     createdAt: '2025-03-03',
-    deliveryDate: '2025-03-15',
+    deliveryDate: '2025-04-15',
   },
   {
     id: '005',
@@ -72,7 +83,28 @@ export const mockOrdersAdmin: AdminOrder[] = [
     price: 200000,
     imageUrl: IMG_NEON,
     clientName: 'Laura Torres',
+    productType: 'neon-flex',
     createdAt: '2025-02-20',
     deliveryDate: '2025-03-01',
   },
+  {
+    id: '006',
+    title: 'Bordado Gorras Equipo',
+    description: 'Gorras con logo del equipo deportivo',
+    status: 'En diseño',
+    price: 35000,
+    imageUrl: IMG_BORDADO,
+    clientName: 'Diego Sánchez',
+    productType: 'bordado',
+    createdAt: '2025-03-05',
+    deliveryDate: '2025-04-20',
+  },
 ];
+
+export function getProductTypeLabel(type: ProductType): string {
+  switch (type) {
+    case 'bordado':   return 'Bordado';
+    case 'neon-flex': return 'Neon Flex';
+    case 'acrilico':  return 'Acrílico';
+  }
+}
