@@ -1,6 +1,6 @@
-from fastapi import APIRouter, UploadFile, File
+from fastapi import APIRouter, UploadFile, File, HTTPException, status
 from uuid import uuid4
-from app.providers.supabase_provider import supabase
+from app.providers.supabase_provider import supabase_admin
 
 router = APIRouter(tags=["Upload"])
 
@@ -18,14 +18,14 @@ async def upload_image(file: UploadFile = File(...)):
 
         BUCKET_NAME = "order-references"
 
-        supabase.storage.from_(BUCKET_NAME).upload(
+        supabase_admin.storage.from_(BUCKET_NAME).upload(
             path=file_path,
             file=contents,
             file_options={"content-type": file.content_type}
         )
 
         # 🔥 usar signed URL porque es privado
-        signed_url = supabase.storage.from_(BUCKET_NAME).create_signed_url(
+        signed_url = supabase_admin.storage.from_(BUCKET_NAME).create_signed_url(
             file_path,
             3600
         )
@@ -36,4 +36,7 @@ async def upload_image(file: UploadFile = File(...)):
 
     except Exception as e:
         print("ERROR UPLOAD:", e)
-        return {"error": str(e)}
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error al subir la imagen",
+        )

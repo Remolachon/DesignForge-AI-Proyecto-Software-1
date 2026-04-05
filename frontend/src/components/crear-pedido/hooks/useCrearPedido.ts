@@ -22,9 +22,13 @@ const initialState: State = {
   selectedVariant: null,
 };
 
-export function useCrearPedido() {
+export function useCrearPedido({
+  restoreDraft = false,
+}: {
+  restoreDraft?: boolean;
+} = {}) {
   const [state, setState] = useState<State>(() => {
-    if (typeof window === "undefined") return initialState;
+    if (typeof window === "undefined" || !restoreDraft) return initialState;
 
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -42,6 +46,12 @@ export function useCrearPedido() {
   });
 
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!restoreDraft) {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }, [restoreDraft]);
 
   useEffect(() => {
     console.log("uploadedImage:", state.uploadedImage); // 🔥 AQUÍ

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useCrearPedido } from "@/components/crear-pedido/hooks/useCrearPedido";
 
@@ -26,6 +27,8 @@ import Step5Confirm from "@/components/crear-pedido/steps/Step5Confirm";
 
 export default function CrearPedido() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const restoreDraft = searchParams.get("resume") === "1";
 
   const getDashboardByRole = (role: string | null) => {
     const normalizedRole = (role || "").toLowerCase().trim();
@@ -65,7 +68,7 @@ export default function CrearPedido() {
     setSelectedVariant,
     reset,
     setUploadedImage,
-  } = useCrearPedido();
+  } = useCrearPedido({ restoreDraft });
 
   const designSettings = {
     color: "#00E5C2",
@@ -91,7 +94,7 @@ export default function CrearPedido() {
       if (!token) {
         localStorage.setItem(
           "redirect_after_login",
-          "/cliente/crear-pedido"
+          "/cliente/crear-pedido?resume=1"
         );
 
         toast.error("Debes iniciar sesión");
