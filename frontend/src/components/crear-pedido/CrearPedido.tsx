@@ -27,6 +27,16 @@ import Step5Confirm from "@/components/crear-pedido/steps/Step5Confirm";
 export default function CrearPedido() {
   const router = useRouter();
 
+  const getDashboardByRole = (role: string | null) => {
+    const normalizedRole = (role || "").toLowerCase().trim();
+
+    if (normalizedRole === "funcionario") {
+      return "/funcionario/dashboard";
+    }
+
+    return "/cliente/dashboard";
+  };
+
   // 🔥 FIX navegación hacia atrás (evita bug)
   useEffect(() => {
     const handlePopState = () => {
@@ -112,7 +122,8 @@ export default function CrearPedido() {
 
       toast.success("¡Pedido creado exitosamente!");
 
-      router.push("/");
+      const role = localStorage.getItem("role");
+      router.push(getDashboardByRole(role));
     } catch (error) {
       toast.error("Error al crear pedido");
     } finally {

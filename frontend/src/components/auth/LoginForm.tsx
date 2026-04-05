@@ -33,6 +33,16 @@ export default function LoginForm() {
     return "Ocurrió un error inesperado";
   };
 
+  const getDashboardByRole = (role: string | undefined) => {
+    const normalizedRole = (role || "").toLowerCase().trim();
+
+    if (normalizedRole === "funcionario") {
+      return "/funcionario/dashboard";
+    }
+
+    return "/cliente/dashboard";
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
@@ -59,12 +69,13 @@ export default function LoginForm() {
 
       toast.success("¡Bienvenido de vuelta!");
       const redirectPath = localStorage.getItem("redirect_after_login");
+      const roleDashboard = getDashboardByRole(res.role);
 
       if (redirectPath) {
         localStorage.removeItem("redirect_after_login");
         router.push(redirectPath);
       } else {
-        router.push("/cliente/dashboard");
+        router.push(roleDashboard);
       }
     } catch (error: any) {
       const message = extractBackendError(error);
