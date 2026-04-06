@@ -22,14 +22,6 @@ type DashboardResponse = {
   orders: DashboardOrder[];
 };
 
-type OrdersPageResponse = {
-  items: DashboardOrder[];
-  page: number;
-  pageSize: number;
-  totalItems: number;
-  totalPages: number;
-};
-
 export type PaginatedOrders<T> = {
   items: T[];
   page: number;
@@ -37,6 +29,15 @@ export type PaginatedOrders<T> = {
   totalItems: number;
   totalPages: number;
 };
+
+function getAuthHeaders() {
+  const token = localStorage.getItem('token');
+  if (!token) throw new Error('No hay token de autenticación');
+
+  return {
+    Authorization: `Bearer ${token}`,
+  };
+}
 
 function canonicalStatus(status: string): OrderStatus {
   const normalized = status.trim().toLowerCase();
@@ -72,80 +73,47 @@ function toAdminOrder(order: DashboardOrder): AdminOrder {
 
 export const funcionarioOrderService = {
   async getOrders(): Promise<AdminOrder[]> {
-    const token = localStorage.getItem('token');
-
-    if (!token) return [];
-
     const response = await fetch(`${API_URL}/orders/dashboard`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: getAuthHeaders(),
     });
 
-    if (!response.ok) {
-      throw new Error('Error cargando pedidos');
-    }
+    if (!response.ok) throw new Error('Error cargando pedidos');
 
     const data: DashboardResponse = await response.json();
     return data.orders.map(toAdminOrder);
   },
 
-  async getFuncionarioOrdersPage(params: {
-    page: number;
-    pageSize: number;
-    search?: string;
-    status?: string;
-  }): Promise<PaginatedOrders<AdminOrder>> {
-    const token = localStorage.getItem('token');
+  async getFuncionarioOrdersPage(
+    params: { page: number; pageSize: number; search?: string; status?: string },
+    signal?: AbortSignal,
+  ) {
+    const query = new URLSearchParams();
+    query.set('page', String(params.page));
+    query.set('page_size', String(params.pageSize));
 
-    if (!token) {
-      return {
-        items: [],
-        page: 1,
-        pageSize: params.pageSize,
-        totalItems: 0,
-        totalPages: 1,
-      };
-    }
-
-    const query = new URLSearchParams({
-      page: String(params.page),
-      page_size: String(params.pageSize),
-    });
-
-    if (params.search?.trim()) query.set('search', params.search.trim());
+    if (params.search) query.set('search', params.search);
     if (params.status && params.status !== 'all') query.set('status', params.status);
 
-    const response = await fetch(`${API_URL}/orders/funcionario-orders/page?${query.toString()}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
+    const response = await fetch(
+      `${API_URL}/orders/funcionario-orders/page?${query.toString()}`,
+      {
+        method: 'GET',
+        headers: getAuthHeaders(),
+        signal,
       },
-    });
+    );
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err?.detail || 'No se pudieron cargar los pedidos');
-    }
+    if (!response.ok) throw new Error('No se pudieron cargar los pedidos');
 
-    const data: OrdersPageResponse = await response.json();
-    return {
-      ...data,
-      items: data.items.map(toAdminOrder),
-    };
+    return response.json();
   },
 
   async updateStatus(orderId: string, status: OrderStatus): Promise<AdminOrder> {
-    const token = localStorage.getItem('token');
-
-    if (!token) {
-      throw new Error('No autorizado');
-    }
-
     const response = await fetch(`${API_URL}/orders/${orderId}/status`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        ...getAuthHeaders(),
       },
       body: JSON.stringify({ status }),
     });

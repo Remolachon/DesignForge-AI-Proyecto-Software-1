@@ -25,6 +25,15 @@ type OrdersPageResponse = {
   totalPages: number;
 };
 
+function getAuthHeaders() {
+  const token = localStorage.getItem('token');
+  if (!token) throw new Error('No hay token de autenticación');
+
+  return {
+    Authorization: `Bearer ${token}`,
+  };
+}
+
 export type PaginatedPedidos = {
   items: Pedido[];
   page: number;
@@ -35,21 +44,11 @@ export type PaginatedPedidos = {
 
 export const pedidosService = {
   async getMyOrders(): Promise<Pedido[]> {
-    const token = localStorage.getItem('token');
-
-    if (!token) {
-      return [];
-    }
-
     const res = await fetch(`${API_URL}/orders/my-orders`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: getAuthHeaders(),
     });
 
-    if (!res.ok) {
-      throw new Error('Error cargando pedidos');
-    }
+    if (!res.ok) throw new Error('Error cargando pedidos');
 
     const data: DashboardOrder[] = await res.json();
 
@@ -67,61 +66,25 @@ export const pedidosService = {
     }));
   },
 
-  async getMyOrdersPage(params: {
-    page: number;
-    pageSize: number;
-    search?: string;
-    status?: string;
-  }): Promise<PaginatedPedidos> {
-    const token = localStorage.getItem('token');
+  async getMyOrdersPage(
+    params: { page: number; pageSize: number; search?: string; status?: string },
+    signal?: AbortSignal,
+  ): Promise<PaginatedPedidos> {
+    const query = new URLSearchParams();
+    query.set('page', String(params.page));
+    query.set('page_size', String(params.pageSize));
 
-    if (!token) {
-      return {
-        items: [],
-        page: 1,
-        pageSize: params.pageSize,
-        totalItems: 0,
-        totalPages: 1,
-      };
-    }
-
-    const query = new URLSearchParams({
-      page: String(params.page),
-      page_size: String(params.pageSize),
-    });
-
-    if (params.search?.trim()) query.set('search', params.search.trim());
+    if (params.search) query.set('search', params.search);
     if (params.status && params.status !== 'all') query.set('status', params.status);
 
-    const res = await fetch(`${API_URL}/orders/my-orders/page?${query.toString()}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    const response = await fetch(`${API_URL}/orders/my-orders/page?${query.toString()}`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+      signal,
     });
 
-    if (!res.ok) {
-      throw new Error('Error cargando pedidos');
-    }
+    if (!response.ok) throw new Error('No se pudieron cargar los pedidos');
 
-    const data: OrdersPageResponse = await res.json();
-
-    return {
-      page: data.page,
-      pageSize: data.pageSize,
-      totalItems: data.totalItems,
-      totalPages: data.totalPages,
-      items: data.items.map((order) => ({
-        id: order.id,
-        title: order.title,
-        description: order.clientName ?? undefined,
-        status: order.status as Pedido['status'],
-        price: order.price,
-        imageUrl: order.imageUrl || '',
-        image: order.image,
-        createdAt: order.createdAt,
-        deliveryDate: order.deliveryDate,
-        clientName: order.clientName ?? undefined,
-      })),
-    };
+    return response.json();
   },
 };

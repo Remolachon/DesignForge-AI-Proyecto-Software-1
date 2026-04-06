@@ -1,3 +1,5 @@
+from re import search
+
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
 from sqlalchemy import cast, String
@@ -236,8 +238,25 @@ class OrderService:
         )
 
         if search:
-            term = f"%{search.strip()}%"
-            query = query.filter(cast(Order.id, String).ilike(term))
+            raw = search.strip()
+            term = f"%{raw}%"
+            term_numeric = raw.replace("#", "")
+
+            matching_ids = (
+                db.query(Order.id)
+                .join(Order.items)
+                .join(OrderItem.current_stage)
+                .join(OrderItem.product_type)
+                .filter(
+                    (cast(Order.id, String).ilike(term))
+                    | (cast(Order.id, String).ilike(f"%{term_numeric}%"))
+                    | (ProductionStage.name.ilike(term))
+                    | (ProductType.name.ilike(term))
+                )
+                .distinct()
+            )
+
+            query = query.filter(Order.id.in_(matching_ids))
 
         if status and status != "all":
             candidates = OrderService._status_candidates(status)
@@ -288,12 +307,17 @@ class OrderService:
             matching_ids = (
                 db.query(Order.id)
                 .join(User, Order.user_id == User.id)
+                .join(Order.items)
+                .join(OrderItem.current_stage)
+                .join(OrderItem.product_type)
                 .filter(
                     (cast(Order.id, String).ilike(term))
                     | (cast(Order.id, String).ilike(f"%{term_numeric}%"))
                     | (User.first_name.ilike(term))
                     | (User.last_name.ilike(term))
                     | (User.email.ilike(term))
+                    | (ProductionStage.name.ilike(term))
+                    | (ProductType.name.ilike(term))
                 )
                 .distinct()
             )
