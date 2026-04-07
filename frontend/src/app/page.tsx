@@ -1,12 +1,34 @@
 import Link from "next/link";
-import { Package } from "lucide-react";
 import { Button } from "@/components/ui/buttonMayus";
-import Header from "@/components/Header"; // ✅ NUEVO
+import Header from "@/components/Header";
+import { getPublicImageUrl } from "@/lib/supabase/getPublicImageUrl";
+
+// 🔹 Configuración de productos (desacoplada de la UI)
+const PRODUCT_TYPES = [
+  {
+    title: "Bordados",
+    description:
+      "Logos y diseños bordados de alta calidad para uniformes, gorras y más",
+    storagePath: "1/landing/bordados.webp",
+  },
+  {
+    title: "Neon Flex",
+    description:
+      "Letreros luminosos modernos y llamativos para tu negocio",
+    storagePath: "1/landing/neon.webp",
+    accent: true,
+  },
+  {
+    title: "Acrílico",
+    description:
+      "Placas y letreros acrílicos premium con acabado profesional",
+    storagePath: "1/landing/acrilico.webp",
+  },
+];
 
 export default function Landing() {
   return (
     <div className="min-h-screen bg-white">
-      {/* ✅ HEADER NUEVO */}
       <Header />
 
       {/* Hero Section */}
@@ -43,23 +65,11 @@ export default function Landing() {
           <h2 className="text-3xl font-semibold text-center mb-12 text-primary">
             Nuestros productos
           </h2>
+
           <div className="grid md:grid-cols-3 gap-8">
-            <ProductCard
-              title="Bordados"
-              description="Logos y diseños bordados de alta calidad para uniformes, gorras y más"
-              imageUrl="https://ppmwqapanrsxnfpfuqol.supabase.co/storage/v1/object/public/.../bordados.jpeg"
-            />
-            <ProductCard
-              title="Neon Flex"
-              description="Letreros luminosos modernos y llamativos para tu negocio"
-              imageUrl="https://ppmwqapanrsxnfpfuqol.supabase.co/storage/v1/object/public/.../neon.jpeg"
-              accent
-            />
-            <ProductCard
-              title="Acrílico"
-              description="Placas y letreros acrílicos premium con acabado profesional"
-              imageUrl="https://ppmwqapanrsxnfpfuqol.supabase.co/storage/v1/object/public/borrar%20ahora,%20solo%20fue%20para%20los%20mockups%20de%20sodtware%201/WhatsApp%20Image%202026-02-22%20at%2010.52.24%20PM.jpeg"
-            />
+            {PRODUCT_TYPES.map((product) => (
+              <ProductCard key={product.title} {...product} />
+            ))}
           </div>
         </div>
       </section>
@@ -80,31 +90,39 @@ export default function Landing() {
           </Link>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="border-t border-border py-8 px-4">
-        <div className="max-w-6xl mx-auto text-center text-muted-foreground">
-          <p>&copy; 2026 LukArt. Todos los derechos reservados.</p>
-        </div>
-      </footer>
     </div>
   );
 }
 
-function ProductCard({ title, description, imageUrl, accent }: { title: string; description: string; imageUrl: string; accent?: boolean }) {
+// 🔹 Componente desacoplado y limpio
+function ProductCard({
+  title,
+  description,
+  storagePath,
+  accent,
+}: {
+  title: string;
+  description: string;
+  storagePath: string;
+  accent?: boolean;
+}) {
+  const imageUrl = getPublicImageUrl(storagePath);
+
   return (
     <div className="group relative overflow-hidden rounded-xl bg-white border border-border hover:shadow-lg transition-all duration-300">
       <div className="aspect-[4/3] overflow-hidden">
-        <img 
-          src={imageUrl} 
+        <img
+          src={imageUrl}
           alt={title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
       </div>
+
       <div className="p-6">
         <h3 className="text-xl font-semibold mb-2">{title}</h3>
         <p className="text-muted-foreground">{description}</p>
       </div>
+
       {accent && (
         <div className="absolute top-4 right-4 px-3 py-1 bg-accent text-accent-foreground rounded-full text-sm font-medium">
           Popular

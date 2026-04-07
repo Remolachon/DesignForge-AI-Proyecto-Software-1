@@ -36,7 +36,20 @@ module.exports = {
         success: "var(--success)",
         warning: "var(--warning)",
       },
-
+      keyframes: {
+        fly: {
+          "0%,100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-6px)" },
+        },
+        progress: {
+          "0%": { width: "0%" },
+          "100%": { width: "85%" },
+        },
+      },
+      animation: {
+        fly: "fly 0.4s ease-in-out infinite",
+        progress: "progress 3s ease-out forwards",
+      },
       borderRadius: {
         sm: "calc(var(--radius) - 4px)",
         md: "calc(var(--radius) - 2px)",
