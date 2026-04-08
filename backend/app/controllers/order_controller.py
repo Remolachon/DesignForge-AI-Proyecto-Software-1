@@ -7,6 +7,7 @@ from app.schemas.order_schema import (
     CreateOrderRequest,
     DashboardResponse,
     DashboardOrder,
+    OrderDetailResponse,
     OrdersPageResponse,
     UpdateOrderStatusRequest,
     UpdateOrderStatusResponse,
@@ -160,3 +161,30 @@ def update_order_status(
         "message": "Estado actualizado",
         "order": updated_order,
     }
+
+
+@router.get("/{order_id}", response_model=OrderDetailResponse)
+def get_order_detail(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Obtiene detalles completos de un pedido (incluyendo parámetros)"""
+    db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
+
+    if not db_user:
+        raise HTTPException(status_code=404, detail="Usuario no existe en DB")
+
+    role_name = UserService.get_user_role_name(db, db_user.id)
+
+    order_detail = OrderService.get_order_detail(
+        db=db,
+        order_id=order_id,
+        user_id=db_user.id,
+        role_name=role_name,
+    )
+
+    if not order_detail:
+        raise HTTPException(status_code=404, detail="Pedido no encontrado o sin permiso")
+
+    return order_detail

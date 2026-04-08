@@ -22,3 +22,4 @@ class OrderItem(Base):
     product_type = relationship("ProductType")
     order = relationship("Order", back_populates="items")
     assets = relationship("FileAsset", back_populates="order_item")
+    parameters = relationship("Parameters", uselist=False)

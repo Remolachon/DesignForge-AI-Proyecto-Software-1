@@ -30,6 +30,31 @@ export type PaginatedOrders<T> = {
   totalPages: number;
 };
 
+export type OrderParameters = {
+  length: number;
+  height: number;
+  width: number;
+  material: string;
+};
+
+export type OrderDetail = {
+  id: string;
+  title: string;
+  status: string;
+  price: number;
+  deliveryDate: string;
+  createdAt: string;
+  imageUrl?: string | null;
+  image: {
+    bucket: string;
+    path: string;
+  };
+  clientName?: string | null;
+  productType?: string | null;
+  quantity: number;
+  parameters: OrderParameters | null;
+};
+
 function getAuthHeaders() {
   const token = localStorage.getItem('token');
   if (!token) throw new Error('No hay token de autenticación');
@@ -125,5 +150,16 @@ export const funcionarioOrderService = {
 
     const data = await response.json();
     return toAdminOrder(data.order as DashboardOrder);
+  },
+
+  async getOrderDetail(orderId: string | number): Promise<OrderDetail> {
+    const response = await fetch(`${API_URL}/orders/${orderId}`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) throw new Error('No se pudo cargar el detalle del pedido');
+
+    return response.json() as Promise<OrderDetail>;
   },
 };

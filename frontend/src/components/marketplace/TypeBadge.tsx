@@ -1,4 +1,4 @@
-import { type ProductType, getProductTypeLabel } from '@/features/Mockordersadmin';
+import { type ProductType, getProductTypeLabel } from '@/types/product';
 export function TypeBadge({ type }: { type: ProductType }) {
     const colors: Record<ProductType, string> = {
         bordado: 'bg-blue-100 text-blue-700',

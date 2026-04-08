@@ -528,3 +528,84 @@ class OrderService:
         db.refresh(order)
 
         return order
+
+    @staticmethod
+    def get_order_detail(db: Session, order_id: int, user_id: int, role_name: str):
+        """Obtiene los detalles completos de un pedido incluyendo parámetros"""
+        query = (
+            db.query(Order)
+            .options(
+                joinedload(Order.user),
+                joinedload(Order.items)
+                .joinedload(OrderItem.current_stage),
+                joinedload(Order.items)
+                .joinedload(OrderItem.product_type),
+                joinedload(Order.items)
+                .joinedload(OrderItem.parameters),
+                joinedload(Order.items)
+                .joinedload(OrderItem.assets),
+            )
+            .filter(Order.id == order_id)
+        )
+
+        # Verificar permiso de acceso
+        if role_name != "funcionario":
+            query = query.filter(Order.user_id == user_id)
+
+        order = query.first()
+
+        if not order or not order.items:
+            return None
+
+        item = order.items[0]
+        asset = item.assets[0] if item.assets else None
+        params = item.parameters
+
+        stage_name = (
+            item.current_stage.name
+            if item.current_stage and item.current_stage.name
+            else "En diseño"
+        )
+        stage_name = OrderService._canonical_status(stage_name)
+        
+        title = (
+            item.product_type.name
+            if item.product_type and item.product_type.name
+            else "Pedido personalizado"
+        )
+        product_type = item.product_type.name if item.product_type else None
+
+        created_at = order.created_at or OrderService._now_local()
+        delivery_date = created_at + timedelta(days=7)
+
+        bucket_name = asset.bucket_name if asset else ""
+        storage_path = asset.storage_path if asset else ""
+
+        payload = {
+            "id": str(order.id),
+            "title": title,
+            "status": stage_name,
+            "price": float(order.total_amount or 0),
+            "deliveryDate": delivery_date.isoformat(),
+            "createdAt": created_at.isoformat(),
+            "image": {
+                "bucket": bucket_name,
+                "path": storage_path,
+            },
+            "imageUrl": OrderService._safe_signed_url(bucket_name, storage_path),
+            "productType": product_type,
+            "quantity": item.quantity,
+            "parameters": {
+                "length": params.length if params else 0,
+                "height": params.height if params else 0,
+                "width": params.width if params else 0,
+                "material": params.material if params else "",
+            } if params else None,
+        }
+
+        if role_name == "funcionario":
+            first_name = order.user.first_name if order.user else ""
+            last_name = order.user.last_name if order.user else ""
+            payload["clientName"] = f"{first_name} {last_name}".strip() or "Cliente"
+
+        return payload

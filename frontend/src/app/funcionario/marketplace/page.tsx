@@ -5,10 +5,6 @@ import { Plus } from 'lucide-react';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  funcionarioMarketplaceService,
-  type MarketplaceSavePayload,
-} from '@/services/funcionario-marketplace.service';
 
 import { useMarketplace } from '@/components/marketplace/hooks/useMarketplace';
 import { MarketplaceStats } from '@/components/marketplace/MarketplaceStats';

@@ -2,29 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/buttonMayus";
 import Header from "@/components/Header";
 import { getPublicImageUrl } from "@/lib/supabase/getPublicImageUrl";
-
-// 🔹 Configuración de productos (desacoplada de la UI)
-const PRODUCT_TYPES = [
-  {
-    title: "Bordados",
-    description:
-      "Logos y diseños bordados de alta calidad para uniformes, gorras y más",
-    storagePath: "1/landing/bordados.webp",
-  },
-  {
-    title: "Neon Flex",
-    description:
-      "Letreros luminosos modernos y llamativos para tu negocio",
-    storagePath: "1/landing/neon.webp",
-    accent: true,
-  },
-  {
-    title: "Acrílico",
-    description:
-      "Placas y letreros acrílicos premium con acabado profesional",
-    storagePath: "1/landing/acrilico.webp",
-  },
-];
+import { HOME_CATALOG_PRODUCTS } from "@/constants/productCatalog";
 
 export default function Landing() {
   return (
@@ -67,7 +45,7 @@ export default function Landing() {
           </h2>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {PRODUCT_TYPES.map((product) => (
+            {HOME_CATALOG_PRODUCTS.map((product) => (
               <ProductCard key={product.title} {...product} />
             ))}
           </div>

@@ -53,13 +53,15 @@ const [imageUrl, setImageUrl] = useState('');
           </div>
 
           <div className="flex-1">
-            <div className="flex justify-between mb-2">
+            <div className="flex justify-between items-start gap-3 mb-2">
               <div>
                 <h3 className="font-semibold">{order.title}</h3>
                 <p className="text-sm text-muted-foreground">Pedido #{order.id}</p>
               </div>
 
-              <span className={`px-2 py-1 text-xs rounded-full font-medium whitespace-nowrap ${getStatusColor(order.status)}`}>
+              <span
+                className={`inline-flex shrink-0 items-center px-3 py-1 text-xs rounded-full font-medium whitespace-nowrap ${getStatusColor(order.status)}`}
+              >
                 {order.status}
               </span>
             </div>

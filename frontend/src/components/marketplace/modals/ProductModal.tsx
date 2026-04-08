@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/marketplace/FormField';
-import { getProductTypeLabel } from '@/features/Mockordersadmin';
+import { getProductTypeLabel } from '@/types/product';
 import {
     type ProductFormData,
     type ProductFormSubmit,

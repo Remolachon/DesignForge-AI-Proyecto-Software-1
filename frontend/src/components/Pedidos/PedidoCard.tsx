@@ -1,8 +1,12 @@
+'use client';
+
 import Image from 'next/image';
-import { Eye, Download } from 'lucide-react';
+import { useState } from 'react';
+import { Eye } from 'lucide-react';
 import { Pedido } from '@/components/Pedidos/types/pedido';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { OrderDetailsModal } from '@/components/modals/OrderDetailsModal';
 
 interface Props {
   pedido: Pedido;
@@ -24,82 +28,64 @@ function getStatusStyles(status: string) {
 }
 
 export function PedidoCard({ pedido }: Props) {
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+
   return (
-    <Card className="p-5 rounded-2xl border border-border bg-white shadow-sm hover:shadow-md transition-all min-h-[180px] flex">
-      <div className="flex gap-5 w-full">
-        
-        {/* Imagen */}
-        <div className="shrink-0">
-          {pedido.imageUrl ? (
-            <Image
-              src={pedido.imageUrl}
-              alt={pedido.title}
-              width={180}
-              height={140}
-              className="object-cover rounded-xl w-[180px] h-[140px]"
-            />
-          ) : (
-            <div className="w-[180px] h-[140px] rounded-xl bg-gray-100" />
-          )}
-        </div>
-
-        {/* Contenido */}
-        <div className="flex-1 flex flex-col justify-between">
-          
-          {/* Header */}
-          <div className="flex justify-between items-start mb-2">
-            <div>
-              <h3 className="text-lg font-semibold">
-                {pedido.title}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Pedido #{pedido.id}
-              </p>
-            </div>
-
-            <span
-              className={`px-3 py-1 text-xs rounded-full font-medium ${getStatusStyles(
-                pedido.status
-              )}`}
-            >
-              {pedido.status}
-            </span>
+    <>
+      <Card className="p-5 rounded-2xl border border-border bg-white shadow-sm hover:shadow-md transition-all min-h-[180px] flex">
+        <div className="flex gap-5 w-full">
+          <div className="shrink-0">
+            {pedido.imageUrl ? (
+              <Image
+                src={pedido.imageUrl}
+                alt={pedido.title}
+                width={180}
+                height={140}
+                unoptimized
+                className="object-cover rounded-xl w-[180px] h-[140px]"
+              />
+            ) : (
+              <div className="w-[180px] h-[140px] rounded-xl bg-gray-100" />
+            )}
           </div>
 
-          {/* Descripción */}
-          {pedido.description && (
-            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-              {pedido.description}
-            </p>
-          )}
+          <div className="flex-1 flex flex-col justify-between">
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <h3 className="text-lg font-semibold">{pedido.title}</h3>
+                <p className="text-sm text-muted-foreground">Pedido #{pedido.id}</p>
+              </div>
 
-          {/* Timeline */}
-          <div className="mb-4 space-y-1">
-            <div className="flex items-center gap-2 text-sm">
-              <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-              <span>
-                Creado:{' '}
-                {new Date(pedido.createdAt).toLocaleDateString()}
+              <span
+                className={`px-3 py-1 text-xs rounded-full font-medium ${getStatusStyles(
+                  pedido.status,
+                )}`}
+              >
+                {pedido.status}
               </span>
             </div>
 
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="w-2.5 h-2.5 rounded-full bg-gray-300" />
-              <span>
-                Entrega:{' '}
-                {new Date(pedido.deliveryDate).toLocaleDateString()}
-              </span>
+            {pedido.description && (
+              <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{pedido.description}</p>
+            )}
+
+            <div className="mb-4 space-y-1">
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                <span>Creado: {new Date(pedido.createdAt).toLocaleDateString()}</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="w-2.5 h-2.5 rounded-full bg-gray-300" />
+                <span>Entrega: {new Date(pedido.deliveryDate).toLocaleDateString()}</span>
+              </div>
             </div>
-          </div>
 
-          {/* Footer */}
-          <div className="flex justify-between items-center border-t pt-4">
-            <span className="text-xl font-semibold text-primary">
-              ${pedido.price.toLocaleString()}
-            </span>
+            <div className="flex justify-between items-center border-t pt-4">
+              <span className="text-xl font-semibold text-primary">${pedido.price.toLocaleString()}</span>
 
-            <div className="flex gap-2">
               <Button
+                onClick={() => setShowDetailsModal(true)}
                 variant="outline"
                 size="sm"
                 className="flex items-center gap-2"
@@ -107,16 +93,16 @@ export function PedidoCard({ pedido }: Props) {
                 <Eye className="w-4 h-4" />
                 Ver Detalles
               </Button>
-
-              {pedido.status === 'Entregado' && (
-                <Button size="sm" variant="ghost">
-                  <Download className="w-4 h-4" />
-                </Button>
-              )}
             </div>
           </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+
+      <OrderDetailsModal
+        orderId={pedido.id}
+        isOpen={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
+      />
+    </>
   );
 }

@@ -6,7 +6,7 @@ import { DataPagination } from '@/components/ui/DataPagination';
 
 import { useFuncionarioPedidos } from '@/components/Pedidos/hooks/useFuncionarioPedidos';
 import { OrdersFilters } from '@/components/Pedidos/funcionario/OrdersFilters';
-import { OrdersTable } from '@/components/Pedidos/funcionario/OrdersTable';
+import { OrdersTable } from '../../../components/Pedidos/funcionario/OrdersTable';
 import { TableSkeleton } from '@/components/Pedidos/funcionario/TableSkeleton';
 import { ConfirmStatusModal } from '@/components/Pedidos/modals/ConfirmStatusModal';
 

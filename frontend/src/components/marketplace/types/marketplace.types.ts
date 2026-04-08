@@ -1,4 +1,4 @@
-import { type ProductType } from '@/features/Mockordersadmin';
+import { type ProductType } from '@/types/product';
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 export type FilterType = ProductType | 'all';
 export type ProductFormData = {

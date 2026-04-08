@@ -264,6 +264,16 @@ export default function RegisterForm() {
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               {loading ? "Creando cuenta..." : "Crear Cuenta"}
             </Button>
+
+            <p className="text-center text-sm text-muted-foreground">
+              ¿Ya tienes cuenta?{" "}
+              <Link
+                href="/login"
+                className="font-medium text-primary hover:text-accent transition-colors"
+              >
+                Inicia sesión
+              </Link>
+            </p>
           </form>
         </div>
       </div>

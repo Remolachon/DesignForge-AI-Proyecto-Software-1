@@ -2,7 +2,7 @@ import Image from 'next/image';
 import { Star, Eye, EyeOff, Pencil, Trash2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { TypeBadge } from '@/components/marketplace/TypeBadge';
-import { type MarketplaceProduct } from '@/features/Mockmarketplace';
+import { type MarketplaceProduct } from '@/types/marketplace';
 interface MarketplaceProductCardProps {
     product: MarketplaceProduct;
     onToggleActive: (productId: string) => void;

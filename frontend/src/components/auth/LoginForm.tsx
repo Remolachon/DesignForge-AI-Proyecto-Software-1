@@ -136,6 +136,16 @@ export default function LoginForm() {
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
             {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
           </Button>
+
+          <p className="text-center text-sm text-muted-foreground">
+            ¿No tienes cuenta?{" "}
+            <Link
+              href="/register"
+              className="font-medium text-primary hover:text-accent transition-colors"
+            >
+              Regístrate
+            </Link>
+          </p>
         </form>
       </div>
     </div>

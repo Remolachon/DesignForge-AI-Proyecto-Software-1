@@ -1,14 +1,7 @@
-// lib/supabase/getImageUrl.ts
-
-import { createBrowserClient } from "@supabase/ssr";
-
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabaseClient } from '@/lib/supabase/supabaseClient';
 
 export function getPublicImageUrl(path: string) {
-  const { data } = supabase.storage
+  const { data } = supabaseClient.storage
     .from("product-catalog")
     .getPublicUrl(path);
 

@@ -20,7 +20,7 @@ import {
   AlertCircle,
   CheckCircle,
 } from 'lucide-react';
-import NyanLoader from '../ui/NyanLoader';
+import { DashboardLoading } from './DashboardLoading';
 
 type Role = 'cliente' | 'funcionario';
 
@@ -29,8 +29,8 @@ export function DashboardView({ role }: { role: Role }) {
 
   const { orders, stats, loading } = useDashboard(role);
 
-  if (loading) { // 👈👈👈 Esta linea es la que pone la pantalla de carga, si loading es true, se muestra el componente NyanLoader con el mensaje "Cargando dashboard"
-    return <NyanLoader message="Cargando dashboard" />;
+  if (loading) {
+    return <DashboardLoading role={role} />;
   }
 
   return (

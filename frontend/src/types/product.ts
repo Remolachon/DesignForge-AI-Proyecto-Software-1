@@ -15,8 +15,11 @@ export interface Product {
 
 export const getProductTypeLabel = (type: ProductType) => {
   switch (type) {
-    case 'bordado': return 'Bordado';
-    case 'neon-flex': return 'Neon';
-    case 'acrilico': return 'Acrílico';
+    case 'bordado':
+      return 'Bordado';
+    case 'neon-flex':
+      return 'Neon Flex';
+    case 'acrilico':
+      return 'Acrílico';
   }
 };

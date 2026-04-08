@@ -19,6 +19,13 @@ class DashboardImage(BaseModel):
     path: str
 
 
+class OrderParameters(BaseModel):
+    length: int
+    height: int
+    width: int
+    material: str
+
+
 class DashboardOrder(BaseModel):
     id: str
     title: str
@@ -30,6 +37,22 @@ class DashboardOrder(BaseModel):
     imageUrl: str | None = None
     clientName: str | None = None
     productType: str | None = None
+
+
+class OrderDetailResponse(BaseModel):
+    """Detalles completos de un pedido con parámetros"""
+    id: str
+    title: str
+    status: str
+    price: float
+    deliveryDate: str
+    createdAt: str
+    image: DashboardImage
+    imageUrl: str | None = None
+    clientName: str | None = None
+    productType: str | None = None
+    quantity: int
+    parameters: OrderParameters | None = None
 
 
 class DashboardStats(BaseModel):

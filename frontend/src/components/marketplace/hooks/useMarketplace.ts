@@ -5,7 +5,7 @@ import {
     funcionarioMarketplaceService,
     type MarketplaceSavePayload,
 } from '@/services/funcionario-marketplace.service';
-import { type MarketplaceProduct } from '@/features/Mockmarketplace';
+import { type MarketplaceProduct } from '@/types/marketplace';
 import {
     type FilterType,
     type ProductFormData,

@@ -1,5 +1,6 @@
-import { MarketplaceProduct } from '@/features/Mockmarketplace';
-import { ProductType } from '@/features/Mockordersadmin';
+import { type ProductType } from '@/types/product';
+import { type MarketplaceProduct } from '@/types/marketplace';
+import { getCatalogImageByType, normalizeProductType } from '@/constants/productCatalog';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -34,22 +35,16 @@ type UploadProductImageResponse = {
   url: string;
 };
 
-function normalizeProductType(value: string): ProductType {
-  const normalized = value.trim().toLowerCase().replace('_', '-');
-
-  if (normalized.includes('neon')) return 'neon-flex';
-  if (normalized.includes('acril')) return 'acrilico';
-  return 'bordado';
-}
-
 function toMarketplaceProduct(product: AdminProductResponse): MarketplaceProduct {
+  const productType = normalizeProductType(product.productType) || 'bordado';
+
   return {
     id: String(product.id),
     name: product.name,
     description: product.description,
     basePrice: product.basePrice,
-    productType: normalizeProductType(product.productType),
-    imageUrl: product.imageUrl || '',
+    productType,
+    imageUrl: getCatalogImageByType(product.productType, product.imageUrl),
     inStock: product.inStock,
     stock: product.stock,
     isActive: product.isPublic,

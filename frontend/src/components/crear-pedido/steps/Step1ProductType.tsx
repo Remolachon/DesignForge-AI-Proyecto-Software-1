@@ -1,6 +1,7 @@
 "use client";
 
 import { ProductType } from "@/types/types";
+import { getCatalogImageByType } from "@/constants/productCatalog";
 
 type Props = {
   productType: ProductType | null;
@@ -19,24 +20,21 @@ export default function Step1ProductType({
   }[] = [
     {
       type: "bordado",
-      title: "Bordado",
+      title: "Bordados",
       description: "Logos y diseños bordados de alta calidad",
-      imageUrl:
-        "https://ppmwqapanrsxnfpfuqol.supabase.co/storage/v1/object/public/borrar%20ahora,%20solo%20fue%20para%20los%20mockups%20de%20sodtware%201/WhatsApp%20Image%202026-02-22%20at%2010.53.05%20PM%20(1).jpeg",
+      imageUrl: getCatalogImageByType("bordado"),
     },
     {
       type: "neon-flex",
       title: "Neon Flex",
       description: "Letreros luminosos modernos",
-      imageUrl:
-        "https://ppmwqapanrsxnfpfuqol.supabase.co/storage/v1/object/public/borrar%20ahora,%20solo%20fue%20para%20los%20mockups%20de%20sodtware%201/WhatsApp%20Image%202026-02-22%20at%2010.51.13%20PM.jpeg",
+      imageUrl: getCatalogImageByType("neon-flex"),
     },
     {
       type: "acrilico",
       title: "Acrílico",
       description: "Placas y letreros acrílicos premium",
-      imageUrl:
-        "https://ppmwqapanrsxnfpfuqol.supabase.co/storage/v1/object/public/borrar%20ahora,%20solo%20fue%20para%20los%20mockups%20de%20sodtware%201/WhatsApp%20Image%202026-02-22%20at%2010.52.24%20PM.jpeg",
+      imageUrl: getCatalogImageByType("acrilico"),
     },
   ];
 
