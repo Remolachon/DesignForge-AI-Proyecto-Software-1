@@ -1,7 +1,25 @@
 "use client";
 
-import Link from "next/link";
 import { Mail, Phone, MapPin, Github, Linkedin, Instagram } from "lucide-react";
+
+const inactiveLinkClassName =
+  "cursor-default text-muted-foreground transition-colors hover:text-accent";
+
+function InactiveFooterLink({
+  children,
+  className,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button
+      type="button"
+      className={`${inactiveLinkClassName} ${className ?? ""}`.trim()}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
 
 export default function Footer() {
   return (
@@ -20,15 +38,15 @@ export default function Footer() {
 
           {/* Socials */}
           <div className="flex gap-4 pt-2">
-            <a href="#" className="hover:text-accent transition">
+            <InactiveFooterLink aria-label="Instagram">
               <Instagram size={18} />
-            </a>
-            <a href="https://github.com/Remolachon/DesignForge-AI-Proyecto-Software-1" className="hover:text-accent transition">
+            </InactiveFooterLink>
+            <InactiveFooterLink aria-label="GitHub">
               <Github size={18} />
-            </a>
-            <a href="#" className="hover:text-accent transition">
+            </InactiveFooterLink>
+            <InactiveFooterLink aria-label="LinkedIn">
               <Linkedin size={18} />
-            </a>
+            </InactiveFooterLink>
           </div>
         </div>
 
@@ -39,24 +57,24 @@ export default function Footer() {
           </h3>
           <ul className="space-y-3 text-sm text-muted-foreground">
             <li>
-              <Link href="/" className="hover:text-accent transition">
+              <InactiveFooterLink>
                 Inicio
-              </Link>
+              </InactiveFooterLink>
             </li>
             <li>
-              <Link href="/catalogo" className="hover:text-accent transition">
+              <InactiveFooterLink>
                 Catálogo
-              </Link>
+              </InactiveFooterLink>
             </li>
             <li>
-              <Link href="/personalizar" className="hover:text-accent transition">
+              <InactiveFooterLink>
                 Personalizar producto
-              </Link>
+              </InactiveFooterLink>
             </li>
             <li>
-              <Link href="/mis-pedidos" className="hover:text-accent transition">
+              <InactiveFooterLink>
                 Mis pedidos
-              </Link>
+              </InactiveFooterLink>
             </li>
           </ul>
         </div>
@@ -68,24 +86,24 @@ export default function Footer() {
           </h3>
           <ul className="space-y-3 text-sm text-muted-foreground">
             <li>
-              <Link href="/about" className="hover:text-accent transition">
+              <InactiveFooterLink>
                 Sobre nosotros
-              </Link>
+              </InactiveFooterLink>
             </li>
             <li>
-              <Link href="/tecnologia" className="hover:text-accent transition">
+              <InactiveFooterLink>
                 Tecnología IA
-              </Link>
+              </InactiveFooterLink>
             </li>
             <li>
-              <Link href="/contacto" className="hover:text-accent transition">
+              <InactiveFooterLink>
                 Contacto
-              </Link>
+              </InactiveFooterLink>
             </li>
             <li>
-              <Link href="/terminos" className="hover:text-accent transition">
+              <InactiveFooterLink>
                 Términos y condiciones
-              </Link>
+              </InactiveFooterLink>
             </li>
           </ul>
         </div>
@@ -120,12 +138,12 @@ export default function Footer() {
           </p>
 
           <div className="flex gap-6">
-            <Link href="/privacidad" className="hover:text-accent transition">
+            <InactiveFooterLink className="text-xs">
               Privacidad
-            </Link>
-            <Link href="/cookies" className="hover:text-accent transition">
+            </InactiveFooterLink>
+            <InactiveFooterLink className="text-xs">
               Cookies
-            </Link>
+            </InactiveFooterLink>
           </div>
         </div>
       </div>

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,19 @@ export default function LoginForm() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const queryRedirectPath = useMemo(() => {
+    const nextPath = searchParams.get("next");
+
+    if (!nextPath || !nextPath.startsWith("/")) {
+      return null;
+    }
+
+    return nextPath;
+  }, [searchParams]);
+
+  const fromRegister = searchParams.get("fromRegister") === "1";
 
   const isValidEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -42,6 +55,45 @@ export default function LoginForm() {
 
     return "/cliente/dashboard";
   };
+
+  const navigateAfterLogin = (targetPath: string, dashboardPath: string) => {
+    // Dejamos dashboard como entrada anterior para que el botón atrás vuelva allí.
+    if (targetPath !== dashboardPath) {
+      router.replace(dashboardPath);
+      setTimeout(() => {
+        router.push(targetPath);
+      }, 0);
+      return;
+    }
+
+    // Duplicamos dashboard para evitar regresar a auth en el primer "atrás".
+    router.replace(dashboardPath);
+    setTimeout(() => {
+      router.push(dashboardPath);
+    }, 0);
+  };
+
+  useEffect(() => {
+    if (!fromRegister) {
+      return;
+    }
+
+    const cleanLoginPath = "/login";
+
+    // Limpiamos query de control y forzamos que atrás desde login vuelva a home.
+    window.history.replaceState(null, "", cleanLoginPath);
+    window.history.pushState({ fromRegister: true }, "", cleanLoginPath);
+
+    const handlePopState = () => {
+      window.location.replace("/");
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [fromRegister]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,14 +120,18 @@ export default function LoginForm() {
       localStorage.setItem("role", res.role);
 
       toast.success("¡Bienvenido de vuelta!");
-      const redirectPath = localStorage.getItem("redirect_after_login");
       const roleDashboard = getDashboardByRole(res.role);
+      const sessionRedirect = sessionStorage.getItem("redirect_after_login");
+      const localRedirect = localStorage.getItem("redirect_after_login");
+      const redirectPath = queryRedirectPath || sessionRedirect || localRedirect;
+
+      sessionStorage.removeItem("redirect_after_login");
+      localStorage.removeItem("redirect_after_login");
 
       if (redirectPath) {
-        localStorage.removeItem("redirect_after_login");
-        router.push(redirectPath);
+        navigateAfterLogin(redirectPath, roleDashboard);
       } else {
-        router.push(roleDashboard);
+        navigateAfterLogin(roleDashboard, roleDashboard);
       }
     } catch (error: any) {
       const message = extractBackendError(error);
@@ -141,6 +197,7 @@ export default function LoginForm() {
             ¿No tienes cuenta?{" "}
             <Link
               href="/register"
+              replace
               className="font-medium text-primary hover:text-accent transition-colors"
             >
               Regístrate

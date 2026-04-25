@@ -92,14 +92,14 @@ export default function CrearPedido() {
 
       // 🚨 SI NO ESTÁ LOGUEADO
       if (!token) {
-        localStorage.setItem(
+        sessionStorage.setItem(
           "redirect_after_login",
           "/cliente/crear-pedido?resume=1"
         );
 
         toast.error("Debes iniciar sesión");
 
-        router.push("/login");
+        router.replace("/login");
         return;
       }
 

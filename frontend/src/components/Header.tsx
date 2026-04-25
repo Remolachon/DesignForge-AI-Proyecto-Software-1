@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Package } from "lucide-react";
 import { Button } from "@/components/ui/buttonMayus";
 import { useAuth } from "@/context/AuthContext";
@@ -8,6 +9,7 @@ import { useState, useEffect } from "react";
 
 export default function Header() {
   const { user, logout } = useAuth();
+  const pathname = usePathname();
 
   const [open, setOpen] = useState(false);
   const [storedName, setStoredName] = useState<string | null>(null);
@@ -37,6 +39,10 @@ export default function Header() {
       ? "/cliente/dashboard"
       : "/";
 
+  const loginHref = pathname?.startsWith("/cliente/crear-pedido")
+    ? `/login?next=${encodeURIComponent("/cliente/crear-pedido?resume=1")}`
+    : "/login";
+
   return (
     <header className="border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -52,7 +58,7 @@ export default function Header() {
 
           {!fullName ? (
             <div className="flex items-center gap-4">
-              <Link href="/login">
+              <Link href={loginHref}>
                 <Button variant="tertiary">Iniciar Sesión</Button>
               </Link>
               <Link href="/register">

@@ -95,7 +95,7 @@ export default function RegisterForm() {
       await register(firstName, lastName, phone, email, password, confirmPassword);
 
       toast.success("Cuenta creada correctamente");
-      router.push("/login");
+      router.replace("/login?fromRegister=1");
     } catch (error: any) {
       const detail = error?.response?.data?.detail;
 
