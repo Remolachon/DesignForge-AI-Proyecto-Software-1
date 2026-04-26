@@ -1,11 +1,13 @@
 // /components/marketplace/ProductCard.tsx
+'use client';
+
 import { Product, getProductTypeLabel } from '@/types/product';
 import { Star } from 'lucide-react';
 import Image from 'next/image';
 
 interface Props {
   product: Product;
-  onBuy: (id: string) => void;
+  onBuy: () => void;
 }
 
 export const ProductCard = ({ product, onBuy }: Props) => {
@@ -51,7 +53,7 @@ export const ProductCard = ({ product, onBuy }: Props) => {
         </span>
 
         <button
-          onClick={() => onBuy(product.id)}
+          onClick={onBuy}
           disabled={!product.inStock}
           className="px-3 py-1 bg-black text-white rounded disabled:opacity-50"
         >

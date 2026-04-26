@@ -5,6 +5,7 @@ from app.database.database import get_db
 from app.services.order_service import OrderService
 from app.schemas.order_schema import (
     CreateOrderRequest,
+    CreateMarketplaceOrderRequest,
     DashboardResponse,
     DashboardOrder,
     OrderDetailResponse,
@@ -46,6 +47,49 @@ def create_order(
         "order_id": order.id,
         "total_amount": float(order.total_amount)
     }
+
+
+@router.post("/marketplace")
+def create_marketplace_order(
+    data: CreateMarketplaceOrderRequest,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """
+    Endpoint para crear órdenes desde el marketplace.
+    Requiere autenticación.
+    Body:
+        - product_id: int (ID del producto del marketplace)
+        - length: int (largo en cm)
+        - height: int (alto en cm)
+        - width: int (ancho en cm)
+        - material: str ("standard", "premium", "deluxe")
+    """
+    print("MARKETPLACE ORDER DATA RECIBIDA:", data)
+    print("USER:", current_user)
+
+    # 🔥 TRADUCCIÓN CLAVE (Supabase → DB)
+    db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
+
+    if not db_user:
+        raise HTTPException(status_code=404, detail="Usuario no existe en DB")
+
+    try:
+        order = OrderService.create_marketplace_order(
+            db=db,
+            user_id=db_user.id,  # ✅ INTEGER correcto
+            data=data
+        )
+
+        return {
+            "message": "Marketplace order created successfully",
+            "order_id": order.id,
+            "total_amount": float(order.total_amount)
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating order: {str(e)}")
 
 
 @router.get("/dashboard", response_model=DashboardResponse)

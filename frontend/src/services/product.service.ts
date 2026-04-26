@@ -17,7 +17,7 @@ function toProduct(apiProduct: ProductApiResponse): Product {
   const normalizedType = normalizeProductType(apiProduct.productType) || "bordado";
 
   return {
-    id: String(apiProduct.id),
+    id: apiProduct.id,
     title: apiProduct.title,
     description: apiProduct.description,
     imageUrl: getCatalogImageByType(apiProduct.productType, apiProduct.imageUrl),
@@ -31,7 +31,7 @@ function toProduct(apiProduct: ProductApiResponse): Product {
 
 export class ProductService {
   static async getProducts(): Promise<Product[]> {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`);
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/`);
 
     if (!res.ok) {
       throw new Error("Error fetching products");

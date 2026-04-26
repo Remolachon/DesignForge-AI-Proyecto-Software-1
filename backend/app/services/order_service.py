@@ -1,4 +1,5 @@
 from re import search
+from uuid import uuid4
 
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
@@ -13,6 +14,7 @@ from app.models.file_assets import FileAsset
 from app.models.productionStage import ProductionStage
 from app.models.statusHistory import StatusHistory
 from app.models.product_type import ProductType
+from app.models.product import Product
 from app.providers.supabase_provider import supabase_admin
 
 
@@ -520,6 +522,157 @@ class OrderService:
             raise ValueError("Valores inválidos en tamaño o material")
 
         total = base_price * size_multiplier * material_multiplier
+
+        order.total_amount = total
+
+        # 5. Guardar todo
+        db.commit()
+        db.refresh(order)
+
+        return order
+
+    @staticmethod
+    def create_marketplace_order(db: Session, user_id: int, data):
+        """
+        Crea una orden desde el marketplace.
+        
+        Args:
+            db: Session de la base de datos
+            user_id: ID del usuario (integer, id interno)
+            data: CreateMarketplaceOrderRequest con product_id y parámetros (length, height, width, material)
+        """
+        # 🔥 VALIDACIÓN EXTRA (CLAVE)
+        if not isinstance(user_id, int):
+            raise ValueError("user_id debe ser INTEGER (id interno de users)")
+
+        # 🔥 VALIDACIÓN BÁSICA
+        if not data.product_id:
+            raise ValueError("El product_id es obligatorio")
+
+        if data.length <= 0 or data.height <= 0 or data.width <= 0:
+            raise ValueError("Las dimensiones deben ser mayores que 0")
+
+        if not data.material:
+            raise ValueError("El material es obligatorio")
+
+        # Buscar producto
+        product = db.query(Product).filter(
+            Product.id == data.product_id,
+            Product.is_active == True,
+            Product.is_public == True
+        ).first()
+
+        if not product:
+            raise ValueError("Producto no existe o no está disponible")
+
+        # 🔴 Buscar stage "En diseño"
+        initial_stage = db.query(ProductionStage).filter(
+            ProductionStage.name == "En diseño"
+        ).first()
+
+        if not initial_stage:
+            raise ValueError("No existe el stage 'En diseño' en la BD")
+
+        # Usar product_type_id del producto
+        product_type_id = product.product_type_id
+        
+        if not product_type_id:
+            raise ValueError("El producto no tiene un tipo de producto asociado")
+
+        # Buscar la imagen principal del producto para reutilizarla en la orden
+        product_asset = (
+            db.query(FileAsset)
+            .filter(
+                FileAsset.product_id == product.id,
+                FileAsset.file_type == "product_main",
+                FileAsset.is_active == True,
+            )
+            .first()
+        )
+
+        if not product_asset:
+            raise ValueError("El producto no tiene una imagen principal configurada")
+
+        # 1. Crear orden
+        order = Order(
+            user_id=user_id,
+            created_at=OrderService._now_local(),
+            total_amount=0
+        )
+        db.add(order)
+        db.flush()
+
+        # 2. Crear item con product_id del marketplace
+        item = OrderItem(
+            order_id=order.id,
+            product_id=product.id,  # 🔴 ASOCIAR CON PRODUCTO DEL MARKETPLACE
+            quantity=1,
+            order_date=OrderService._now_local(),
+            current_stage_id=initial_stage.id,
+            product_type_id=product_type_id
+        )
+        db.add(item)
+        db.flush()
+
+        # 🔴 Guardar en status_history
+        status = StatusHistory(
+            order_item_id=item.id,
+            production_stage_id=initial_stage.id,
+            changed_at=OrderService._now_local(),
+        )
+        db.add(status)
+
+        # Copiar la imagen del producto a una ruta única para la orden
+        source_bucket = product_asset.bucket_name
+        source_path = product_asset.storage_path
+        file_ext = source_path.split(".")[-1] if "." in source_path else "png"
+        order_bucket = "order-references"
+        order_storage_path = f"{user_id}/orders/{order.id}/{uuid4().hex}.{file_ext}"
+
+        image_bytes = supabase_admin.storage.from_(source_bucket).download(source_path)
+        supabase_admin.storage.from_(order_bucket).upload(
+            path=order_storage_path,
+            file=image_bytes,
+            file_options={"content-type": f"image/{file_ext}"},
+        )
+
+        file = FileAsset(
+            bucket_name=order_bucket,
+            storage_path=order_storage_path,
+            file_type="reference_image",
+            order_item_id=item.id,
+            is_active=True,
+        )
+        db.add(file)
+
+        # Guardar parámetros con valores reales del marketplace
+        params = Parameters(
+            order_item_id=item.id,
+            length=data.length,
+            height=data.height,
+            width=data.width,
+            material=data.material
+        )
+        db.add(params)
+
+        # 4. Calcular precio basado en el precio del producto y los parámetros
+        base_price = float(product.base_price)
+
+        # Multiplicadores según el material del marketplace
+        material_map = {
+            "standard": 1.0,
+            "premium": 1.3,
+            "deluxe": 1.6
+        }
+
+        material_multiplier = material_map.get(data.material.lower(), 1.0)
+
+        # Calcular precio basado en volumen y material
+        # Volumen = length * height * width (en unidades de 100cm³)
+        volume = (data.length * data.height * data.width) / 100.0
+        volume_multiplier = max(1.0, volume / 10.0)  # Cada 1000cm³ = 1x
+
+        total = base_price * volume_multiplier * material_multiplier
 
         order.total_amount = total
 

@@ -9,6 +9,14 @@ class CreateOrderRequest(BaseModel):
     color: str
 
 
+class CreateMarketplaceOrderRequest(BaseModel):
+    product_id: int
+    length: int
+    height: int
+    width: int
+    material: str
+
+
 class OrderResponse(BaseModel):
     order_id: int
     total_amount: float
