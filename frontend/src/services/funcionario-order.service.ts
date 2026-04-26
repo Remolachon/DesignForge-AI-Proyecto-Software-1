@@ -67,6 +67,8 @@ function getAuthHeaders() {
 function canonicalStatus(status: string): OrderStatus {
   const normalized = status.trim().toLowerCase();
 
+  if (normalized === 'pendiente de pago') return 'Pendiente de pago';
+  if (normalized === 'pago rechazado') return 'Pago rechazado';
   if (normalized === 'en diseño') return 'En diseño';
   if (normalized === 'en producción' || normalized === 'en produccion') return 'En producción';
   if (normalized === 'listo para entregar') return 'Listo para entregar';

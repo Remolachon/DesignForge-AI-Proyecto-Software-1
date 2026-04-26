@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
@@ -16,6 +16,7 @@ from app.schemas.order_schema import (
 from app.security.token_validator import get_current_user
 from app.models.user import User  # 🔥 IMPORTANTE
 from app.services.user_service import UserService
+from app.models.order import Order
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
@@ -42,10 +43,19 @@ def create_order(
         data=data
     )
 
+    payment_result = OrderService.generate_payment_url(db, order.id)
+
+    if payment_result.get("status") == "error":
+        raise HTTPException(status_code=400, detail=payment_result.get("error", "Error generando URL de pago"))
+
     return {
         "message": "Order created successfully",
         "order_id": order.id,
-        "total_amount": float(order.total_amount)
+        "total_amount": float(order.total_amount),
+        "payment_url": payment_result.get("payment_url"),
+        "payment_action_url": payment_result.get("payment_action_url"),
+        "payment_payload": payment_result.get("payment_payload"),
+        "payment_reference": payment_result.get("payment_reference"),
     }
 
 
@@ -81,10 +91,19 @@ def create_marketplace_order(
             data=data
         )
 
+        payment_result = OrderService.generate_payment_url(db, order.id)
+
+        if payment_result.get("status") == "error":
+            raise HTTPException(status_code=400, detail=payment_result.get("error", "Error generando URL de pago"))
+
         return {
             "message": "Marketplace order created successfully",
             "order_id": order.id,
-            "total_amount": float(order.total_amount)
+            "total_amount": float(order.total_amount),
+            "payment_url": payment_result.get("payment_url"),
+            "payment_action_url": payment_result.get("payment_action_url"),
+            "payment_payload": payment_result.get("payment_payload"),
+            "payment_reference": payment_result.get("payment_reference"),
         }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -232,3 +251,120 @@ def get_order_detail(
         raise HTTPException(status_code=404, detail="Pedido no encontrado o sin permiso")
 
     return order_detail
+
+
+@router.post("/{order_id}/payment-url")
+def get_payment_url(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """
+    Genera la URL de pago de PayU para una orden pendiente.
+    Solo el dueño de la orden puede acceder.
+    """
+    db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
+
+    if not db_user:
+        raise HTTPException(status_code=404, detail="Usuario no existe en DB")
+
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Orden no encontrada")
+
+    if order.user_id != db_user.id:
+        raise HTTPException(status_code=403, detail="No tienes permiso para acceder a esta orden")
+
+    result = OrderService.generate_payment_url(db, order_id)
+
+    if result.get("status") == "error":
+        raise HTTPException(status_code=400, detail=result.get("error", "Error generando URL de pago"))
+
+    return result
+
+
+@router.get("/{order_id}/payment-status")
+def get_payment_status(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """
+    Obtiene el estado de pago de una orden.
+    Solo el dueño de la orden o un funcionario pueden acceder.
+    """
+    db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
+
+    if not db_user:
+        raise HTTPException(status_code=404, detail="Usuario no existe en DB")
+
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Orden no encontrada")
+
+    role_name = UserService.get_user_role_name(db, db_user.id)
+    if order.user_id != db_user.id and role_name != "funcionario":
+        raise HTTPException(status_code=403, detail="No tienes permiso")
+
+    return OrderService.get_order_payment_status(db, order_id)
+
+
+@router.post("/payu-webhook")
+async def payu_webhook(
+    request_data: Request,
+    db: Session = Depends(get_db),
+):
+    """
+    Webhook para recibir confirmación de pago de PayU.
+    Este endpoint es llamado por PayU después de procesar un pago.
+    NO requiere autenticación porque PayU envía la solicitud directamente.
+    """
+    try:
+        content_type = request_data.headers.get("content-type", "")
+        payload: dict = {}
+
+        if "application/json" in content_type:
+            payload = await request_data.json()
+        elif "application/x-www-form-urlencoded" in content_type or "multipart/form-data" in content_type:
+            form_data = await request_data.form()
+            payload = dict(form_data)
+        else:
+            payload = dict(request_data.query_params)
+
+        result = OrderService.process_payu_webhook(db, payload)
+        return result
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Error procesando webhook: {str(e)}"
+        }
+
+
+@router.post("/payu-response")
+async def payu_response_sync(
+    request_data: Request,
+    db: Session = Depends(get_db),
+):
+    """
+    Sincroniza estado de pago desde el retorno del navegador (responseUrl).
+    Útil en desarrollo local cuando PayU no puede alcanzar localhost para el webhook.
+    """
+    try:
+        content_type = request_data.headers.get("content-type", "")
+        payload: dict = {}
+
+        if "application/json" in content_type:
+            payload = await request_data.json()
+        elif "application/x-www-form-urlencoded" in content_type or "multipart/form-data" in content_type:
+            form_data = await request_data.form()
+            payload = dict(form_data)
+        else:
+            payload = dict(request_data.query_params)
+
+        result = OrderService.process_payu_webhook(db, payload)
+        return result
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Error procesando retorno de pago: {str(e)}"
+        }

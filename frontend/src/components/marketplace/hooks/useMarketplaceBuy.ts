@@ -1,6 +1,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { paymentService } from '@/services/payment.service';
 
 export interface BuyFormData {
   length: string;
@@ -57,12 +58,6 @@ export function useMarketplaceBuy() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const getDashboardByRole = (role: string | null): string => {
-    if (!role) return '/cliente/dashboard';
-    const normalizedRole = role.toLowerCase().trim();
-    return normalizedRole === 'funcionario' ? '/funcionario/dashboard' : '/cliente/dashboard';
-  };
-
   const createOrder = async (
     productId: number,
     productTitle: string
@@ -82,38 +77,45 @@ export function useMarketplaceBuy() {
         return false;
       }
 
-      const response = await fetch('http://localhost:8000/orders/marketplace', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          product_id: productId,
-          length: Number(formData.length),
-          height: Number(formData.height),
-          width: Number(formData.width),
-          material: formData.material,
-        }),
+      const result = await paymentService.createMarketplaceOrder({
+        product_id: productId,
+        length: Number(formData.length),
+        height: Number(formData.height),
+        width: Number(formData.width),
+        material: formData.material,
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Error al crear la orden');
+      if (!result.payment_url) {
+        throw new Error('No se pudo iniciar el pago con PayU');
       }
 
-      const result = await response.json();
-      toast.success(`¡Pedido de "${productTitle}" creado exitosamente!`);
+      if (result.payment_action_url && result.payment_payload) {
+        sessionStorage.setItem(
+          `payu_payload_${result.order_id}`,
+          JSON.stringify({
+            actionUrl: result.payment_action_url,
+            payload: result.payment_payload,
+          })
+        );
+      }
+
+      toast.success(`Pedido de "${productTitle}" creado. Continúa al checkout seguro.`);
       resetForm();
-      
-      // 🔥 REDIRIGIR AL DASHBOARD SEGÚN EL ROL (IGUAL QUE CREAR-PEDIDO)
-      const role = localStorage.getItem('role');
-      const dashboardPath = getDashboardByRole(role);
-      router.push(dashboardPath);
+
+      router.push(`/pagos/checkout?orderId=${result.order_id}`);
       
       return true;
     } catch (error: any) {
-      toast.error(error.message || 'Error al crear la orden');
+      const message = error?.message || 'Error al crear la orden';
+
+      if (message === 'AUTH_REQUIRED' || message === 'SESSION_EXPIRED') {
+        localStorage.setItem('redirect_after_login', '/marketplace');
+        toast.error('Tu sesión expiró. Inicia sesión nuevamente.');
+        router.push('/login');
+        return false;
+      }
+
+      toast.error(message);
       return false;
     } finally {
       setLoading(false);

@@ -10,6 +10,15 @@ class Settings(BaseSettings):
     EMAIL_USER: str | None = None
     EMAIL_PASSWORD: str | None = None
     AI_API_KEY: str | None = None
+    
+    # PayU Configuration
+    PAYU_MERCHANT_ID: str | None = None
+    PAYU_ACCOUNT_ID: str | None = None
+    PAYU_API_KEY: str | None = None
+    PAYU_API_LOGIN: str | None = None
+    PAYU_SANDBOX_MODE: bool = True
+    PAYU_WEBHOOK_URL: str | None = None
+    PAYU_RESPONSE_URL: str | None = None
 
     class Config:
         env_file = ".env"

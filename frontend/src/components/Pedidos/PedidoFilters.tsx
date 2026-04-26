@@ -12,6 +12,8 @@ interface Props {
 
 const statuses: (OrderStatus | 'all')[] = [
   'all',
+  'Pendiente de pago',
+  'Pago rechazado',
   'En diseño',
   'En producción',
   'Listo para entregar',
