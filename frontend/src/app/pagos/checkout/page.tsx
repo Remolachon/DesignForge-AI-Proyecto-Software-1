@@ -28,8 +28,11 @@ const formatCOP = (value: number) =>
   new Intl.NumberFormat("es-CO", {
     style: "currency",
     currency: "COP",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(value);
+
+const roundMoney = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
 
 export default function PaymentCheckoutPage() {
   const router = useRouter();
@@ -131,9 +134,14 @@ export default function PaymentCheckoutPage() {
   const taxFromPayload = Number(storedPayload?.payload?.tax || 0);
   const subtotalFromPayload = Number(storedPayload?.payload?.taxReturnBase || 0);
 
-  const displaySubtotal = subtotalFromPayload > 0 ? subtotalFromPayload : Math.round((order?.price || 0) / 1.19);
-  const displayTax = taxFromPayload > 0 ? taxFromPayload : Math.round((order?.price || 0) - displaySubtotal);
-  const displayTotal = amountFromPayload > 0 ? amountFromPayload : order?.price || 0;
+  const fallbackTotal = roundMoney(order?.price || 0);
+  const displayTotal = amountFromPayload > 0 ? roundMoney(amountFromPayload) : fallbackTotal;
+  const displaySubtotal = subtotalFromPayload > 0
+    ? roundMoney(subtotalFromPayload)
+    : roundMoney(displayTotal / 1.19);
+  const displayTax = taxFromPayload > 0
+    ? roundMoney(taxFromPayload)
+    : roundMoney(displayTotal - displaySubtotal);
 
   return (
     <>

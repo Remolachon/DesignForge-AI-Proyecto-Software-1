@@ -10,11 +10,12 @@ from app.schemas.order_schema import (
     DashboardOrder,
     OrderDetailResponse,
     OrdersPageResponse,
+    PayUResponseSyncRequest,
     UpdateOrderStatusRequest,
     UpdateOrderStatusResponse,
 )
 from app.security.token_validator import get_current_user
-from app.models.user import User  # 🔥 IMPORTANTE
+from app.models.user import User
 from app.services.user_service import UserService
 from app.models.order import Order
 
@@ -27,19 +28,14 @@ def create_order(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    print("DATA RECIBIDA:", data)
-    print("USER:", current_user)
-
-    # 🔥 TRADUCCIÓN CLAVE (Supabase → DB)
     db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
 
     if not db_user:
         raise HTTPException(status_code=404, detail="Usuario no existe en DB")
 
-    # 🔥 AQUÍ ESTÁ LA SOLUCIÓN REAL
     order = OrderService.create_order(
         db=db,
-        user_id=db_user.id,  # ✅ INTEGER correcto
+        user_id=db_user.id,
         data=data
     )
 
@@ -75,10 +71,6 @@ def create_marketplace_order(
         - width: int (ancho en cm)
         - material: str ("standard", "premium", "deluxe")
     """
-    print("MARKETPLACE ORDER DATA RECIBIDA:", data)
-    print("USER:", current_user)
-
-    # 🔥 TRADUCCIÓN CLAVE (Supabase → DB)
     db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
 
     if not db_user:
@@ -87,7 +79,7 @@ def create_marketplace_order(
     try:
         order = OrderService.create_marketplace_order(
             db=db,
-            user_id=db_user.id,  # ✅ INTEGER correcto
+            user_id=db_user.id,
             data=data
         )
 
@@ -343,6 +335,7 @@ async def payu_webhook(
 @router.post("/payu-response")
 async def payu_response_sync(
     request_data: Request,
+    payload_body: PayUResponseSyncRequest | None = None,
     db: Session = Depends(get_db),
 ):
     """
@@ -350,16 +343,19 @@ async def payu_response_sync(
     Útil en desarrollo local cuando PayU no puede alcanzar localhost para el webhook.
     """
     try:
-        content_type = request_data.headers.get("content-type", "")
-        payload: dict = {}
-
-        if "application/json" in content_type:
-            payload = await request_data.json()
-        elif "application/x-www-form-urlencoded" in content_type or "multipart/form-data" in content_type:
-            form_data = await request_data.form()
-            payload = dict(form_data)
+        if payload_body is not None:
+            payload = payload_body.model_dump(exclude_none=True)
         else:
-            payload = dict(request_data.query_params)
+            content_type = request_data.headers.get("content-type", "")
+            payload: dict = {}
+
+            if "application/json" in content_type:
+                payload = await request_data.json()
+            elif "application/x-www-form-urlencoded" in content_type or "multipart/form-data" in content_type:
+                form_data = await request_data.form()
+                payload = dict(form_data)
+            else:
+                payload = dict(request_data.query_params)
 
         result = OrderService.process_payu_webhook(db, payload)
         return result

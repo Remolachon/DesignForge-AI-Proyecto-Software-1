@@ -169,15 +169,45 @@ class OrderService:
         return transaction
 
     @staticmethod
-    def _serialize_order(order: Order, include_client: bool = False):
+    def _get_transaction_payment_status(db: Session, order_id: int) -> str | None:
+        """
+        Obtiene el estado de pago más reciente para una orden desde transactions.
+        Retorna: 'pending', 'approved', 'declined', 'expired', 'cancelled', 'refunded' o None
+        """
+        transaction = (
+            db.query(Transaction)
+            .filter(Transaction.order_id == order_id)
+            .order_by(Transaction.transaction_date.desc())
+            .first()
+        )
+        return transaction.status if transaction else None
+
+    @staticmethod
+    def _get_transaction_reference(db: Session, order_id: int) -> str | None:
+        """
+        Obtiene la referencia de PayU más reciente para una orden desde transactions.
+        """
+        transaction = (
+            db.query(Transaction)
+            .filter(Transaction.order_id == order_id)
+            .order_by(Transaction.transaction_date.desc())
+            .first()
+        )
+        return transaction.payu_reference if transaction else None
+
+    @staticmethod
+    def _serialize_order(db: Session, order: Order, include_client: bool = False):
         item = order.items[0] if hasattr(order, "items") and order.items else None
         asset = item.assets[0] if item and hasattr(item, "assets") and item.assets else None
 
         stage_name = item.current_stage.name if item and item.current_stage and item.current_stage.name else "En diseño"
         stage_name = OrderService._canonical_status(stage_name)
-        if getattr(order, "payment_status", None) == "pending_payment":
+        
+        # Obtener estado de pago desde transactions
+        payment_status = OrderService._get_transaction_payment_status(db, order.id)
+        if payment_status == "pending":
             stage_name = "Pendiente de pago"
-        if getattr(order, "payment_status", None) in {"declined", "expired", "cancelled"}:
+        elif payment_status in {"declined", "expired", "cancelled"}:
             stage_name = "Pago rechazado"
 
         title = item.product_type.name if item and item.product_type and item.product_type.name else "Pedido personalizado"
@@ -227,14 +257,17 @@ class OrderService:
             query = query.filter(Order.user_id == user_id)
 
         orders = query.all()
-        serialized_orders = [OrderService._serialize_order(order, include_client=is_funcionario) for order in orders]
+        serialized_orders = [OrderService._serialize_order(db, order, include_client=is_funcionario) for order in orders]
+
+        canonical_statuses = [OrderService._canonical_status(o["status"]) for o in serialized_orders]
 
         stats = {
             "total": len(serialized_orders),
-            "design": len([o for o in serialized_orders if OrderService._canonical_status(o["status"]) == "En diseño"]),
-            "production": len([o for o in serialized_orders if OrderService._canonical_status(o["status"]) == "En producción"]),
-            "ready": len([o for o in serialized_orders if OrderService._canonical_status(o["status"]) == "Listo para entregar"]),
-            "active": len([o for o in serialized_orders if OrderService._canonical_status(o["status"]) != "Entregado"]),
+            "pending_payment": len([s for s in canonical_statuses if s == "Pendiente de pago"]),
+            "design": len([s for s in canonical_statuses if s == "En diseño"]),
+            "production": len([s for s in canonical_statuses if s == "En producción"]),
+            "ready": len([s for s in canonical_statuses if s == "Listo para entregar"]),
+            "active": len([s for s in canonical_statuses if s in {"En diseño", "En producción"}]),
         }
 
         return {"orders": serialized_orders, "stats": stats}
@@ -253,7 +286,7 @@ class OrderService:
             .order_by(Order.created_at.desc())
         )
         orders = query.all()
-        return [OrderService._serialize_order(order, include_client=False) for order in orders]
+        return [OrderService._serialize_order(db, order, include_client=False) for order in orders]
 
     @staticmethod
     def _paginate(query, page: int, page_size: int):
@@ -325,7 +358,7 @@ class OrderService:
             query = query.filter(Order.id.in_(matching_ids))
 
         page_data = OrderService._paginate(query, page, page_size)
-        serialized = [OrderService._serialize_order(o, include_client=False) for o in page_data["items"]]
+        serialized = [OrderService._serialize_order(db, o, include_client=False) for o in page_data["items"]]
 
         return {
             "items": serialized,
@@ -389,7 +422,7 @@ class OrderService:
             query = query.filter(Order.id.in_(matching_ids))
 
         page_data = OrderService._paginate(query, page, page_size)
-        serialized = [OrderService._serialize_order(o, include_client=True) for o in page_data["items"]]
+        serialized = [OrderService._serialize_order(db, o, include_client=True) for o in page_data["items"]]
 
         return {
             "items": serialized,
@@ -430,7 +463,7 @@ class OrderService:
             raise ValueError("Estado no válido")
 
         if prev_status and OrderService._canonical_status(prev_status) == OrderService._canonical_status(target_stage.name):
-            return OrderService._serialize_order(order, include_client=True)
+            return OrderService._serialize_order(db, order, include_client=True)
 
         item.current_stage_id = target_stage.id
         db.add(
@@ -458,7 +491,7 @@ class OrderService:
             .first()
         )
 
-        return OrderService._serialize_order(updated_order, include_client=True)
+        return OrderService._serialize_order(db, updated_order, include_client=True)
 
     @staticmethod
     def create_order(db: Session, user_id: int, data):
@@ -480,7 +513,6 @@ class OrderService:
             user_id=user_id,
             created_at=OrderService._now_local(),
             total_amount=0,
-            payment_status="pending_payment",
         )
         db.add(order)
         db.flush()
@@ -598,7 +630,6 @@ class OrderService:
             user_id=user_id,
             created_at=OrderService._now_local(),
             total_amount=0,
-            payment_status="pending_payment",
         )
         db.add(order)
         db.flush()
@@ -702,9 +733,12 @@ class OrderService:
 
         stage_name = item.current_stage.name if item.current_stage and item.current_stage.name else "En diseño"
         stage_name = OrderService._canonical_status(stage_name)
-        if getattr(order, "payment_status", None) == "pending_payment":
+        
+        # Obtener estado de pago desde transactions
+        payment_status = OrderService._get_transaction_payment_status(db, order.id)
+        if payment_status == "pending":
             stage_name = "Pendiente de pago"
-        if getattr(order, "payment_status", None) in {"declined", "expired", "cancelled"}:
+        elif payment_status in {"declined", "expired", "cancelled"}:
             stage_name = "Pago rechazado"
 
         title = item.product_type.name if item.product_type and item.product_type.name else "Pedido personalizado"
@@ -746,8 +780,12 @@ class OrderService:
             order = db.query(Order).filter(Order.id == order_id).first()
             if not order:
                 return {"error": "Orden no encontrada", "status": "error"}
-            if order.payment_status != "pending_payment":
+            
+            # Validar que el pago está pendiente (leer de transactions)
+            payment_status = OrderService._get_transaction_payment_status(db, order_id)
+            if payment_status != "pending":
                 return {"error": "La orden no está en estado pendiente de pago", "status": "error"}
+            
             user = order.user
             if not user:
                 return {"error": "Usuario no encontrado", "status": "error"}
@@ -768,10 +806,7 @@ class OrderService:
             if result.get("status") == "error":
                 return result
 
-            order.payment_reference = result.get("payment_reference")
-            db.commit()
-            
-            # Actualizar referencia en transactions
+            # Actualizar referencia en transactions (no guardar en order ya que payment_status fue eliminado)
             OrderService._update_transaction_reference(
                 db=db,
                 order_id=order_id,
@@ -800,7 +835,6 @@ class OrderService:
             if not order:
                 return {"status": "error", "message": f"Orden {order_id} no encontrada"}
 
-            order.payment_transaction_id = webhook_data.get("transactionId", "")
             response_code = (
                 webhook_data.get("responseCode")
                 or webhook_data.get("response_code_pol")
@@ -814,8 +848,6 @@ class OrderService:
 
             if payu_provider.is_payment_approved(response_code, state_pol):
                 design_stage = OrderService._ensure_stage(db, "En diseño")
-                order.payment_status = "approved"
-                order.payment_approved_at = OrderService._now_local()
 
                 # Actualizar transacción
                 OrderService._update_transaction_status(
@@ -849,8 +881,6 @@ class OrderService:
                 }
 
             payment_status = payu_provider.get_payment_status(state_pol)
-            order.payment_status = payment_status
-            order.payment_transaction_id = webhook_data.get("transactionId", "")
 
             # Actualizar transacción
             OrderService._update_transaction_status(
@@ -889,15 +919,20 @@ class OrderService:
     @staticmethod
     def get_order_payment_status(db: Session, order_id: int) -> dict:
         try:
-            order = db.query(Order).filter(Order.id == order_id).first()
-            if not order:
-                return {"status": "error", "message": "Orden no encontrada"}
+            transaction = (
+                db.query(Transaction)
+                .filter(Transaction.order_id == order_id)
+                .order_by(Transaction.transaction_date.desc())
+                .first()
+            )
+            if not transaction:
+                return {"status": "error", "message": "No se encontró registro de transacción para esta orden"}
             return {
                 "status": "success",
                 "order_id": order_id,
-                "payment_status": order.payment_status,
-                "payment_reference": order.payment_reference,
-                "payment_approved_at": order.payment_approved_at.isoformat() if order.payment_approved_at else None,
+                "payment_status": transaction.status,
+                "payment_reference": transaction.payu_reference,
+                "payment_approved_at": transaction.approved_at.isoformat() if transaction.approved_at else None,
             }
         except Exception as e:
             return {"status": "error", "message": str(e)}

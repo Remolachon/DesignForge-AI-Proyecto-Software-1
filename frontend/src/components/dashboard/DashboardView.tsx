@@ -63,9 +63,10 @@ export function DashboardView({ role }: { role: Role }) {
 
         {/* STATS */}
         {isCliente ? (
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            <StatCard label="Pendientes de pago" value={stats.pending_payment} icon={<Clock />} colorClass="bg-rose-100" />
             <StatCard label="Activos" value={stats.active} icon={<Package />} colorClass="bg-blue-100" />
-            <StatCard label="Pendientes" value={stats.ready} icon={<Clock />} colorClass="bg-amber-100" />
+            <StatCard label="Pendientes de entrega" value={stats.ready} icon={<CheckCircle />} colorClass="bg-amber-100" />
             <StatCard label="Totales" value={stats.total} icon={<TrendingUp />} colorClass="bg-green-100" />
           </div>
         ) : (
