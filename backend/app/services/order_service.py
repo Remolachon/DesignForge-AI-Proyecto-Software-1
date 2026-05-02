@@ -55,8 +55,8 @@ class OrderService:
             return "Listo para entregar"
         if normalized == "entregado":
             return "Entregado"
-        if normalized == "pago rechazado":
-            return "Pago rechazado"
+        if normalized in {"pago rechazado", "pago no aprobado", "payment declined", "declined"}:
+            return "Pendiente de pago"
 
         return value.strip() if value else "En diseño"
 
@@ -205,10 +205,8 @@ class OrderService:
         
         # Obtener estado de pago desde transactions
         payment_status = OrderService._get_transaction_payment_status(db, order.id)
-        if payment_status == "pending":
+        if payment_status in {"pending", "declined", "expired", "cancelled", "refunded", "unknown"}:
             stage_name = "Pendiente de pago"
-        elif payment_status in {"declined", "expired", "cancelled"}:
-            stage_name = "Pago rechazado"
 
         title = item.product_type.name if item and item.product_type and item.product_type.name else "Pedido personalizado"
         product_type = item.product_type.name if item and item.product_type else None
@@ -736,10 +734,8 @@ class OrderService:
         
         # Obtener estado de pago desde transactions
         payment_status = OrderService._get_transaction_payment_status(db, order.id)
-        if payment_status == "pending":
+        if payment_status in {"pending", "declined", "expired", "cancelled", "refunded", "unknown"}:
             stage_name = "Pendiente de pago"
-        elif payment_status in {"declined", "expired", "cancelled"}:
-            stage_name = "Pago rechazado"
 
         title = item.product_type.name if item.product_type and item.product_type.name else "Pedido personalizado"
         product_type = item.product_type.name if item.product_type else None
@@ -881,36 +877,38 @@ class OrderService:
                 }
 
             payment_status = payu_provider.get_payment_status(state_pol)
+            internal_payment_status = "pending"
 
             # Actualizar transacción
             OrderService._update_transaction_status(
                 db=db,
                 order_id=int(order_id),
-                status=payment_status,
+                status=internal_payment_status,
                 payu_transaction_id=webhook_data.get("transactionId", ""),
                 payu_response_code=response_code,
                 payu_state_pol=state_pol,
             )
 
-            if item and payment_status in {"declined", "expired", "cancelled"}:
-                declined_stage = OrderService._ensure_stage(db, "Pago rechazado")
+            if item:
+                pending_stage = OrderService._ensure_stage(db, "Pendiente de pago")
                 previous_stage_id = item.current_stage_id
-                item.current_stage_id = declined_stage.id
-                db.add(
-                    StatusHistory(
-                        order_item_id=item.id,
-                        production_stage_id=previous_stage_id,
-                        new_stage_id=declined_stage.id,
-                        changed_by=None,
-                        changed_at=OrderService._now_local(),
+                if previous_stage_id != pending_stage.id:
+                    item.current_stage_id = pending_stage.id
+                    db.add(
+                        StatusHistory(
+                            order_item_id=item.id,
+                            production_stage_id=previous_stage_id,
+                            new_stage_id=pending_stage.id,
+                            changed_by=None,
+                            changed_at=OrderService._now_local(),
+                        )
                     )
-                )
 
             db.commit()
             return {
-                "status": "payment_declined",
-                "message": "Pago rechazado",
-                "payment_status": payment_status,
+                "status": "payment_pending",
+                "message": "Pago no aprobado. La orden permanece en Pendiente de pago.",
+                "payment_status": internal_payment_status,
                 "order_id": order_id,
             }
         except Exception as e:

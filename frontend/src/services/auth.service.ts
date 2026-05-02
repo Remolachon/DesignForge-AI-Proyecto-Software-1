@@ -1,6 +1,84 @@
 import axios from "axios";
+import { supabaseClient } from "@/lib/supabase/supabaseClient";
 
 const API_URL = "http://localhost:8000/auth";
+
+type GoogleAuthMode = "login" | "register";
+
+export const getDashboardByRole = (role: string | undefined) => {
+  const normalizedRole = (role || "").toLowerCase().trim();
+
+  if (normalizedRole === "funcionario") {
+    return "/funcionario/dashboard";
+  }
+
+  return "/cliente/dashboard";
+};
+
+export const startGoogleAuth = async (mode: GoogleAuthMode) => {
+  const redirectTo = `${window.location.origin}/auth/callback?mode=${mode}`;
+
+  const { data, error } = await supabaseClient.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo,
+      queryParams: {
+        prompt: "select_account",
+      },
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  if (data.url) {
+    window.location.href = data.url;
+  }
+};
+
+export const completeGoogleAuth = async (code: string) => {
+  // Intercambiar el código por sesión en Supabase
+  const { data: sessionData, error: sessionError } = await supabaseClient.auth.exchangeCodeForSession(code);
+
+  if (sessionError) {
+    console.error("completeGoogleAuth: exchangeCodeForSession error:", sessionError);
+    throw sessionError;
+  }
+
+  const accessToken = sessionData.session?.access_token;
+
+  if (!accessToken) {
+    console.error("completeGoogleAuth: no access_token in sessionData", sessionData);
+    throw new Error("SESSION_EXPIRED");
+  }
+
+  try {
+    console.log("completeGoogleAuth: posting access_token to backend", { api: `${API_URL}/google-oauth` });
+    const response = await axios.post(
+      `${API_URL}/google-oauth`,
+      {
+        access_token: accessToken,
+      },
+      {
+        timeout: 7000,
+      }
+    );
+
+    console.log("completeGoogleAuth: backend response", response.data);
+
+    const { access_token, first_name, last_name, role } = response.data;
+
+    localStorage.setItem("token", access_token);
+    localStorage.setItem("user_name", `${first_name} ${last_name}`);
+    localStorage.setItem("role", role);
+
+    return response.data;
+  } catch (err) {
+    console.error("completeGoogleAuth: error posting to backend", err);
+    throw err;
+  }
+};
 
 export const login = async (email: string, password: string) => {
   const response = await axios.post(

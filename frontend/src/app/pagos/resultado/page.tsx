@@ -21,9 +21,9 @@ function normalizePayuState(raw: string | null): string {
   const value = (raw || "").toLowerCase();
 
   if (value === "4" || value.includes("approved")) return "approved";
-  if (value === "6" || value.includes("declined")) return "declined";
+  if (value === "6" || value.includes("declined")) return "pending";
   if (value === "7" || value.includes("pending")) return "pending";
-  if (value === "5" || value.includes("expired")) return "expired";
+  if (value === "5" || value.includes("expired")) return "pending";
 
   return "unknown";
 }
@@ -81,18 +81,10 @@ export default function PaymentResultPage() {
       };
     }
 
-    if (state === "declined") {
-      return {
-        title: "Pago rechazado",
-        description: "El pago fue rechazado. Puedes intentar nuevamente con otro método de pago.",
-        badgeClass: "bg-red-100 text-red-800 border-red-200",
-      };
-    }
-
     if (state === "pending") {
       return {
         title: "Pago pendiente",
-        description: "Tu pago está pendiente de confirmación. Te recomendamos revisar el estado en tus pedidos.",
+        description: "Tu pago no se confirmó todavía. El pedido seguirá en Pendiente de pago hasta que PayU lo apruebe.",
         badgeClass: "bg-yellow-100 text-yellow-800 border-yellow-200",
       };
     }

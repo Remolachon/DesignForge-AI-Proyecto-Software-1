@@ -1,6 +1,5 @@
 export type OrderStatus =
   | 'Pendiente de pago'
-  | 'Pago rechazado'
   | 'En diseño'
   | 'En producción'
   | 'Listo para entregar'

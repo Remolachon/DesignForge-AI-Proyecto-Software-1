@@ -34,18 +34,18 @@ export function DashboardView({ role }: { role: Role }) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
       <Header />
 
-      <main className="max-w-7xl mx-auto p-8 space-y-8">
+      <main className="mx-auto max-w-7xl space-y-10 px-4 py-8 sm:px-6 lg:px-8">
 
         {/* HEADER */}
-        <div className="flex justify-between">
-          <div>
-            <h1 className="text-3xl font-semibold text-primary mb-2">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl space-y-2">
+            <h1 className="text-3xl font-semibold tracking-tight text-primary sm:text-4xl">
               {isCliente ? 'Bienvenido' : 'Panel de Producción'}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm text-muted-foreground sm:text-base">
               {isCliente ? 'Gestiona tus pedidos y crea nuevos diseños personalizados' : 'Gestiona pedidos y organiza el calendario de producción'} 
             </p>
           </div>
@@ -63,14 +63,14 @@ export function DashboardView({ role }: { role: Role }) {
 
         {/* STATS */}
         {isCliente ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          <div className="grid w-full gap-6 md:grid-cols-2 xl:grid-cols-4">
             <StatCard label="Pendientes de pago" value={stats.pending_payment} icon={<Clock />} colorClass="bg-rose-100" />
             <StatCard label="Activos" value={stats.active} icon={<Package />} colorClass="bg-blue-100" />
             <StatCard label="Pendientes de entrega" value={stats.ready} icon={<CheckCircle />} colorClass="bg-amber-100" />
             <StatCard label="Totales" value={stats.total} icon={<TrendingUp />} colorClass="bg-green-100" />
           </div>
         ) : (
-          <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid w-full gap-6 md:grid-cols-2 xl:grid-cols-4">
             <StatCard label="En Diseño" value={stats.design} icon={<AlertCircle />} colorClass="bg-blue-100" />
             <StatCard label="En Producción" value={stats.production} icon={<Clock />} colorClass="bg-amber-100" />
             <StatCard label="Listo para entregar" value={stats.ready} icon={<CheckCircle />} colorClass="bg-green-100" />

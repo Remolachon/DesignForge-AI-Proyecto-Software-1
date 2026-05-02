@@ -17,16 +17,16 @@ export function QuickActionCard({
   description,
 }: QuickActionCardProps) {
   return (
-    <Link href={href}>
-      <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
+    <Link href={href} className="block h-full">
+      <Card className="h-full border-border/60 bg-card/90 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.45)] backdrop-blur-sm transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-lg">
         <CardContent className="pt-6">
           <div className="flex items-start gap-4">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${iconBg}`}>
+            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${iconBg} shadow-sm`}>
               {icon}
             </div>
-            <div>
-              <h3 className="font-semibold mb-1">{title}</h3>
-              <p className="text-sm text-muted-foreground">{description}</p>
+            <div className="space-y-1">
+              <h3 className="font-semibold tracking-tight text-foreground">{title}</h3>
+              <p className="text-sm leading-5 text-muted-foreground">{description}</p>
             </div>
           </div>
         </CardContent>

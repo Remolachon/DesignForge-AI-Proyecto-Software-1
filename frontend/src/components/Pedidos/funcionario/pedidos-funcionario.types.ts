@@ -6,7 +6,6 @@ export const DEBOUNCE_MS = 250;
 export const STATUS_OPTIONS: { value: FilterStatus; label: string }[] = [
     { value: 'all', label: 'Todos' },
     { value: 'Pendiente de pago', label: 'Pendiente de pago' },
-    { value: 'Pago rechazado', label: 'Pago rechazado' },
     { value: 'En diseño', label: 'En diseño' },
     { value: 'En producción', label: 'En producción' },
     { value: 'Listo para entregar', label: 'Listo para entregar' },
@@ -14,7 +13,6 @@ export const STATUS_OPTIONS: { value: FilterStatus; label: string }[] = [
 ];
 export const ORDER_STATUSES: OrderStatus[] = [
     'Pendiente de pago',
-    'Pago rechazado',
     'En diseño',
     'En producción',
     'Listo para entregar',

@@ -2,8 +2,6 @@ export function getStatusColor(status: string): string {
   switch (status) {
     case 'Pendiente de pago':
       return 'bg-yellow-100 text-yellow-800 border border-yellow-200';
-    case 'Pago rechazado':
-      return 'bg-red-100 text-red-700 border border-red-200';
     case 'En diseño':
       return 'bg-blue-100 text-blue-700 border border-blue-200';
     case 'En producción':

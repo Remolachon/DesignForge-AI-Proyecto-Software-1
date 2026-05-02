@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     PAYU_WEBHOOK_URL: str | None = None
     PAYU_RESPONSE_URL: str | None = None
 
+    # Google OAuth Configuration
+    GOOGLE_CLIENT_ID: str | None = None
+    GOOGLE_CLIENT_SECRET: str | None = None
+    GOOGLE_REDIRECT_URI: str | None = None
+
     class Config:
         env_file = ".env"
 

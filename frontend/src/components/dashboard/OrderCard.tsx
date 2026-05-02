@@ -41,32 +41,32 @@ const [imageUrl, setImageUrl] = useState('');
   }, [order.imageUrl, order.image?.bucket, order.image?.path]);
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="border-border/60 bg-card/90 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.45)] backdrop-blur-sm transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-lg">
       <CardContent className="pt-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative w-full sm:w-24 h-24 rounded-lg overflow-hidden">
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <div className="relative h-24 w-full overflow-hidden rounded-xl sm:w-24 sm:flex-shrink-0">
             {imageUrl ? (
               <Image src={imageUrl} alt={order.title} fill sizes="(max-width: 640px) 100vw, 96px" unoptimized className="object-cover" />
             ) : (
-              <div className="w-full h-full bg-gray-100" />
+              <div className="h-full w-full bg-muted/70" />
             )}
           </div>
 
-          <div className="flex-1">
-            <div className="flex justify-between items-start gap-3 mb-2">
-              <div>
-                <h3 className="font-semibold">{order.title}</h3>
+          <div className="flex-1 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <h3 className="font-semibold tracking-tight text-foreground">{order.title}</h3>
                 <p className="text-sm text-muted-foreground">Pedido #{order.id}</p>
               </div>
 
               <span
-                className={`inline-flex shrink-0 items-center px-3 py-1 text-xs rounded-full font-medium whitespace-nowrap ${getStatusColor(order.status)}`}
+                className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(order.status)}`}
               >
                 {order.status}
               </span>
             </div>
 
-            <div className="flex gap-6 text-sm text-muted-foreground">
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
               <span>
                 Entrega:{' '}
                 {new Date(order.deliveryDate).toLocaleDateString('es-ES')}
