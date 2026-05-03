@@ -6,26 +6,33 @@ import { Skeleton } from '@/components/ui/skeleton';
 type Role = 'cliente' | 'funcionario';
 
 export function DashboardLoading({ role }: { role: Role }) {
-  const isCliente = role === 'cliente';
+  const statCards = Array.from({ length: 4 });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20" data-role={role}>
       <Header />
 
-      <main className="max-w-7xl mx-auto p-8 space-y-8 animate-pulse">
-        <section className="flex justify-between gap-6">
+      <main className="mx-auto max-w-7xl space-y-10 px-4 py-8 sm:px-6 lg:px-8 animate-pulse">
+        <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
             <Skeleton className="h-9 w-64 bg-primary/10" />
-            <Skeleton className="h-5 w-96 max-w-[70vw] bg-primary/10" />
+            <Skeleton className="h-5 w-[min(32rem,70vw)] bg-primary/10" />
           </div>
           <Skeleton className="h-10 w-40 rounded-lg bg-accent/30" />
         </section>
 
-        <section className={`grid gap-6 ${isCliente ? 'md:grid-cols-3 max-w-5xl mx-auto' : 'md:grid-cols-3 lg:grid-cols-4'}`}>
-          <Skeleton className="h-28 rounded-xl bg-primary/10" />
-          <Skeleton className="h-28 rounded-xl bg-primary/10" />
-          <Skeleton className="h-28 rounded-xl bg-primary/10" />
-          {!isCliente && <Skeleton className="h-28 rounded-xl bg-primary/10" />}
+        <section className="grid w-full gap-6 md:grid-cols-2 xl:grid-cols-4">
+          {statCards.map((_, index) => (
+            <div key={index} className="rounded-xl bg-muted p-6 shadow-none">
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-3">
+                  <Skeleton className="h-3 w-28 bg-muted/80" />
+                  <Skeleton className="h-9 w-20 bg-muted/80" />
+                </div>
+                <Skeleton className="h-12 w-12 rounded-xl bg-muted/80" />
+              </div>
+            </div>
+          ))}
         </section>
 
         <section className="space-y-4">

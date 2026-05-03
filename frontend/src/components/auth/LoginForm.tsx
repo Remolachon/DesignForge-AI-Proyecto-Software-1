@@ -1,105 +1,51 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-import { Package, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { login } from "@/services/auth.service";
+
+import { AuthShell } from "@/components/auth/AuthShell";
+import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
+import { getDashboardByRole, login, startGoogleAuth } from "@/services/auth.service";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   const router = useRouter();
-  const searchParams = useSearchParams();
 
-  const queryRedirectPath = useMemo(() => {
-    const nextPath = searchParams.get("next");
+  useEffect(() => {
+    const googleError = localStorage.getItem("google_auth_error");
 
-    if (!nextPath || !nextPath.startsWith("/")) {
-      return null;
+    if (googleError) {
+      localStorage.removeItem("google_auth_error");
+      setErrorMsg(googleError);
+      toast.error(googleError);
     }
+  }, []);
 
-    return nextPath;
-  }, [searchParams]);
+  const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
-  const fromRegister = searchParams.get("fromRegister") === "1";
-
-  const isValidEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-
-  const extractBackendError = (error: any) => {
-    const detail = error?.response?.data?.detail;
+  const extractBackendError = (error: unknown) => {
+    const detail = (error as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
 
     if (!detail) return "Ocurrió un error inesperado";
-
     if (typeof detail === "string") return detail;
 
     return "Ocurrió un error inesperado";
   };
 
-  const getDashboardByRole = (role: string | undefined) => {
-    const normalizedRole = (role || "").toLowerCase().trim();
-
-    if (normalizedRole === "funcionario") {
-      return "/funcionario/dashboard";
-    }
-
-    return "/cliente/dashboard";
-  };
-
-  const navigateAfterLogin = (targetPath: string, dashboardPath: string) => {
-    // Dejamos dashboard como entrada anterior para que el botón atrás vuelva allí.
-    if (targetPath !== dashboardPath) {
-      router.replace(dashboardPath);
-      setTimeout(() => {
-        router.push(targetPath);
-      }, 0);
-      return;
-    }
-
-    // Duplicamos dashboard para evitar regresar a auth en el primer "atrás".
-    router.replace(dashboardPath);
-    setTimeout(() => {
-      router.push(dashboardPath);
-    }, 0);
-  };
-
-  useEffect(() => {
-    if (!fromRegister) {
-      return;
-    }
-
-    const cleanLoginPath = "/login";
-
-    // Limpiamos query de control y forzamos que atrás desde login vuelva a home.
-    window.history.replaceState(null, "", cleanLoginPath);
-    window.history.pushState({ fromRegister: true }, "", cleanLoginPath);
-
-    const handlePopState = () => {
-      window.location.replace("/");
-    };
-
-    window.addEventListener("popstate", handlePopState);
-
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
-  }, [fromRegister]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
 
-    // ✅ VALIDACIONES EN ORDEN (SOLO 1 ERROR)
     if (!email.trim() || !password.trim()) {
       setErrorMsg("Hay campos vacíos");
       return;
@@ -114,26 +60,18 @@ export default function LoginForm() {
 
     try {
       const res = await login(email, password);
-
-      localStorage.setItem("token", res.access_token);
-      localStorage.setItem("user_name", `${res.first_name} ${res.last_name}`);
-      localStorage.setItem("role", res.role);
-
       toast.success("¡Bienvenido de vuelta!");
-      const roleDashboard = getDashboardByRole(res.role);
-      const sessionRedirect = sessionStorage.getItem("redirect_after_login");
-      const localRedirect = localStorage.getItem("redirect_after_login");
-      const redirectPath = queryRedirectPath || sessionRedirect || localRedirect;
 
-      sessionStorage.removeItem("redirect_after_login");
-      localStorage.removeItem("redirect_after_login");
+      const redirectPath = localStorage.getItem("redirect_after_login");
 
       if (redirectPath) {
-        navigateAfterLogin(redirectPath, roleDashboard);
-      } else {
-        navigateAfterLogin(roleDashboard, roleDashboard);
+        localStorage.removeItem("redirect_after_login");
+        router.push(redirectPath);
+        return;
       }
-    } catch (error: any) {
+
+      router.push(getDashboardByRole(res.role));
+    } catch (error: unknown) {
       const message = extractBackendError(error);
       setErrorMsg(message);
       toast.error(message);
@@ -142,69 +80,80 @@ export default function LoginForm() {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    setErrorMsg("");
+    setGoogleLoading(true);
+
+    try {
+      await startGoogleAuth("login");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "No se pudo iniciar con Google";
+      setErrorMsg(message);
+      toast.error(message);
+      setGoogleLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4">
-      <div className="max-w-md mx-auto w-full">
-        <Link href="/" className="flex items-center justify-center gap-2 mb-6">
-          <div className="w-12 h-12 bg-gradient-to-br from-accent to-accent-magenta rounded-lg flex items-center justify-center">
-            <Package className="w-7 h-7 text-white" />
+    <AuthShell
+      title="Inicia sesión"
+      description="Accede a tu cuenta para gestionar tus pedidos y compras."
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {errorMsg && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm text-red-700">
+            {errorMsg}
           </div>
-          <span className="text-2xl font-semibold text-primary">LukArt</span>
-        </Link>
+        )}
 
-        <h2 className="text-center text-3xl font-semibold text-primary">
-          Iniciar Sesión
-        </h2>
+        <div>
+          <Input
+            label="Correo electrónico"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="tu@email.com"
+            disabled={loading || googleLoading}
+            className="h-11 rounded-xl border-border/70 bg-background/80"
+          />
+        </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="mt-8 space-y-6 bg-white p-8 rounded-xl shadow-lg border border-border min-h-[380px] flex flex-col justify-center"
-        >
-          {errorMsg && (
-            <div className="bg-red-100 text-red-600 text-sm p-3 rounded-md text-center">
-              {errorMsg}
-            </div>
-          )}
+        <div>
+          <Input
+            label="Contraseña"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Introduce tu contraseña"
+            disabled={loading || googleLoading}
+            className="h-11 rounded-xl border-border/70 bg-background/80"
+          />
+        </div>
 
-          <div className="[&_input]:border-black [&_input]:focus:border-accent">
-            <Input
-              label="Correo electrónico"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Introduce tu correo"
-              disabled={loading}
-            />
-          </div>
+        <Button type="submit" className="h-11 w-full rounded-xl shadow-sm" disabled={loading || googleLoading}>
+          {loading ? "Iniciando sesión..." : "Iniciar sesión"}
+        </Button>
 
-          <div className="[&_input]:border-black [&_input]:focus:border-accent">
-            <Input
-              label="Contraseña"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Introduce tu contraseña"
-              disabled={loading}
-            />
-          </div>
+        <div className="flex items-center gap-3">
+          <div className="flex-1 border-t border-border/60" />
+          <span className="px-3 text-xs uppercase tracking-[0.22em] text-muted-foreground bg-card/90">o continúa con</span>
+          <div className="flex-1 border-t border-border/60" />
+        </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
-          </Button>
+        <GoogleAuthButton
+          label="Iniciar sesión con Google"
+          helperText="Continuar con Google"
+          loading={googleLoading}
+          onClick={handleGoogleLogin}
+        />
 
-          <p className="text-center text-sm text-muted-foreground">
-            ¿No tienes cuenta?{" "}
-            <Link
-              href="/register"
-              replace
-              className="font-medium text-primary hover:text-accent transition-colors"
-            >
-              Regístrate
-            </Link>
-          </p>
-        </form>
-      </div>
-    </div>
+        <p className="text-center text-sm text-muted-foreground">
+          ¿No tienes cuenta?{" "}
+          <Link href="/register" className="font-medium text-primary transition-colors hover:text-accent">
+            Regístrate
+          </Link>
+        </p>
+      </form>
+    </AuthShell>
   );
 }

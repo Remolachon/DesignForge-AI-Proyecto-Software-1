@@ -5,12 +5,14 @@ export const PAGE_SIZE = 10;
 export const DEBOUNCE_MS = 250;
 export const STATUS_OPTIONS: { value: FilterStatus; label: string }[] = [
     { value: 'all', label: 'Todos' },
+    { value: 'Pendiente de pago', label: 'Pendiente de pago' },
     { value: 'En diseño', label: 'En diseño' },
     { value: 'En producción', label: 'En producción' },
     { value: 'Listo para entregar', label: 'Listo para entregar' },
     { value: 'Entregado', label: 'Entregados' },
 ];
 export const ORDER_STATUSES: OrderStatus[] = [
+    'Pendiente de pago',
     'En diseño',
     'En producción',
     'Listo para entregar',

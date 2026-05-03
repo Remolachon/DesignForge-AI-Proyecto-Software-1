@@ -9,6 +9,14 @@ class CreateOrderRequest(BaseModel):
     color: str
 
 
+class CreateMarketplaceOrderRequest(BaseModel):
+    product_id: int
+    length: int
+    height: int
+    width: int
+    material: str
+
+
 class OrderResponse(BaseModel):
     order_id: int
     total_amount: float
@@ -57,10 +65,26 @@ class OrderDetailResponse(BaseModel):
 
 class DashboardStats(BaseModel):
     total: int
+    pending_payment: int
     design: int
     production: int
     ready: int
     active: int
+
+
+class PayUResponseSyncRequest(BaseModel):
+    extra1: str | None = None
+    referenceCode: str | None = None
+    reference_code: str | None = None
+    transactionState: str | None = None
+    statePol: str | None = None
+    state_pol: str | None = None
+    responseCode: str | None = None
+    response_code_pol: str | None = None
+    responseCodePol: str | None = None
+    lapResponseCode: str | None = None
+    transactionId: str | None = None
+    message: str | None = None
 
 
 class DashboardResponse(BaseModel):

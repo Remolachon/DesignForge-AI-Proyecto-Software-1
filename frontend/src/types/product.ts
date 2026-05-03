@@ -2,7 +2,7 @@
 export type ProductType = 'bordado' | 'neon-flex' | 'acrilico';
 
 export interface Product {
-  id: string;
+  id: number;
   title: string;
   description: string;
   imageUrl: string;

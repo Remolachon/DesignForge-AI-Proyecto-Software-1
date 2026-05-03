@@ -5,6 +5,8 @@ from app.config.settings import settings
 engine = create_engine(
     settings.DATABASE_URL,
     connect_args={"options": "-c timezone=America/Bogota"},
+    pool_pre_ping=True,
+    pool_recycle=1800,
 )
 
 SessionLocal = sessionmaker(

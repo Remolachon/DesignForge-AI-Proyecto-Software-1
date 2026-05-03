@@ -4,6 +4,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 type DashboardStats = {
   total: number;
+  pending_payment: number;
   design: number;
   production: number;
   ready: number;
@@ -22,7 +23,7 @@ export const dashboardService = {
     if (!token) {
       return {
         orders: [],
-        stats: { total: 0, design: 0, production: 0, ready: 0, active: 0 },
+        stats: { total: 0, pending_payment: 0, design: 0, production: 0, ready: 0, active: 0 },
       };
     }
 

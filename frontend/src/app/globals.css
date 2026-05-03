@@ -81,3 +81,12 @@
     font-family: Arial, Helvetica, sans-serif;
   }
 }
+
+/* =========================
+   CUSTOM ANIMATIONS
+========================= */
+@keyframes shine-sweep {
+  0% { left: -100%; }
+  20% { left: 200%; }
+  100% { left: 200%; }
+}

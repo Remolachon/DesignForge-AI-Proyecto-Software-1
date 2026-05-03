@@ -3,15 +3,25 @@
 
 import { useState } from 'react';
 import { useProducts } from '@/hooks/useProducts';
-import { ProductType } from '@/types/product';
+import { ProductType, Product } from '@/types/product';
 import { Filters } from './Filters';
 import { ProductCard } from './ProductCard';
+import { BuyOrderModal } from './modals/BuyOrderModal';
+import { ConfirmBuyModal } from './modals/ConfirmBuyModal';
+import { useMarketplaceBuy } from './hooks/useMarketplaceBuy';
+import { useRouter } from 'next/navigation';
 
 export const Marketplace = () => {
   const { products } = useProducts();
+  const router = useRouter();
+  const { formData, errors, loading, setField, createOrder, resetForm, validateForm } =
+    useMarketplaceBuy();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<ProductType | 'all'>('all');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [showBuyModal, setShowBuyModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const filtered = products.filter((p) => {
     const matchesSearch =
@@ -24,8 +34,50 @@ export const Marketplace = () => {
     return matchesSearch && matchesFilter;
   });
 
-  const handleBuy = () => {
-    alert('Producto agregado');
+  const handleBuy = (product: Product) => {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      localStorage.setItem('redirect_after_login', '/marketplace');
+      router.push('/login');
+      return;
+    }
+
+    setSelectedProduct(product);
+    setShowBuyModal(true);
+  };
+
+  const handleBuyConfirm = () => {
+    const isValid = validateForm();
+    if (!isValid) return;
+
+    setShowBuyModal(false);
+    setShowConfirmModal(true);
+  };
+
+  // ✅ CONFIRMAR Y CREAR ORDEN (incluye check de token)
+  const handleFinalConfirm = async () => {
+    if (!selectedProduct) return;
+
+    const success = await createOrder(
+      selectedProduct.id,
+      selectedProduct.title
+    );
+
+    if (success) {
+      setShowConfirmModal(false);
+      resetForm();
+      setSelectedProduct(null);
+    }
+  };
+
+  const handleCloseBuyModal = () => {
+    setShowBuyModal(false);
+  };
+
+  const handleCloseConfirmModal = () => {
+    setShowConfirmModal(false);
+    setShowBuyModal(true);
   };
 
   return (
@@ -46,7 +98,7 @@ export const Marketplace = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filtered.map((p) => (
-          <ProductCard key={p.id} product={p} onBuy={handleBuy} />
+          <ProductCard key={p.id} product={p} onBuy={() => handleBuy(p)} />
         ))}
       </div>
 
@@ -54,6 +106,31 @@ export const Marketplace = () => {
         <p className="text-center text-gray-500">
           No se encontraron productos
         </p>
+      )}
+
+      {/* Modal de parámetros */}
+      {selectedProduct && (
+        <BuyOrderModal
+          productTitle={selectedProduct.title}
+          isOpen={showBuyModal}
+          onClose={handleCloseBuyModal}
+          formData={formData}
+          errors={errors}
+          loading={loading}
+          onFieldChange={setField}
+          onConfirm={handleBuyConfirm}
+        />
+      )}
+
+      {/* Modal de confirmación */}
+      {selectedProduct && (
+        <ConfirmBuyModal
+          productTitle={selectedProduct.title}
+          isOpen={showConfirmModal}
+          onConfirm={handleFinalConfirm}
+          onCancel={handleCloseConfirmModal}
+          loading={loading}
+        />
       )}
     </div>
   );

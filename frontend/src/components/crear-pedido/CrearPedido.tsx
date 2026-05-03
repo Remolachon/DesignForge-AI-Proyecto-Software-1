@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { toast } from "sonner";
+import { paymentService } from "@/services/payment.service";
 
 import Step1ProductType from "@/components/crear-pedido/steps/Step1ProductType";
 import Step2Upload from "@/components/crear-pedido/steps/Step2Upload";
@@ -103,32 +104,49 @@ export default function CrearPedido() {
         return;
       }
 
-      const response = await fetch("http://localhost:8000/orders/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          product_type: productType,
-          image_url: uploadedImage,
-          size: designSettings.size,
-          material: designSettings.material,
-          color: designSettings.color,
-        }),
+      if (!productType) {
+        toast.error("Selecciona un tipo de producto");
+        return;
+      }
+
+      const result = await paymentService.createCustomOrder({
+        product_type: productType,
+        image_url: uploadedImage,
+        size: designSettings.size,
+        material: designSettings.material,
+        color: designSettings.color,
       });
 
-      if (!response.ok) throw new Error();
+      if (!result.payment_url) {
+        throw new Error("No se pudo iniciar el pago con PayU");
+      }
+
+      if (result.payment_action_url && result.payment_payload) {
+        sessionStorage.setItem(
+          `payu_payload_${result.order_id}`,
+          JSON.stringify({
+            actionUrl: result.payment_action_url,
+            payload: result.payment_payload,
+          })
+        );
+      }
 
       // 🔥 LIMPIAR TODO
       reset();
 
-      toast.success("¡Pedido creado exitosamente!");
-
-      const role = localStorage.getItem("role");
-      router.push(getDashboardByRole(role));
+      toast.success("Pedido creado. Continúa al checkout seguro.");
+      router.push(`/pagos/checkout?orderId=${result.order_id}`);
     } catch (error) {
-      toast.error("Error al crear pedido");
+      const message = error instanceof Error ? error.message : "Error al crear pedido";
+
+      if (message === "AUTH_REQUIRED" || message === "SESSION_EXPIRED") {
+        localStorage.setItem("redirect_after_login", "/cliente/crear-pedido?resume=1");
+        toast.error("Tu sesión expiró. Inicia sesión nuevamente.");
+        router.push("/login");
+        return;
+      }
+
+      toast.error(message || "Error al crear pedido");
     } finally {
       setLoading(false);
     }

@@ -3,6 +3,7 @@
 import Header from '@/components/Header';
 import { PedidoFilters } from '@/components/Pedidos/PedidoFilters';
 import { PedidoList } from '@/components/Pedidos/PedidoList';
+import { PedidosClienteLoading } from '@/components/Pedidos/PedidosClienteLoading';
 import { usePedidos } from '@/components/Pedidos/hooks/usePedidos';
 
 function Pagination({
@@ -93,6 +94,10 @@ export default function ClientePedidosPage() {
     totalItems,
   } = usePedidos();
 
+  if (loading) {
+    return <PedidosClienteLoading />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -114,20 +119,16 @@ export default function ClientePedidosPage() {
           <p className="text-sm text-muted-foreground animate-pulse">Buscando pedidos…</p>
         )}
 
-        {loading ? (
-          <div className="py-12 text-center text-muted-foreground">Cargando pedidos...</div>
-        ) : (
-          <>
-            <PedidoList pedidos={filteredPedidos} />
+        <>
+          <PedidoList pedidos={filteredPedidos} />
 
-            <Pagination
-              page={page}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              onPageChange={setPage}
-            />
-          </>
-        )}
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            onPageChange={setPage}
+          />
+        </>
       </div>
     </div>
   );
