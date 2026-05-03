@@ -40,4 +40,18 @@ export class ProductService {
     const data: ProductApiResponse[] = await res.json();
     return data.map(toProduct);
   }
+
+  static async getProductById(id: string): Promise<Product> {
+    // Note: Since the backend currently lacks a specific /products/:id endpoint, 
+    // we fetch the catalog and filter. In production with a large catalog, 
+    // a specific backend endpoint should be added.
+    const products = await ProductService.getProducts();
+    const product = products.find(p => p.id.toString() === id);
+
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
+    return product;
+  }
 }

@@ -1,7 +1,7 @@
 // /components/marketplace/Marketplace.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useProducts } from '@/hooks/useProducts';
 import { ProductType, Product } from '@/types/product';
 import { Filters } from './Filters';
@@ -9,11 +9,12 @@ import { ProductCard } from './ProductCard';
 import { BuyOrderModal } from './modals/BuyOrderModal';
 import { ConfirmBuyModal } from './modals/ConfirmBuyModal';
 import { useMarketplaceBuy } from './hooks/useMarketplaceBuy';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export const Marketplace = () => {
   const { products } = useProducts();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { formData, errors, loading, setField, createOrder, resetForm, validateForm } =
     useMarketplaceBuy();
 
@@ -22,6 +23,13 @@ export const Marketplace = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  useEffect(() => {
+    const typeParam = searchParams.get('type');
+    if (typeParam) {
+      setFilterType(typeParam as ProductType);
+    }
+  }, [searchParams]);
 
   const filtered = products.filter((p) => {
     const matchesSearch =

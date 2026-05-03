@@ -6,9 +6,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { getStatusColor } from '@/lib/utils/statusColors';
 import { AdminOrder } from '@/types/order';
+import { Eye } from 'lucide-react';
+import { OrderDetailsModal } from '@/components/modals/OrderDetailsModal';
 
 export function UrgentOrderCard({ order }: { order: AdminOrder }) {
-
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   
     useEffect(() => {
@@ -39,7 +41,8 @@ export function UrgentOrderCard({ order }: { order: AdminOrder }) {
     }, [order.imageUrl, order.image?.bucket, order.image?.path]);
 
   return (
-    <Card className="border-border/60 bg-card/90 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.45)] backdrop-blur-sm transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-lg">
+    <>
+      <Card className="border-border/60 bg-card/90 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.45)] backdrop-blur-sm transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-lg">
       <CardContent className="pt-6">
         <div className="flex flex-col gap-4 sm:flex-row">
           <div className="relative h-24 w-full overflow-hidden rounded-xl sm:w-24 sm:flex-shrink-0">
@@ -66,14 +69,27 @@ export function UrgentOrderCard({ order }: { order: AdminOrder }) {
               </span>
             </div>
 
-            <Link href={`/funcionario/pedidos/${order.id}`}>
-              <Button variant="ghost" size="sm" className="px-0 text-primary hover:bg-transparent hover:text-primary/80">
-                Ver detalles
+            <div className="flex justify-end items-center mt-2">
+              <Button
+                onClick={() => setShowDetailsModal(true)}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Eye className="w-4 h-4" />
+                Ver Detalles
               </Button>
-            </Link>
+            </div>
           </div>
         </div>
       </CardContent>
     </Card>
+      
+    <OrderDetailsModal
+      orderId={order.id}
+      isOpen={showDetailsModal}
+      onClose={() => setShowDetailsModal(false)}
+    />
+    </>
   );
 }

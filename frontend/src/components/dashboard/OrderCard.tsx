@@ -4,14 +4,58 @@ import { getImageUrl } from '@/lib/supabase/getImageUrl';
 import { Card, CardContent } from '@/components/ui/card';
 import { getStatusColor } from '@/lib/utils/statusColors';
 import { BaseOrder  } from '@/types/order';
+import { Eye, CreditCard } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { OrderDetailsModal } from '@/components/modals/OrderDetailsModal';
+import { paymentService } from '@/services/payment.service';
 
 interface OrderCardProps {
   order: BaseOrder ;
 }
 
 export function OrderCard({ order }: OrderCardProps) {
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
+  const [paying, setPaying] = useState(false);
 
-const [imageUrl, setImageUrl] = useState('');
+  const handlePay = async () => {
+    try {
+      setPaying(true);
+      
+      const payloadRaw = sessionStorage.getItem(`payu_payload_${order.id}`);
+      let actionUrl;
+      let payload;
+
+      if (payloadRaw) {
+        const parsed = JSON.parse(payloadRaw);
+        actionUrl = parsed.actionUrl;
+        payload = parsed.payload;
+      } else {
+        const regenerated = await paymentService.generatePaymentUrl(Number(order.id));
+        if (regenerated.payment_action_url && regenerated.payment_payload) {
+          actionUrl = regenerated.payment_action_url;
+          payload = regenerated.payment_payload;
+          
+          sessionStorage.setItem(`payu_payload_${order.id}`, JSON.stringify({
+            actionUrl,
+            payload
+          }));
+        }
+      }
+
+      if (!actionUrl || !payload) {
+        alert("No encontramos los datos de pago.");
+        setPaying(false);
+        return;
+      }
+
+      paymentService.submitToPayU(actionUrl, payload);
+    } catch (error) {
+      console.error("Error al procesar el pago:", error);
+      alert("Error al procesar el pago");
+      setPaying(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -41,7 +85,8 @@ const [imageUrl, setImageUrl] = useState('');
   }, [order.imageUrl, order.image?.bucket, order.image?.path]);
 
   return (
-    <Card className="border-border/60 bg-card/90 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.45)] backdrop-blur-sm transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-lg">
+    <>
+      <Card className="border-border/60 bg-card/90 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.45)] backdrop-blur-sm transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-lg">
       <CardContent className="pt-6">
         <div className="flex flex-col gap-4 sm:flex-row">
           <div className="relative h-24 w-full overflow-hidden rounded-xl sm:w-24 sm:flex-shrink-0">
@@ -66,18 +111,49 @@ const [imageUrl, setImageUrl] = useState('');
               </span>
             </div>
 
-            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-              <span>
-                Entrega:{' '}
-                {new Date(order.deliveryDate).toLocaleDateString('es-ES')}
-              </span>
-              <span className="font-semibold text-primary">
-                ${order.price.toLocaleString()}
-              </span>
+              <div className="flex justify-between items-center mt-2">
+                <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                  <span>
+                    Entrega:{' '}
+                    {new Date(order.deliveryDate).toLocaleDateString('es-ES')}
+                  </span>
+                  <span className="font-semibold text-primary">
+                    ${order.price.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  {order.status === 'Pendiente de pago' && (
+                    <Button
+                      onClick={handlePay}
+                      disabled={paying}
+                      size="sm"
+                      className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      {paying ? "Procesando..." : "Pagar"}
+                    </Button>
+                  )}
+                  <Button
+                    onClick={() => setShowDetailsModal(true)}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <Eye className="w-4 h-4" />
+                    Ver Detalles
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      <OrderDetailsModal
+        orderId={order.id}
+        isOpen={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
+      />
+    </>
   );
 }

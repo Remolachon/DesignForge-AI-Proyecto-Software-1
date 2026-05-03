@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Curated Rebel - Premium Product Detail</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Space+Grotesk:wght@400;500;600;700;800;900&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary": "#ffffff",
+                      "secondary": "#506600",
+                      "on-error-container": "#93000a",
+                      "on-primary-fixed": "#23005c",
+                      "surface-dim": "#dadada",
+                      "tertiary": "#b41b23",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary-fixed-variant": "#5516be",
+                      "tertiary-container": "#d83738",
+                      "surface-container-high": "#e8e8e8",
+                      "secondary-fixed": "#c3f400",
+                      "on-tertiary-fixed-variant": "#930013",
+                      "error": "#ba1a1a",
+                      "on-surface-variant": "#494454",
+                      "tertiary-fixed-dim": "#ffb3ad",
+                      "tertiary-fixed": "#ffdad7",
+                      "outline": "#7b7486",
+                      "primary-fixed-dim": "#d0bcff",
+                      "inverse-on-surface": "#f1f1f1",
+                      "inverse-surface": "#2f3131",
+                      "surface-tint": "#6d3bd7",
+                      "surface-bright": "#f9f9f9",
+                      "background": "#f9f9f9",
+                      "primary": "#6b38d4",
+                      "inverse-primary": "#d0bcff",
+                      "on-primary-container": "#fffbff",
+                      "on-primary": "#ffffff",
+                      "primary-fixed": "#e9ddff",
+                      "outline-variant": "#cbc3d7",
+                      "surface-container-highest": "#e2e2e2",
+                      "on-error": "#ffffff",
+                      "on-tertiary-fixed": "#410004",
+                      "on-secondary-fixed-variant": "#3c4d00",
+                      "surface-variant": "#e2e2e2",
+                      "on-tertiary-container": "#fffbff",
+                      "on-background": "#1a1c1c",
+                      "primary-container": "#8455ef",
+                      "on-secondary": "#ffffff",
+                      "on-surface": "#1a1c1c",
+                      "on-secondary-fixed": "#161e00",
+                      "error-container": "#ffdad6",
+                      "surface-container": "#eeeeee",
+                      "surface": "#f9f9f9",
+                      "surface-container-low": "#f3f3f3",
+                      "on-secondary-container": "#546b00",
+                      "secondary-container": "#c1f100",
+                      "secondary-fixed-dim": "#abd600"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {},
+              "fontFamily": {
+                      "headline": [
+                              "Space Grotesk"
+                      ],
+                      "body": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "label": [
+                              "Inter"
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+</head>
+<body class="bg-surface text-on-surface font-body antialiased selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- TopNavBar (Shared Component) - Transactional/Details page, but usually e-comm keeps global nav. Let's keep it but simplified. -->
+<nav class="fixed top-0 w-full z-50 bg-[#f9f9f9] shadow-[0_40px_40px_rgba(26,28,28,0.04)]">
+<div class="flex justify-between items-center h-20 px-8 w-full max-w-[1440px] mx-auto">
+<div class="flex items-center gap-8">
+<a class="font-['Space_Grotesk'] text-2xl font-black tracking-tighter text-[#1a1c1c]" href="#">CURATED REBEL</a>
+<div class="hidden md:flex items-center gap-6">
+<a class="font-['Space_Grotesk'] font-bold text-sm tracking-tight uppercase text-[#6b38d4] font-extrabold hover:text-[#6b38d4] transition-transform duration-200 hover:scale-105" href="#">Marketplace</a>
+<a class="font-['Space_Grotesk'] font-bold text-sm tracking-tight uppercase text-[#1a1c1c] hover:text-[#6b38d4] transition-transform duration-200 hover:scale-105" href="#">Create</a>
+<a class="font-['Space_Grotesk'] font-bold text-sm tracking-tight uppercase text-[#1a1c1c] hover:text-[#6b38d4] transition-transform duration-200 hover:scale-105" href="#">Drops</a>
+<a class="font-['Space_Grotesk'] font-bold text-sm tracking-tight uppercase text-[#1a1c1c] hover:text-[#6b38d4] transition-transform duration-200 hover:scale-105" href="#">Artists</a>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<!-- Search (on_right) -->
+<button class="text-[#1a1c1c] hover:text-[#6b38d4] transition-transform duration-200 hover:scale-105">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">search</span>
+</button>
+<!-- Trailing Icon Actions -->
+<div class="flex items-center gap-4">
+<button class="text-[#1a1c1c] hover:text-[#6b38d4] transition-transform duration-200 hover:scale-105 scale-95 duration-100 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">person</span>
+</button>
+<button class="text-[#1a1c1c] hover:text-[#6b38d4] transition-transform duration-200 hover:scale-105 scale-95 duration-100 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">favorite</span>
+</button>
+</div>
+<!-- Trailing Primary Action -->
+<button class="flex items-center gap-2 bg-gradient-to-r from-primary to-primary-container text-on-primary px-6 py-2.5 rounded-full font-headline font-bold text-sm tracking-tight uppercase hover:shadow-[0_8px_16px_rgba(107,56,212,0.2)] transition-all hover:scale-105 scale-95 duration-100 transition-all">
+<span>Cart</span>
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">shopping_cart</span>
+</button>
+</div>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="pt-24 pb-24 min-h-screen">
+<div class="max-w-[1440px] mx-auto px-4 md:px-8">
+<!-- Breadcrumbs -->
+<div class="flex items-center gap-2 text-label text-sm text-on-surface-variant mb-8 mt-4">
+<a class="hover:text-primary transition-colors" href="#">Marketplace</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">Apparel</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-on-surface font-medium">Neural Drift Hoodie</span>
+</div>
+<!-- Product Grid Layout (Asymmetric Puma-Style) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
+<!-- Left: Image Gallery (High Whitespace, Borderless) -->
+<div class="lg:col-span-7 flex flex-col md:flex-row-reverse gap-6">
+<!-- Main Hero Image -->
+<div class="flex-1 bg-surface-container-low rounded-xl overflow-hidden aspect-[4/5] relative group">
+<img alt="Main product view" class="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105" data-alt="high fashion streetwear hoodie with complex abstract ai generated graphic pattern standing against clean grey seamless background studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAt0wZn55JE5vKPcIyMnpnRbISbYrGEjMlJ_3K1RzVw_x3E7yCeIHGzZQ4Kff801fL-dlN_cixUQ1ZuFJPeNl1Qw9SPVmCOsvWP2lgdcz2-upZzCGZenjmubSlHTc31Ip6twWxTujC_Kof2JFpccFT3shFxfp9MNX6jd5gdUM2c4uxT698iH273A_la238_MO-tRodTRC0vT1R0ziDJL2T3REO_7RTFrDwGydhYDLUk0IPHmZORhUysAgjC3c8Na-2UGfttzVwIcfg"/>
+<!-- AI Badge Overlay -->
+<div class="absolute top-4 left-4 bg-surface-container-lowest/70 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-[0_4px_12px_rgba(26,28,28,0.08)]">
+<span class="material-symbols-outlined text-secondary-container drop-shadow-[0_0_4px_rgba(193,241,0,0.6)] text-[16px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="font-label text-xs font-semibold text-on-surface">Designed by AI</span>
+</div>
+</div>
+<!-- Thumbnails (Vertical) -->
+<div class="flex md:flex-col gap-4 w-full md:w-24 overflow-x-auto md:overflow-visible pb-4 md:pb-0 scrollbar-hide">
+<button class="shrink-0 w-20 h-24 md:w-full md:h-28 rounded-lg overflow-hidden bg-surface-container-lowest border-2 border-primary opacity-100 transition-opacity">
+<img alt="Thumbnail 1" class="w-full h-full object-cover object-center" data-alt="front view of streetwear hoodie high end flat lay on clean white background crisp lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuyRic5HX8XEnWb2aRWLShWA5qAaOJ5ryjquSVZdxYMXW31Oz84E9RwiEgN0rDy_7qElI2ZUmNDfTh5sQGD4LH7oU4R1bZlSvF2HsTqh3c71T3KVOwvOCC3ySL2oZxiUnY2UFdZVBwScZoN0LDUMvNsvNCqidh2-MunbUKxT99dDrdA6HDQHGGlB_7mXT-s_inIAMBvYNT0h9HNB4GyT1h5yRyhZSg1zitz-3tWMsHRJncCD88x7-g5QUVRdavPMLi0OICZ_a0iek"/>
+</button>
+<button class="shrink-0 w-20 h-24 md:w-full md:h-28 rounded-lg overflow-hidden bg-surface-container-low opacity-60 hover:opacity-100 transition-opacity">
+<img alt="Thumbnail 2" class="w-full h-full object-cover object-center" data-alt="detail shot of thick cotton fabric texture on premium streetwear hoodie sharp focus" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpc9a1b01-t6K7sGLpMIJ0f9zfgIjt31KBl9uaG4uIyQoDs-P4bXXkdBdl3ViFFRU7KZQ5knU41l-yCG23H86xAmrGWeRNCEklGOXiGLLQqckIaKE81AOAtQc6dNsQ5GX-eZ8GisGsvTxXyM5h-gdJpJKzDMRMlvDMClvx6ZiPaFpmgzjA44qY1jTKpFs9N7omq0InWeu63gQhXi8LORoDm8pDT4pipu3uAx-gJMZKqeBEhsDD7b7GwCvw0lV8gFUPKEwuVBgY-iU"/>
+</button>
+<button class="shrink-0 w-20 h-24 md:w-full md:h-28 rounded-lg overflow-hidden bg-surface-container-low opacity-60 hover:opacity-100 transition-opacity">
+<img alt="Thumbnail 3" class="w-full h-full object-cover object-center" data-alt="close up of abstract vibrant ai generated graphic print on white cotton garment fabric" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJVoeeitsD8-rw5Uq66VehjhOap48fmRXGtoeKyuophiGx-AHVPPp9sQhJxnNt7VG5Y3XgouMdpGCKvE1AH88gESKaEcQXCpAuDFbUZjiWQxc29LQpsu4aaXMA6dy1PQEAPbGtUArB-zDc5TTGCxzeOpY1Q-pM2tTVwFXOyrs3qXG3XnUyfNPmngj09w8TWohJBNj84a7w7_1MCrOGqWqQVVlXdGTkSomvhgsoA-cB_3cfzH_lNPWes-da40z7SBDS09FFpCiICyM"/>
+</button>
+<button class="shrink-0 w-20 h-24 md:w-full md:h-28 rounded-lg overflow-hidden bg-surface-container-low opacity-60 hover:opacity-100 transition-opacity flex items-center justify-center relative">
+<img alt="Thumbnail 4" class="w-full h-full object-cover object-center absolute inset-0 blur-[2px]" data-alt="model wearing streetwear hoodie standing in bright sunlit industrial space with concrete floor" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmHzQujZ1sKfE71QsVGfKfdj8NeM1vLFJCcWy8ym5mBURrcSNt2lhLUgNxnwB_qKP_zbu60w4XB_16l4mYWkyCQgqvgsG2NwBOOU_dnPF_GPxCM-fcMAokwZPFGFHwvwM8OvUv7e7gqxspPOhwpv3bu8d64EzZSWHgBzWQjHl3xx5_DE0xx0RADjNTUBdbFPLWZ5spmXqr0e0Stxfzr190scNWN-AtxeFub_FU7yLQ5y7t1R-wmPB1UHCs8sjoqUhv6YubNJvLctg"/>
+<div class="absolute inset-0 bg-on-surface/30"></div>
+<span class="material-symbols-outlined text-surface-container-lowest z-10 text-3xl" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+</button>
+</div>
+</div>
+<!-- Right: Product Information & Purchase Context -->
+<div class="lg:col-span-5 flex flex-col pt-2 lg:pt-8">
+<!-- Title & Price Block -->
+<div class="mb-8">
+<h1 class="font-headline text-4xl lg:text-5xl font-black text-on-surface leading-[1.1] tracking-tighter mb-4">
+                            Neural Drift<br/>Heavyweight Hoodie
+                        </h1>
+<div class="flex items-end gap-4 mb-2">
+<span class="font-headline text-2xl font-bold text-on-surface">$145.00</span>
+<span class="font-label text-sm text-on-surface-variant line-through pb-1">$180.00</span>
+</div>
+<div class="flex items-center gap-2 text-label text-sm text-on-surface-variant">
+<span class="w-2 h-2 rounded-full bg-secondary-container drop-shadow-[0_0_4px_rgba(193,241,0,0.6)]"></span>
+                            In Stock - Ships in 24h
+                        </div>
+</div>
+<!-- Short Description -->
+<p class="font-body text-base text-on-surface-variant leading-relaxed mb-10 max-w-md">
+                        Generated by AI Model Alpha-V3. This 450gsm organic cotton hoodie features a subversive, non-euclidean print that challenges traditional streetwear geometry. Hand-finished in Los Angeles.
+                    </p>
+<!-- Interactive Options (Glassmorphism Chips) -->
+<div class="mb-10 space-y-6">
+<!-- Color Selection -->
+<div>
+<div class="flex justify-between items-center mb-3">
+<span class="font-label text-sm font-semibold text-on-surface uppercase tracking-wide">Color</span>
+<span class="font-label text-xs text-on-surface-variant">Optic White</span>
+</div>
+<div class="flex gap-3">
+<button class="w-10 h-10 rounded-full border border-surface-container-highest p-1 flex items-center justify-center hover:scale-110 transition-transform">
+<span class="w-full h-full rounded-full bg-[#f1f1f1] shadow-inner"></span>
+</button>
+<button class="w-10 h-10 rounded-full border-2 border-primary p-1 flex items-center justify-center scale-110 transition-transform">
+<span class="w-full h-full rounded-full bg-[#e8e8e8] shadow-inner"></span>
+</button>
+<button class="w-10 h-10 rounded-full border border-surface-container-highest p-1 flex items-center justify-center hover:scale-110 transition-transform">
+<span class="w-full h-full rounded-full bg-[#1a1c1c] shadow-inner"></span>
+</button>
+</div>
+</div>
+<!-- Size Selection -->
+<div>
+<div class="flex justify-between items-center mb-3">
+<span class="font-label text-sm font-semibold text-on-surface uppercase tracking-wide">Size</span>
+<button class="font-label text-xs text-primary underline hover:text-primary-container transition-colors">Size Guide</button>
+</div>
+<div class="grid grid-cols-4 gap-3">
+<button class="py-3 rounded-lg bg-surface-container-lowest border-none shadow-[0_4px_20px_rgba(26,28,28,0.03)] font-label text-sm font-medium text-on-surface hover:bg-surface-container-low transition-colors">S</button>
+<button class="py-3 rounded-lg bg-surface-container-lowest border-none shadow-[0_4px_20px_rgba(26,28,28,0.03)] font-label text-sm font-medium text-on-surface hover:bg-surface-container-low transition-colors">M</button>
+<button class="py-3 rounded-lg bg-primary text-on-primary border-none shadow-[0_8px_24px_rgba(107,56,212,0.2)] font-label text-sm font-bold scale-105 transition-all">L</button>
+<button class="py-3 rounded-lg bg-surface-container-lowest border-none shadow-[0_4px_20px_rgba(26,28,28,0.03)] font-label text-sm font-medium text-on-surface hover:bg-surface-container-low transition-colors">XL</button>
+</div>
+</div>
+</div>
+<!-- Action Area -->
+<div class="flex flex-col gap-4 mt-auto">
+<button class="w-full bg-gradient-to-r from-primary to-primary-container text-on-primary py-4 rounded-xl font-headline font-bold text-lg tracking-tight uppercase hover:shadow-[0_12px_32px_rgba(107,56,212,0.25)] transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 border-none">
+                            Add to Cart
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">shopping_bag</span>
+</button>
+<button class="w-full bg-surface-container-highest text-primary py-4 rounded-xl font-headline font-bold text-sm tracking-tight uppercase hover:bg-surface-dim transition-colors flex items-center justify-center gap-2 border-none">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">tune</span>
+                            Customize Prompt
+                        </button>
+</div>
+<!-- Perks List (Micro-copy precision) -->
+<div class="mt-8 pt-8 border-t border-outline-variant/15 grid grid-cols-2 gap-y-4 gap-x-2">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[20px]">local_shipping</span>
+<span class="font-label text-xs text-on-surface-variant">Free Global Shipping</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[20px]">recycling</span>
+<span class="font-label text-xs text-on-surface-variant">Sustainable Materials</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[20px]">verified</span>
+<span class="font-label text-xs text-on-surface-variant">1-of-1 Guarantee</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[20px]">history</span>
+<span class="font-label text-xs text-on-surface-variant">14-Day Returns</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer (Shared Component) -->
+<footer class="w-full py-12 bg-[#f3f3f3] border-t border-[#cbc3d7]/15 flat">
+<div class="max-w-[1440px] mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="font-['Space_Grotesk'] font-black text-xl text-[#1a1c1c]">CURATED REBEL</div>
+<div class="flex flex-wrap justify-center gap-6">
+<a class="font-['Plus_Jakarta_Sans'] text-xs tracking-wide uppercase text-[#1a1c1c]/40 hover:text-[#6b38d4] transition-colors opacity-80 hover:opacity-100 transition-opacity" href="#">Terms of Service</a>
+<a class="font-['Plus_Jakarta_Sans'] text-xs tracking-wide uppercase text-[#1a1c1c]/40 hover:text-[#6b38d4] transition-colors opacity-80 hover:opacity-100 transition-opacity" href="#">Privacy Policy</a>
+<a class="font-['Plus_Jakarta_Sans'] text-xs tracking-wide uppercase text-[#1a1c1c]/40 hover:text-[#6b38d4] transition-colors opacity-80 hover:opacity-100 transition-opacity" href="#">Customization Guide</a>
+<a class="font-['Plus_Jakarta_Sans'] text-xs tracking-wide uppercase text-[#1a1c1c]/40 hover:text-[#6b38d4] transition-colors opacity-80 hover:opacity-100 transition-opacity" href="#">Sustainability</a>
+</div>
+<div class="font-['Plus_Jakarta_Sans'] text-xs tracking-wide uppercase text-[#1a1c1c]/40">© 2024 CURATED REBEL. POWERED BY AI.</div>
+</div>
+</footer>
+</body></html>

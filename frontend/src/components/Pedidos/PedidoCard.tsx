@@ -2,11 +2,12 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
-import { Eye } from 'lucide-react';
+import { Eye, CreditCard } from 'lucide-react';
 import { Pedido } from '@/components/Pedidos/types/pedido';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { OrderDetailsModal } from '@/components/modals/OrderDetailsModal';
+import { paymentService } from '@/services/payment.service';
 
 interface Props {
   pedido: Pedido;
@@ -14,6 +15,8 @@ interface Props {
 
 function getStatusStyles(status: string) {
   switch (status) {
+    case 'Pendiente de pago':
+      return 'bg-amber-100 text-amber-700';
     case 'En diseño':
       return 'bg-blue-100 text-blue-700';
     case 'En producción':
@@ -29,6 +32,46 @@ function getStatusStyles(status: string) {
 
 export function PedidoCard({ pedido }: Props) {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [paying, setPaying] = useState(false);
+
+  const handlePay = async () => {
+    try {
+      setPaying(true);
+      
+      const payloadRaw = sessionStorage.getItem(`payu_payload_${pedido.id}`);
+      let actionUrl;
+      let payload;
+
+      if (payloadRaw) {
+        const parsed = JSON.parse(payloadRaw);
+        actionUrl = parsed.actionUrl;
+        payload = parsed.payload;
+      } else {
+        const regenerated = await paymentService.generatePaymentUrl(Number(pedido.id));
+        if (regenerated.payment_action_url && regenerated.payment_payload) {
+          actionUrl = regenerated.payment_action_url;
+          payload = regenerated.payment_payload;
+          
+          sessionStorage.setItem(`payu_payload_${pedido.id}`, JSON.stringify({
+            actionUrl,
+            payload
+          }));
+        }
+      }
+
+      if (!actionUrl || !payload) {
+        alert("No encontramos los datos de pago.");
+        setPaying(false);
+        return;
+      }
+
+      paymentService.submitToPayU(actionUrl, payload);
+    } catch (error) {
+      console.error("Error al procesar el pago:", error);
+      alert("Error al procesar el pago");
+      setPaying(false);
+    }
+  };
 
   return (
     <>
@@ -84,15 +127,28 @@ export function PedidoCard({ pedido }: Props) {
             <div className="flex justify-between items-center border-t pt-4">
               <span className="text-xl font-semibold text-primary">${pedido.price.toLocaleString()}</span>
 
-              <Button
-                onClick={() => setShowDetailsModal(true)}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <Eye className="w-4 h-4" />
-                Ver Detalles
-              </Button>
+              <div className="flex gap-2">
+                {pedido.status === 'Pendiente de pago' && (
+                  <Button
+                    onClick={handlePay}
+                    disabled={paying}
+                    size="sm"
+                    className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    {paying ? "Procesando..." : "Pagar"}
+                  </Button>
+                )}
+                <Button
+                  onClick={() => setShowDetailsModal(true)}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <Eye className="w-4 h-4" />
+                  Ver Detalles
+                </Button>
+              </div>
             </div>
           </div>
         </div>
