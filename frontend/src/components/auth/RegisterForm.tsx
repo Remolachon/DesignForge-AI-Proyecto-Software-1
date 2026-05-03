@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -50,6 +50,19 @@ export default function RegisterForm() {
   });
 
   const router = useRouter();
+
+  useEffect(() => {
+    const googleError = localStorage.getItem("google_auth_error");
+
+    if (googleError) {
+      localStorage.removeItem("google_auth_error");
+      setErrors((prev) => ({
+        ...prev,
+        general: googleError,
+      }));
+      toast.error(googleError);
+    }
+  }, []);
 
   const clearFieldError = (field: keyof FormErrors) => {
     setErrors((prev) => ({ ...prev, [field]: "" }));

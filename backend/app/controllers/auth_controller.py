@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
@@ -11,6 +13,7 @@ from app.services.user_service import UserService
 
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
+logger = logging.getLogger(__name__)
 
 
 def _service_unavailable() -> HTTPException:
@@ -28,6 +31,39 @@ def _update_user_profile(
     phone: str | None = None,
 ) -> None:
     should_commit = False
+
+    if first_name and first_name != db_user.first_name:
+        db_user.first_name = first_name
+        should_commit = True
+
+    if last_name and last_name != db_user.last_name:
+        db_user.last_name = last_name
+        should_commit = True
+
+    if phone is not None:
+        normalized_phone = phone.strip() or None
+        if normalized_phone != db_user.phone:
+            db_user.phone = normalized_phone
+            should_commit = True
+
+    if should_commit:
+        db.commit()
+        db.refresh(db_user)
+
+
+def _link_google_account(
+    db: Session,
+    db_user,
+    supabase_id: str,
+    first_name: str | None = None,
+    last_name: str | None = None,
+    phone: str | None = None,
+) -> None:
+    should_commit = False
+
+    if db_user.supabase_id != supabase_id:
+        db_user.supabase_id = supabase_id
+        should_commit = True
 
     if first_name and first_name != db_user.first_name:
         db_user.first_name = first_name
@@ -192,11 +228,10 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 @router.post("/google-oauth", response_model=AuthResponse)
 def google_oauth(payload: GoogleOAuthRequest, db: Session = Depends(get_db)):
     try:
-        print("[auth_controller] /google-oauth called", {"access_token_present": bool(payload.access_token)})
+        logger.debug("/google-oauth called", extra={"access_token_present": bool(payload.access_token)})
         token_payload = GoogleOAuthProvider.verify_supabase_token(payload.access_token)
 
         if not token_payload:
-            print("[auth_controller] token validation failed")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token de Google inválido o expirado",
@@ -214,9 +249,21 @@ def google_oauth(payload: GoogleOAuthRequest, db: Session = Depends(get_db)):
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="No se pudo validar la cuenta de Google",
             )
-        print(f"[auth_controller] google oauth for supabase_id={supabase_id} email={email}")
+
+        logger.debug(
+            "google oauth processed",
+            extra={
+                "supabase_id": supabase_id,
+                "email": email,
+                "first_name": first_name,
+                "last_name": last_name,
+            },
+        )
 
         db_user = UserService.get_user_by_supabase_id(db, supabase_id)
+
+        if db_user is None:
+            db_user = UserService.get_user_by_email(db, email)
 
         if db_user is None:
             db_user = UserService.create_user(
@@ -229,13 +276,23 @@ def google_oauth(payload: GoogleOAuthRequest, db: Session = Depends(get_db)):
             )
             UserService.assign_default_role(db, db_user.id)
         else:
-            _update_user_profile(
-                db,
-                db_user,
-                first_name=first_name,
-                last_name=last_name,
-                phone=phone,
-            )
+            if db_user.supabase_id != supabase_id:
+                _link_google_account(
+                    db,
+                    db_user,
+                    supabase_id=supabase_id,
+                    first_name=first_name,
+                    last_name=last_name,
+                    phone=phone,
+                )
+            else:
+                _update_user_profile(
+                    db,
+                    db_user,
+                    first_name=first_name,
+                    last_name=last_name,
+                    phone=phone,
+                )
         return _build_auth_response(db, db_user, payload.access_token)
     except OperationalError:
         raise _service_unavailable()
@@ -243,7 +300,7 @@ def google_oauth(payload: GoogleOAuthRequest, db: Session = Depends(get_db)):
         # Re-raise HTTPExceptions so FastAPI handles them normally
         raise
     except Exception as e:
-        print(f"[auth_controller] unexpected error in /google-oauth: {e}")
+        logger.exception("unexpected error in /google-oauth")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Ocurrió un error al procesar la autenticación con Google",

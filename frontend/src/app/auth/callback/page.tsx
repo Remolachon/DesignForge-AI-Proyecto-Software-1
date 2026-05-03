@@ -11,6 +11,7 @@ export default function GoogleCallbackPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<"loading" | "done" | "error">("loading");
+  const [message, setMessage] = useState("Espere un momento mientras completamos el inicio de sesión.");
 
   const mode = useMemo(() => searchParams.get("mode") || "login", [searchParams]);
 
@@ -18,8 +19,28 @@ export default function GoogleCallbackPage() {
     const code = searchParams.get("code");
     const error = searchParams.get("error") || searchParams.get("error_description");
     const fallbackRoute = mode === "register" ? "/register" : "/login";
+    const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    const hasFragment = window.location.hash.length > 1;
 
-    if (error || !code) {
+    console.log("Google callback received", { currentPath, mode, codePresent: Boolean(code), error, hasFragment });
+
+    if (error) {
+      const errorMessage = `No se pudo completar el inicio con Google: ${error}`;
+      localStorage.setItem("google_auth_error", errorMessage);
+      toast.error(errorMessage);
+      setStatus("error");
+      setMessage("Volveremos al formulario para que puedas intentarlo de nuevo.");
+      router.replace(fallbackRoute);
+      return;
+    }
+
+    // Allow continuing if we have either a code OR a fragment (implicit flow)
+    if (!code && !hasFragment) {
+      const errorMessage = "No se recibió el código de Google. Revisa que Supabase tenga autorizado este callback.";
+      localStorage.setItem("google_auth_error", errorMessage);
+      toast.error(errorMessage);
+      setStatus("error");
+      setMessage("Volveremos al formulario para que puedas intentarlo de nuevo.");
       router.replace(fallbackRoute);
       return;
     }
@@ -29,7 +50,8 @@ export default function GoogleCallbackPage() {
     const finishOAuth = async () => {
       try {
         setStatus("loading");
-        const authResult = await completeGoogleAuth(code);
+        setMessage("Validando tu cuenta con Supabase y creando tu sesión...");
+        const authResult = await completeGoogleAuth(code || undefined);
 
         if (!active) return;
 
@@ -42,14 +64,18 @@ export default function GoogleCallbackPage() {
         }
 
         setStatus("done");
+        setMessage("Tu sesión quedó lista. Estamos entrando a tu panel.");
         router.replace(getDashboardByRole(authResult.role));
       } catch (err: unknown) {
         if (!active) return;
 
         console.error("finishOAuth error:", err);
         setStatus("error");
-        toast.error("No se pudo completar el inicio con Google. Puedes reintentar.");
-        // No redirect here so the user can see the error and retry from the form
+        const errorMessage = "No se pudo completar el inicio con Google. Puedes reintentar desde el formulario.";
+        setMessage(errorMessage);
+        localStorage.setItem("google_auth_error", errorMessage);
+        toast.error(errorMessage);
+        router.replace(fallbackRoute);
       }
     };
 
@@ -91,9 +117,7 @@ export default function GoogleCallbackPage() {
                   : "Completando el inicio de sesión"}
             </h1>
             <p className="text-sm leading-6 text-muted-foreground sm:text-base">
-              {status === "error"
-                ? "No se guardó ningún cambio. Puedes intentarlo de nuevo cuando quieras."
-                : "Espere un momento mientras completamos el inicio de sesión."}
+              {message}
             </p>
           </div>
         </div>

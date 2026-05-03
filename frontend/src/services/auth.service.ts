@@ -37,21 +37,66 @@ export const startGoogleAuth = async (mode: GoogleAuthMode) => {
   }
 };
 
-export const completeGoogleAuth = async (code: string) => {
-  // Intercambiar el código por sesión en Supabase
-  const { data: sessionData, error: sessionError } = await supabaseClient.auth.exchangeCodeForSession(code);
+export const completeGoogleAuth = async (code?: string) => {
+  let accessToken: string | undefined;
+  const fragment = window.location.hash.substring(1);
 
-  if (sessionError) {
-    console.error("completeGoogleAuth: exchangeCodeForSession error:", sessionError);
-    throw sessionError;
+  console.log("completeGoogleAuth: starting", { code: !!code, fragmentLength: fragment.length });
+
+  if (code) {
+    console.log("completeGoogleAuth: using authorization code flow");
+    const { data: sessionData, error: sessionError } = await supabaseClient.auth.exchangeCodeForSession(code);
+
+    if (sessionError) {
+      console.error("completeGoogleAuth: exchangeCodeForSession error:", sessionError);
+      throw sessionError;
+    }
+
+    accessToken = sessionData.session?.access_token;
+    console.log("completeGoogleAuth: got token from exchangeCodeForSession", { hasToken: !!accessToken });
+  } else if (fragment) {
+    // Supabase is using implicit flow - let it process the fragment automatically
+    console.log("completeGoogleAuth: fragment detected, letting Supabase process it");
+    
+    // Wait a moment for Supabase to process the fragment and set the session
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+
+    if (sessionError) {
+      console.error("completeGoogleAuth: getSession error after fragment:", sessionError);
+      throw sessionError;
+    }
+
+    accessToken = sessionData.session?.access_token;
+    console.log("completeGoogleAuth: got token from session after processing fragment", {
+      hasToken: !!accessToken,
+      email: sessionData.session?.user?.email,
+    });
+  } else {
+    // No code, no fragment - try getSession() directly
+    console.log("completeGoogleAuth: no code or fragment, trying getSession()");
+    const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+
+    if (sessionError) {
+      console.error("completeGoogleAuth: getSession error:", sessionError);
+      throw sessionError;
+    }
+
+    accessToken = sessionData.session?.access_token;
+    console.log("completeGoogleAuth: got token from direct getSession()", { hasToken: !!accessToken });
   }
-
-  const accessToken = sessionData.session?.access_token;
 
   if (!accessToken) {
-    console.error("completeGoogleAuth: no access_token in sessionData", sessionData);
+    console.error("completeGoogleAuth: FAILED - no access_token available after Google redirect", {
+      urlFragment: fragment.substring(0, 50),
+      hasCode: !!code,
+      hasFragment: !!fragment,
+    });
     throw new Error("SESSION_EXPIRED");
   }
+
+  console.log("completeGoogleAuth: SUCCESS - token acquired, posting to backend");
 
   try {
     console.log("completeGoogleAuth: posting access_token to backend", { api: `${API_URL}/google-oauth` });
@@ -60,9 +105,6 @@ export const completeGoogleAuth = async (code: string) => {
       {
         access_token: accessToken,
       },
-      {
-        timeout: 7000,
-      }
     );
 
     console.log("completeGoogleAuth: backend response", response.data);
