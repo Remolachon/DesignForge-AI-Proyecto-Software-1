@@ -8,6 +8,10 @@ type GoogleAuthMode = "login" | "register";
 export const getDashboardByRole = (role: string | undefined) => {
   const normalizedRole = (role || "").toLowerCase().trim();
 
+  if (normalizedRole === "administrador") {
+    return "/administrador/dashboard";
+  }
+
   if (normalizedRole === "funcionario") {
     return "/funcionario/dashboard";
   }

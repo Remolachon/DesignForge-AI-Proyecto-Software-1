@@ -13,6 +13,7 @@ from app.models.product_type import ProductType
 from app.models.productionStage import ProductionStage
 from app.models.statusHistory import StatusHistory
 from app.models.transaction import Transaction
+from app.models.company import Company
 from app.models.user import User
 from app.providers.payu_provider import payu_provider
 from app.providers.supabase_provider import supabase_admin
@@ -83,6 +84,16 @@ class OrderService:
         db.add(stage)
         db.flush()
         return stage
+
+    @staticmethod
+    def _order_query_options():
+        return [
+            joinedload(Order.user).joinedload(User.company),
+            joinedload(Order.items).joinedload(OrderItem.current_stage),
+            joinedload(Order.items).joinedload(OrderItem.product_type),
+            joinedload(Order.items).joinedload(OrderItem.assets),
+            joinedload(Order.items).joinedload(OrderItem.product).joinedload(Product.company),
+        ]
 
     @staticmethod
     def _safe_signed_url(bucket_name: str | None, storage_path: str | None) -> str | None:
@@ -199,6 +210,8 @@ class OrderService:
     def _serialize_order(db: Session, order: Order, include_client: bool = False):
         item = order.items[0] if hasattr(order, "items") and order.items else None
         asset = item.assets[0] if item and hasattr(item, "assets") and item.assets else None
+        product = item.product if item and getattr(item, "product", None) else None
+        product_company = product.company if product and getattr(product, "company", None) else None
 
         stage_name = item.current_stage.name if item and item.current_stage and item.current_stage.name else "En diseño"
         stage_name = OrderService._canonical_status(stage_name)
@@ -208,7 +221,7 @@ class OrderService:
         if payment_status in {"pending", "declined", "expired", "cancelled", "refunded", "unknown"}:
             stage_name = "Pendiente de pago"
 
-        title = item.product_type.name if item and item.product_type and item.product_type.name else "Pedido personalizado"
+        title = product.name if product and product.name else (item.product_type.name if item and item.product_type and item.product_type.name else "Pedido personalizado")
         product_type = item.product_type.name if item and item.product_type else None
 
         created_at = order.created_at or OrderService._now_local()
@@ -226,6 +239,7 @@ class OrderService:
             "createdAt": created_at.isoformat(),
             "image": {"bucket": bucket_name, "path": storage_path},
             "imageUrl": OrderService._safe_signed_url(bucket_name, storage_path),
+            "productId": item.product_id if item else None,
             "productType": product_type,
         }
 
@@ -233,6 +247,10 @@ class OrderService:
             first_name = order.user.first_name if order.user else ""
             last_name = order.user.last_name if order.user else ""
             payload["clientName"] = f"{first_name} {last_name}".strip() or "Cliente"
+            company_name = product_company.name if product_company and product_company.name else None
+            if not company_name and order.user and order.user.company and order.user.company.name:
+                company_name = order.user.company.name
+            payload["companyName"] = company_name
 
         return payload
 
@@ -242,12 +260,7 @@ class OrderService:
 
         query = (
             db.query(Order)
-            .options(
-                joinedload(Order.user),
-                joinedload(Order.items).joinedload(OrderItem.current_stage),
-                joinedload(Order.items).joinedload(OrderItem.product_type),
-                joinedload(Order.items).joinedload(OrderItem.assets),
-            )
+            .options(*OrderService._order_query_options())
             .order_by(Order.created_at.desc())
         )
 
@@ -274,12 +287,7 @@ class OrderService:
     def get_user_orders(db: Session, user_id: int):
         query = (
             db.query(Order)
-            .options(
-                joinedload(Order.user),
-                joinedload(Order.items).joinedload(OrderItem.current_stage),
-                joinedload(Order.items).joinedload(OrderItem.product_type),
-                joinedload(Order.items).joinedload(OrderItem.assets),
-            )
+            .options(*OrderService._order_query_options())
             .filter(Order.user_id == user_id)
             .order_by(Order.created_at.desc())
         )
@@ -315,12 +323,7 @@ class OrderService:
     ):
         query = (
             db.query(Order)
-            .options(
-                joinedload(Order.user),
-                joinedload(Order.items).joinedload(OrderItem.current_stage),
-                joinedload(Order.items).joinedload(OrderItem.product_type),
-                joinedload(Order.items).joinedload(OrderItem.assets),
-            )
+            .options(*OrderService._order_query_options())
             .filter(Order.user_id == user_id)
             .order_by(Order.created_at.desc())
         )
@@ -338,6 +341,7 @@ class OrderService:
                     (cast(Order.id, String).ilike(term))
                     | (cast(Order.id, String).ilike(f"%{term_numeric}%"))
                     | (ProductionStage.name.ilike(term))
+                    | (Product.name.ilike(term))
                     | (ProductType.name.ilike(term))
                 )
                 .distinct()
@@ -376,12 +380,7 @@ class OrderService:
     ):
         query = (
             db.query(Order)
-            .options(
-                joinedload(Order.user),
-                joinedload(Order.items).joinedload(OrderItem.current_stage),
-                joinedload(Order.items).joinedload(OrderItem.product_type),
-                joinedload(Order.items).joinedload(OrderItem.assets),
-            )
+            .options(*OrderService._order_query_options())
             .order_by(Order.created_at.desc())
         )
 
@@ -402,6 +401,70 @@ class OrderService:
                     | (User.last_name.ilike(term))
                     | (User.email.ilike(term))
                     | (ProductionStage.name.ilike(term))
+                    | (Product.name.ilike(term))
+                    | (ProductType.name.ilike(term))
+                )
+                .distinct()
+            )
+            query = query.filter(Order.id.in_(matching_ids))
+
+        if status and status != "all":
+            candidates = OrderService._status_candidates(status)
+            matching_ids = (
+                db.query(Order.id)
+                .join(Order.items)
+                .join(OrderItem.current_stage)
+                .filter(ProductionStage.name.in_(candidates))
+                .distinct()
+            )
+            query = query.filter(Order.id.in_(matching_ids))
+
+        page_data = OrderService._paginate(query, page, page_size)
+        serialized = [OrderService._serialize_order(db, o, include_client=True) for o in page_data["items"]]
+
+        return {
+            "items": serialized,
+            "page": page_data["page"],
+            "pageSize": page_data["page_size"],
+            "totalItems": page_data["total_items"],
+            "totalPages": page_data["total_pages"],
+        }
+
+    @staticmethod
+    def get_admin_orders_page(
+        db: Session,
+        page: int = 1,
+        page_size: int = 10,
+        search: str | None = None,
+        status: str | None = None,
+    ):
+        query = (
+            db.query(Order)
+            .options(*OrderService._order_query_options())
+            .order_by(Order.created_at.desc())
+        )
+
+        if search:
+            raw = search.strip()
+            term = f"%{raw}%"
+            term_numeric = raw.replace("#", "")
+            matching_ids = (
+                db.query(Order.id)
+                .join(User, Order.user_id == User.id)
+                .outerjoin(User.company)
+                .join(Order.items)
+                .join(OrderItem.current_stage)
+                .join(OrderItem.product_type)
+                .filter(
+                    (cast(Order.id, String).ilike(term))
+                    | (cast(Order.id, String).ilike(f"%{term_numeric}%"))
+                    | (User.first_name.ilike(term))
+                    | (User.last_name.ilike(term))
+                    | (User.email.ilike(term))
+                    | (Company.name.ilike(term))
+                    | (Product.company.has(Company.name.ilike(term)))
+                    | (ProductionStage.name.ilike(term))
+                    | (Product.name.ilike(term))
                     | (ProductType.name.ilike(term))
                 )
                 .distinct()
@@ -439,12 +502,7 @@ class OrderService:
     ):
         order = (
             db.query(Order)
-            .options(
-                joinedload(Order.user),
-                joinedload(Order.items).joinedload(OrderItem.current_stage),
-                joinedload(Order.items).joinedload(OrderItem.product_type),
-                joinedload(Order.items).joinedload(OrderItem.assets),
-            )
+            .options(*OrderService._order_query_options())
             .filter(Order.id == order_id)
             .first()
         )
@@ -479,12 +537,7 @@ class OrderService:
 
         updated_order = (
             db.query(Order)
-            .options(
-                joinedload(Order.user),
-                joinedload(Order.items).joinedload(OrderItem.current_stage),
-                joinedload(Order.items).joinedload(OrderItem.product_type),
-                joinedload(Order.items).joinedload(OrderItem.assets),
-            )
+            .options(*OrderService._order_query_options())
             .filter(Order.id == order_id)
             .first()
         )
@@ -709,11 +762,12 @@ class OrderService:
         query = (
             db.query(Order)
             .options(
-                joinedload(Order.user),
+                joinedload(Order.user).joinedload(User.company),
                 joinedload(Order.items).joinedload(OrderItem.current_stage),
                 joinedload(Order.items).joinedload(OrderItem.product_type),
                 joinedload(Order.items).joinedload(OrderItem.parameters),
                 joinedload(Order.items).joinedload(OrderItem.assets),
+                joinedload(Order.items).joinedload(OrderItem.product).joinedload(Product.company),
             )
             .filter(Order.id == order_id)
         )
@@ -728,6 +782,8 @@ class OrderService:
         item = order.items[0]
         asset = item.assets[0] if item.assets else None
         params = item.parameters
+        product = item.product if item.product else None
+        product_company = product.company if product and product.company else None
 
         stage_name = item.current_stage.name if item.current_stage and item.current_stage.name else "En diseño"
         stage_name = OrderService._canonical_status(stage_name)
@@ -737,7 +793,7 @@ class OrderService:
         if payment_status in {"pending", "declined", "expired", "cancelled", "refunded", "unknown"}:
             stage_name = "Pendiente de pago"
 
-        title = item.product_type.name if item.product_type and item.product_type.name else "Pedido personalizado"
+        title = product.name if product and product.name else (item.product_type.name if item.product_type and item.product_type.name else "Pedido personalizado")
         product_type = item.product_type.name if item.product_type else None
         created_at = order.created_at or OrderService._now_local()
         delivery_date = created_at + timedelta(days=7)
@@ -753,6 +809,7 @@ class OrderService:
             "createdAt": created_at.isoformat(),
             "image": {"bucket": bucket_name, "path": storage_path},
             "imageUrl": OrderService._safe_signed_url(bucket_name, storage_path),
+            "productId": item.product_id if item else None,
             "productType": product_type,
             "quantity": item.quantity,
             "parameters": {
@@ -767,6 +824,10 @@ class OrderService:
             first_name = order.user.first_name if order.user else ""
             last_name = order.user.last_name if order.user else ""
             payload["clientName"] = f"{first_name} {last_name}".strip() or "Cliente"
+            company_name = product_company.name if product_company and product_company.name else None
+            if not company_name and order.user and order.user.company and order.user.company.name:
+                company_name = order.user.company.name
+            payload["companyName"] = company_name
 
         return payload
 

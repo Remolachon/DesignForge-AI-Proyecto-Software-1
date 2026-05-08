@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Text, Numeric, Boolean, ForeignKey
+from sqlalchemy.orm import relationship
 from app.database.database import Base
 
 class Product(Base):
@@ -13,3 +14,5 @@ class Product(Base):
     base_price = Column(Numeric, nullable=False)
     is_public = Column(Boolean, default=True)
     is_active = Column(Boolean, default=True)
+
+    company = relationship("Company")

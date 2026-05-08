@@ -17,10 +17,12 @@ export interface BaseOrder {
     bucket: string;
     path: string;
   };
+  productId?: number | null;
 }
 
 export interface AdminOrder extends BaseOrder {
   clientName: string;
+  companyName?: string | null;
   imageUrl?: string | null;
   productType?: 'bordado' | 'neon-flex' | 'acrilico';
 }

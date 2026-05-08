@@ -83,6 +83,7 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
                   src={mainImage}
                   alt={initialProduct.title}
                   fill
+                  loading="eager"
                   className="object-cover object-center transition-transform duration-700 group-hover:scale-[1.03]"
                   unoptimized
                 />

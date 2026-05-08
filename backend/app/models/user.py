@@ -15,6 +15,6 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     supabase_id = Column(String, unique=True)
 
-    company = relationship("Company")
+    company = relationship("Company", back_populates="users", foreign_keys=[company_id])
     orders = relationship("Order", back_populates="user")
     

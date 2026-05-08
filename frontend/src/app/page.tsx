@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/buttonMayus";
 import Header from "@/components/Header";
 import { getPublicImageUrl } from "@/lib/supabase/getPublicImageUrl";
@@ -58,12 +59,12 @@ export default function Landing() {
       <section className="py-20 px-4 bg-primary text-white">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl font-semibold mb-6">
-            ¿Listo para crear algo increíble?
+            ¿Quieres vender tus productos con nosotros?
           </h2>
           <p className="text-xl mb-8 opacity-90">
-            Únete a cientos de clientes satisfechos que ya han creado productos únicos
+            Registra tu empresa y empieza a publicar tu catálogo en nuestra plataforma.
           </p>
-          <Link href="/register" className="inline-block relative z-50 mt-8">
+          <Link href="/crear-empresa" className="inline-block relative z-50 mt-8">
             <Magnetic intensityX={0.35} intensityY={0.08} actionArea='global' range={250} springOptions={{ stiffness: 80, damping: 10, mass: 0.5 }}>
               <Button size="lg" className="group relative overflow-hidden bg-accent text-accent-foreground hover:brightness-110 shadow-lg hover:shadow-2xl transition-all duration-500">
                 {/* Shine effect div */}
@@ -97,11 +98,14 @@ function ProductCard({
 
   return (
     <div className="group relative overflow-hidden rounded-xl bg-white border border-border hover:shadow-lg transition-all duration-300">
-      <div className="aspect-[4/3] overflow-hidden">
-        <img
+      <div className="relative aspect-[4/3] overflow-hidden">
+        <Image
           src={imageUrl}
           alt={title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          fill
+          loading="lazy"
+          unoptimized
+          className="object-cover group-hover:scale-105 transition-transform duration-300"
         />
       </div>
 

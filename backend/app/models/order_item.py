@@ -20,6 +20,7 @@ class OrderItem(Base):
         foreign_keys=[current_stage_id]
     )
     product_type = relationship("ProductType")
+    product = relationship("Product")
     order = relationship("Order", back_populates="items")
     assets = relationship("FileAsset", back_populates="order_item")
     parameters = relationship("Parameters", uselist=False)

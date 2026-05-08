@@ -24,6 +24,7 @@ export const ProductCard = ({ product, onBuy }: Props) => {
             alt={product.title}
             fill
             sizes="(max-width: 768px) 100vw, 33vw"
+            loading="eager"
             unoptimized
             className="object-cover transition-transform duration-700 group-hover:scale-105"
           />

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,8 @@ export default function LoginForm() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = searchParams.get("next");
 
   useEffect(() => {
     const googleError = localStorage.getItem("google_auth_error");
@@ -66,7 +68,13 @@ export default function LoginForm() {
 
       if (redirectPath) {
         localStorage.removeItem("redirect_after_login");
+        router.replace(getDashboardByRole(res.role));
         router.push(redirectPath);
+        return;
+      }
+
+      if (nextPath) {
+        router.replace(nextPath);
         return;
       }
 

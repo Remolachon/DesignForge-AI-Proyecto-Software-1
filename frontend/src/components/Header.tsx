@@ -33,6 +33,9 @@ export default function Header() {
 
   // Ruta del dashboard según rol
   const dashboardRoute =
+    role === "administrador"
+      ? "/administrador/dashboard"
+      :
     role === "funcionario"
       ? "/funcionario/dashboard"
       : role === "cliente"
@@ -44,7 +47,7 @@ export default function Header() {
     : "/login";
 
   return (
-    <header className="border-b border-border">
+    <header className="relative z-50 border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
@@ -66,7 +69,7 @@ export default function Header() {
               </Link>
             </div>
           ) : (
-            <div className="relative flex justify-center">
+            <div className="relative z-50 flex justify-center">
 
               {/* ICONO USUARIO */}
               <button
@@ -78,7 +81,7 @@ export default function Header() {
 
               {/* DROPDOWN */}
               {open && (
-                <div className="absolute top-14 left-1/2 -translate-x-1/2 w-56 bg-white border border-border rounded-lg shadow-lg p-4 text-center">
+                <div className="absolute top-14 left-1/2 z-50 w-56 -translate-x-1/2 rounded-lg border border-border bg-background p-4 text-center shadow-xl">
 
                   <p className="text-sm font-medium text-primary mb-3">
                     {fullName}

@@ -44,6 +44,8 @@ class DashboardOrder(BaseModel):
     image: DashboardImage
     imageUrl: str | None = None
     clientName: str | None = None
+    companyName: str | None = None
+    productId: int | None = None
     productType: str | None = None
 
 
@@ -58,6 +60,8 @@ class OrderDetailResponse(BaseModel):
     image: DashboardImage
     imageUrl: str | None = None
     clientName: str | None = None
+    companyName: str | None = None
+    productId: int | None = None
     productType: str | None = None
     quantity: int
     parameters: OrderParameters | None = None
