@@ -183,6 +183,7 @@ def get_funcionario_orders_page(
         page_size=page_size,
         search=search,
         status=status,
+        company_id=db_user.company_id,
     )
 
 
@@ -237,6 +238,7 @@ def get_order_detail(
         order_id=order_id,
         user_id=db_user.id,
         role_name=role_name,
+        company_id=db_user.company_id,
     )
 
     if not order_detail:

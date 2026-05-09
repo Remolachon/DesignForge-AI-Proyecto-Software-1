@@ -1,14 +1,15 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 
 import Header from "@/components/Header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { OrderDetailsModal } from "@/components/modals/OrderDetailsModal";
 import { AdminService, AdminOrdersPageResponse } from "@/services/admin.service";
 import { AdminOrder } from "@/types/order";
 import { STATUS_OPTIONS } from "@/components/Pedidos/funcionario/pedidos-funcionario.types";
@@ -32,52 +33,12 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-function formatStatus(status: string) {
-  return status || "Sin estado";
+function getCompanyLabel(order: AdminOrder) {
+  return order.companyName || "No tiene empresa todavía";
 }
 
-function OrderDetailsDialog({ order, open, onOpenChange }: { order: AdminOrder | null; open: boolean; onOpenChange: (open: boolean) => void }) {
-  if (!order) {
-    return null;
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="text-2xl text-primary">Pedido #{order.id}</DialogTitle>
-          <DialogDescription>Vista de solo lectura para la administración.</DialogDescription>
-        </DialogHeader>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-border/70 bg-muted/30 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Cliente</p>
-            <p className="mt-1 font-medium text-foreground">{order.clientName}</p>
-          </div>
-          <div className="rounded-2xl border border-border/70 bg-muted/30 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Empresa</p>
-            <p className="mt-1 font-medium text-foreground">{order.companyName || "Sin empresa asociada"}</p>
-          </div>
-          <div className="rounded-2xl border border-border/70 bg-muted/30 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Estado</p>
-            <p className="mt-1 font-medium text-foreground">{formatStatus(order.status)}</p>
-          </div>
-          <div className="rounded-2xl border border-border/70 bg-muted/30 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Precio</p>
-            <p className="mt-1 font-medium text-foreground">{formatCurrency(order.price)}</p>
-          </div>
-          <div className="rounded-2xl border border-border/70 bg-muted/30 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Creado</p>
-            <p className="mt-1 font-medium text-foreground">{formatDate(order.createdAt)}</p>
-          </div>
-          <div className="rounded-2xl border border-border/70 bg-muted/30 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Entrega</p>
-            <p className="mt-1 font-medium text-foreground">{formatDate(order.deliveryDate)}</p>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
+function getImageLabel(order: AdminOrder) {
+  return order.imageUrl ? "Imagen del pedido" : "Sin imagen";
 }
 
 export function AdminOrdersPage() {
@@ -87,7 +48,7 @@ export function AdminOrdersPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [page, setPage] = useState(1);
-  const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | number | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -139,7 +100,7 @@ export function AdminOrdersPage() {
 
   const totalItems = data?.totalItems ?? 0;
   const totalPages = data?.totalPages ?? 1;
-  const items = data?.items ?? [];
+  const items = useMemo(() => data?.items ?? [], [data]);
 
   const summary = useMemo(() => {
     const activeCount = items.filter((order) => order.status !== "Pendiente de pago").length;
@@ -162,7 +123,7 @@ export function AdminOrdersPage() {
               </div>
               <h1 className="text-4xl font-semibold tracking-tight text-primary sm:text-5xl">Pedidos visibles para administración</h1>
               <p className="max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">
-                Consulta todos los pedidos, filtra por estado o búsqueda y abre el detalle para revisar la empresa asociada y el cliente sin modificar nada.
+                Consulta todos los pedidos, filtra por estado o búsqueda y abre el detalle para revisar la empresa asociada, el cliente y la imagen del pedido.
               </p>
             </div>
 
@@ -252,19 +213,39 @@ export function AdminOrdersPage() {
                     {items.map((order) => (
                       <tr key={order.id} className="border-b border-border/60 last:border-b-0">
                         <td className="px-6 py-4">
-                          <div className="font-medium text-primary">#{order.id}</div>
-                          <div className="text-xs text-muted-foreground">{order.title}</div>
+                          <div className="flex items-center gap-3">
+                            <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-2xl border border-border/60 bg-muted/30">
+                              {order.imageUrl ? (
+                                <Image
+                                  src={order.imageUrl}
+                                  alt={order.title}
+                                  fill
+                                  sizes="56px"
+                                  unoptimized
+                                  className="object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-full w-full items-center justify-center text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                                  Sin imagen
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <div className="font-medium text-primary">#{order.id}</div>
+                              <div className="text-xs text-muted-foreground">{getImageLabel(order)}</div>
+                            </div>
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-foreground">{order.clientName}</td>
-                        <td className="px-6 py-4 text-foreground">{order.companyName || "Sin empresa"}</td>
+                        <td className="px-6 py-4 text-foreground">{getCompanyLabel(order)}</td>
                         <td className="px-6 py-4">
                           <Badge variant="outline" className={getStatusColor(order.status)}>{order.status}</Badge>
                         </td>
                         <td className="px-6 py-4 text-foreground">{formatDate(order.deliveryDate)}</td>
                         <td className="px-6 py-4 font-medium text-foreground">{formatCurrency(order.price)}</td>
                         <td className="px-6 py-4">
-                          <Button variant="outline" className="rounded-xl" onClick={() => setSelectedOrder(order)}>
-                            Ver detalle
+                          <Button variant="outline" className="rounded-xl" onClick={() => setSelectedOrderId(order.id)}>
+                            Ver detalles
                           </Button>
                         </td>
                       </tr>
@@ -295,7 +276,13 @@ export function AdminOrdersPage() {
         </section>
       </main>
 
-      <OrderDetailsDialog open={Boolean(selectedOrder)} order={selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)} />
+      {selectedOrderId !== null && (
+        <OrderDetailsModal
+          orderId={selectedOrderId}
+          isOpen={true}
+          onClose={() => setSelectedOrderId(null)}
+        />
+      )}
     </div>
   );
 }

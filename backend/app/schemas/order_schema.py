@@ -47,6 +47,8 @@ class DashboardOrder(BaseModel):
     companyName: str | None = None
     productId: int | None = None
     productType: str | None = None
+    quantity: int | None = None
+    parameters: OrderParameters | None = None
 
 
 class OrderDetailResponse(BaseModel):

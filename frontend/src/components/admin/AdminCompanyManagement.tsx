@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Building2, CheckCircle2, Search, Trash2, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import axios from "axios";
 
 import Header from "@/components/Header";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -13,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { AdminService, CompanyCountsResponse } from "@/services/admin.service";
 import { CompanyAdmin } from "@/types/company";
 
-type CompanyFilter = "all" | "pending" | "active" | "inactive";
+type CompanyFilter = "all" | "pending" | "rejected" | "active" | "inactive";
 
 type CompanyAction = {
   company: CompanyAdmin;
@@ -23,6 +24,7 @@ type CompanyAction = {
 const filters: { value: CompanyFilter; label: string }[] = [
   { value: "all", label: "Todas" },
   { value: "pending", label: "Pendientes" },
+  { value: "rejected", label: "Rechazadas" },
   { value: "active", label: "Activas" },
   { value: "inactive", label: "Inactivas" },
 ];
@@ -43,6 +45,10 @@ function isActiveCompany(company: CompanyAdmin) {
   return company.status === "APPROVED" && company.is_active;
 }
 
+function isRejectedCompany(company: CompanyAdmin) {
+  return company.status === "REJECTED";
+}
+
 function isInactiveApprovedCompany(company: CompanyAdmin) {
   return company.status === "APPROVED" && !company.is_active;
 }
@@ -60,7 +66,7 @@ function getCompanyState(company: CompanyAdmin) {
     return { label: "Inactiva", className: "border-gray-200 bg-gray-50 text-gray-700" };
   }
 
-  if (company.status === "REJECTED") {
+  if (isRejectedCompany(company)) {
     return { label: "Rechazada", className: "border-red-200 bg-red-50 text-red-700" };
   }
 
@@ -78,20 +84,32 @@ export function AdminCompanyManagement() {
   const [error, setError] = useState("");
 
   const loadData = async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const [companyList, companyCounts] = await Promise.all([
-        AdminService.getCompanies("all"),
-        AdminService.getCompanyCounts(),
-      ]);
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        setLoading(true);
+        setError("");
+        const [companyList, companyCounts] = await Promise.all([
+          AdminService.getCompanies("all"),
+          AdminService.getCompanyCounts(),
+        ]);
 
-      setCompanies(companyList);
-      setCounts(companyCounts);
-    } catch {
-      setError("No fue posible cargar las empresas.");
-    } finally {
-      setLoading(false);
+        setCompanies(companyList);
+        setCounts(companyCounts);
+        return;
+      } catch (error) {
+        const detail = axios.isAxiosError(error)
+          ? error.response?.data?.detail
+          : null;
+
+        if (attempt === 0) {
+          continue;
+        }
+
+        console.error("No fue posible cargar las empresas:", error);
+        setError(typeof detail === "string" ? detail : "No fue posible cargar las empresas.");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -108,6 +126,8 @@ export function AdminCompanyManagement() {
           ? true
           : filter === "pending"
           ? isPendingCompany(company)
+          : filter === "rejected"
+          ? isRejectedCompany(company)
           : filter === "active"
           ? isActiveCompany(company)
           : isInactiveApprovedCompany(company) || company.status === "INACTIVE";
@@ -137,6 +157,7 @@ export function AdminCompanyManagement() {
   const countsToShow = {
     total: counts?.total ?? companies.length,
     pending: counts?.pending ?? companies.filter((company) => company.status === "PENDING").length,
+    rejected: counts?.rejected ?? companies.filter((company) => isRejectedCompany(company)).length,
     active: counts?.active ?? companies.filter((company) => isActiveCompany(company)).length,
     inactive: counts?.inactive ?? companies.filter((company) => isInactiveApprovedCompany(company) || company.status === "INACTIVE").length,
   };
@@ -194,8 +215,8 @@ export function AdminCompanyManagement() {
               {[
                 { label: "Total", value: countsToShow.total },
                 { label: "Pendientes", value: countsToShow.pending },
+                { label: "Rechazadas", value: countsToShow.rejected },
                 { label: "Activas", value: countsToShow.active },
-                { label: "Inactivas", value: countsToShow.inactive },
               ].map((item) => (
                 <Card key={item.label} className="border-border/70 bg-background/80">
                   <CardContent className="p-4 text-center">

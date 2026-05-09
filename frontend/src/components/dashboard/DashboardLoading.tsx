@@ -3,7 +3,7 @@
 import Header from '@/components/Header';
 import { Skeleton } from '@/components/ui/skeleton';
 
-type Role = 'cliente' | 'funcionario';
+type Role = 'cliente' | 'funcionario' | 'administrador';
 
 export function DashboardLoading({ role }: { role: Role }) {
   const statCards = Array.from({ length: 4 });

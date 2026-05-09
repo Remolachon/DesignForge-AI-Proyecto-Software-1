@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.models.role import Role
 from app.models.user import User
+from app.models.user_role import UserRole
 from app.security.token_validator import get_current_user
 from app.schemas.order_schema import OrdersPageResponse
 from app.services.company_service import CompanyService
@@ -35,7 +37,20 @@ def get_admin_dashboard(
     order_data = OrderService.get_dashboard_data(db=db, user_id=0, role_name="funcionario")
     recent_orders = order_data["orders"][:3]
     company_counts = CompanyService.get_admin_company_counts(db)
-    total_users = db.query(User).filter(User.is_active == True).count()
+    client_role = db.query(Role).filter(Role.name == "cliente").first()
+    total_users = 0
+
+    if client_role is not None:
+        total_users = (
+            db.query(User)
+            .join(UserRole, User.id == UserRole.user_id)
+            .filter(
+                User.is_active == True,
+                UserRole.is_active == True,
+                UserRole.role_id == client_role.id,
+            )
+            .count()
+        )
 
     return {
         "stats": {

@@ -31,13 +31,30 @@ def _get_funcionario_user(db: Session, current_user):
     return db_user
 
 
+def _get_db_user(db: Session, current_user):
+    db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
+
+    if not db_user:
+        raise HTTPException(status_code=404, detail="Usuario no existe en DB")
+
+    return db_user
+
+
 @router.get("/admin", response_model=list[AdminProductResponse])
 def get_admin_products(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    db_user = _get_funcionario_user(db, current_user)
-    company_id = db_user.company_id or 1
+    db_user = _get_db_user(db, current_user)
+    role_name = UserService.get_user_role_name(db, db_user.id)
+
+    if role_name == "administrador":
+        company_id = None
+    elif role_name == "funcionario":
+        company_id = db_user.company_id or None
+    else:
+        raise HTTPException(status_code=403, detail="No autorizado")
+
     return ProductService.get_admin_products(db, company_id=company_id)
 
 

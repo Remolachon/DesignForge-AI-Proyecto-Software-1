@@ -66,15 +66,16 @@ export default function LoginForm() {
 
       const redirectPath = localStorage.getItem("redirect_after_login");
 
+      if (nextPath) {
+        localStorage.removeItem("redirect_after_login");
+        router.replace(nextPath);
+        return;
+      }
+
       if (redirectPath) {
         localStorage.removeItem("redirect_after_login");
         router.replace(getDashboardByRole(res.role));
         router.push(redirectPath);
-        return;
-      }
-
-      if (nextPath) {
-        router.replace(nextPath);
         return;
       }
 
@@ -93,6 +94,10 @@ export default function LoginForm() {
     setGoogleLoading(true);
 
     try {
+      if (nextPath) {
+        localStorage.setItem("redirect_after_login", nextPath);
+      }
+
       await startGoogleAuth("login");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "No se pudo iniciar con Google";

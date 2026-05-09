@@ -24,44 +24,62 @@ export function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModa
   useEffect(() => {
     if (!isOpen) return;
 
-    setLoading(true);
-    setError(null);
-    setResolvedImageUrl(null);
+    let cancelled = false;
 
-    funcionarioOrderService
-      .getOrderDetail(orderId)
-      .then((data) => {
-        setOrder(data);
-      })
-      .catch((err) => {
-        setError(err?.message || 'Error al cargar los detalles');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    const loadOrder = async () => {
+      setLoading(true);
+      setError(null);
+      setResolvedImageUrl(null);
+
+      try {
+        const data = await funcionarioOrderService.getOrderDetail(orderId);
+
+        if (!cancelled) {
+          setOrder(data);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError((err as { message?: string })?.message || 'Error al cargar los detalles');
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void loadOrder();
+
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen, orderId]);
 
   useEffect(() => {
     if (!order || !isOpen) return;
 
-    if (order.imageUrl) {
-      setResolvedImageUrl(order.imageUrl);
-      return;
-    }
-
-    if (!order.image?.bucket || !order.image?.path) {
-      setResolvedImageUrl(null);
-      return;
-    }
-
     let cancelled = false;
-    getImageUrl(order.image.bucket, order.image.path)
-      .then((url) => {
+
+    const resolveImage = async () => {
+      if (order.imageUrl) {
+        setResolvedImageUrl(order.imageUrl);
+        return;
+      }
+
+      if (!order.image?.bucket || !order.image?.path) {
+        setResolvedImageUrl(null);
+        return;
+      }
+
+      try {
+        const url = await getImageUrl(order.image.bucket, order.image.path);
         if (!cancelled) setResolvedImageUrl(url || null);
-      })
-      .catch(() => {
+      } catch {
         if (!cancelled) setResolvedImageUrl(null);
-      });
+      }
+    };
+
+    void resolveImage();
 
     return () => {
       cancelled = true;
@@ -211,6 +229,13 @@ export function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModa
               <Card className="p-4">
                 <p className="text-xs text-muted-foreground mb-2">Cliente</p>
                 <p className="text-sm font-medium">{order.clientName}</p>
+              </Card>
+            )}
+
+            {order.companyName && (
+              <Card className="p-4">
+                <p className="text-xs text-muted-foreground mb-2">Empresa</p>
+                <p className="text-sm font-medium">{order.companyName}</p>
               </Card>
             )}
 

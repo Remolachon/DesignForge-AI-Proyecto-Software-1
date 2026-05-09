@@ -18,6 +18,13 @@ export interface BaseOrder {
     path: string;
   };
   productId?: number | null;
+  quantity?: number | null;
+  parameters?: {
+    length: number;
+    height: number;
+    width: number;
+    material: string;
+  } | null;
 }
 
 export interface AdminOrder extends BaseOrder {

@@ -181,6 +181,8 @@ class CompanyService:
         normalized = (filter_status or "all").lower().strip()
         if normalized == "pending":
             query = query.filter(Company.status == "PENDING")
+        elif normalized == "rejected":
+            query = query.filter(Company.status == "REJECTED")
         elif normalized == "active":
             query = query.filter(Company.is_active == True, Company.status == "APPROVED")
         elif normalized == "inactive":
@@ -218,6 +220,7 @@ class CompanyService:
     def get_admin_company_counts(db: Session) -> dict[str, int]:
         total = db.query(Company).count()
         pending = db.query(Company).filter(Company.status == "PENDING").count()
+        rejected = db.query(Company).filter(Company.status == "REJECTED").count()
         active = db.query(Company).filter(Company.status == "APPROVED", Company.is_active == True).count()
         inactive = db.query(Company).filter(
             or_(
@@ -229,6 +232,7 @@ class CompanyService:
         return {
             "total": total,
             "pending": pending,
+            "rejected": rejected,
             "active": active,
             "inactive": inactive,
         }

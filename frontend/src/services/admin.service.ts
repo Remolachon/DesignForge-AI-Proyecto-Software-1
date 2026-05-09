@@ -36,6 +36,7 @@ export interface AdminOrdersPageResponse {
 export interface CompanyCountsResponse {
   total: number;
   pending: number;
+  rejected: number;
   active: number;
   inactive: number;
 }
@@ -69,7 +70,7 @@ export class AdminService {
   }
 
   static async updateCompanyStatus(companyId: number, status: CompanyStatusAction): Promise<CompanyAdmin> {
-    const response = await axios.put(
+    const response = await axios.patch(
       `${API_URL}/companies/${companyId}/status`,
       { status },
       { headers: getAuthHeaders() }

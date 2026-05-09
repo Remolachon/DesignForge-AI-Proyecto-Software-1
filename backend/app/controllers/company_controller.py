@@ -78,6 +78,7 @@ def get_admin_company_counts(
     return CompanyService.get_admin_company_counts(db)
 
 
+@router.put("/{company_id}/status", response_model=CompanyResponse)
 @router.patch("/{company_id}/status", response_model=CompanyResponse)
 def update_company_status(
     company_id: int,

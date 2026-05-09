@@ -15,7 +15,10 @@ type DashboardOrder = {
     path: string;
   };
   clientName?: string | null;
+  companyName?: string | null;
   productType?: string | null;
+  quantity?: number | null;
+  parameters?: OrderParameters | null;
 };
 
 type DashboardResponse = {
@@ -50,6 +53,7 @@ export type OrderDetail = {
     path: string;
   };
   clientName?: string | null;
+  companyName?: string | null;
   productType?: string | null;
   quantity: number;
   parameters: OrderParameters | null;
@@ -95,7 +99,10 @@ function toAdminOrder(order: DashboardOrder): AdminOrder {
     image: order.image,
     imageUrl: order.imageUrl || undefined,
     clientName: order.clientName || 'Cliente',
+    companyName: order.companyName || null,
     productType: normalizeProductType(order.productType),
+    quantity: order.quantity ?? 1,
+    parameters: order.parameters || null,
   };
 }
 

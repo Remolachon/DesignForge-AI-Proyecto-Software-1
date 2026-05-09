@@ -106,6 +106,38 @@ class OrderService:
             return None
 
     @staticmethod
+    def _resolve_order_asset(db: Session, item: OrderItem | None) -> FileAsset | None:
+        if not item:
+            return None
+
+        if item.assets:
+            return item.assets[0]
+
+        product = item.product if getattr(item, "product", None) else None
+        if not product:
+            return None
+
+        return (
+            db.query(FileAsset)
+            .filter(
+                FileAsset.product_id == product.id,
+                FileAsset.file_type == "product_main",
+                FileAsset.is_active == True,
+            )
+            .first()
+        )
+
+    @staticmethod
+    def _resolve_company_name(item: OrderItem | None) -> str | None:
+        product = item.product if item and getattr(item, "product", None) else None
+        product_company = product.company if product and getattr(product, "company", None) else None
+
+        if product_company and product_company.name:
+            return product_company.name
+
+        return None
+
+    @staticmethod
     def _create_transaction(
         db: Session,
         order_id: int,
@@ -209,9 +241,8 @@ class OrderService:
     @staticmethod
     def _serialize_order(db: Session, order: Order, include_client: bool = False):
         item = order.items[0] if hasattr(order, "items") and order.items else None
-        asset = item.assets[0] if item and hasattr(item, "assets") and item.assets else None
+        asset = OrderService._resolve_order_asset(db, item)
         product = item.product if item and getattr(item, "product", None) else None
-        product_company = product.company if product and getattr(product, "company", None) else None
 
         stage_name = item.current_stage.name if item and item.current_stage and item.current_stage.name else "En diseño"
         stage_name = OrderService._canonical_status(stage_name)
@@ -241,16 +272,20 @@ class OrderService:
             "imageUrl": OrderService._safe_signed_url(bucket_name, storage_path),
             "productId": item.product_id if item else None,
             "productType": product_type,
+            "quantity": item.quantity if item else 1,
+            "parameters": {
+                "length": item.parameters.length if item and item.parameters else 0,
+                "height": item.parameters.height if item and item.parameters else 0,
+                "width": item.parameters.width if item and item.parameters else 0,
+                "material": item.parameters.material if item and item.parameters else "",
+            } if item and item.parameters else None,
         }
 
         if include_client:
             first_name = order.user.first_name if order.user else ""
             last_name = order.user.last_name if order.user else ""
             payload["clientName"] = f"{first_name} {last_name}".strip() or "Cliente"
-            company_name = product_company.name if product_company and product_company.name else None
-            if not company_name and order.user and order.user.company and order.user.company.name:
-                company_name = order.user.company.name
-            payload["companyName"] = company_name
+            payload["companyName"] = OrderService._resolve_company_name(item)
 
         return payload
 
@@ -377,12 +412,17 @@ class OrderService:
         page_size: int,
         search: str | None = None,
         status: str | None = None,
+        company_id: int | None = None,
     ):
         query = (
             db.query(Order)
             .options(*OrderService._order_query_options())
             .order_by(Order.created_at.desc())
         )
+
+        # Filtrar solo órdenes relacionadas con productos de la empresa del funcionario
+        if company_id is not None:
+            query = query.filter(Order.items.any(OrderItem.product.has(Product.company_id == company_id)))
 
         if search:
             raw = search.strip()
@@ -758,7 +798,7 @@ class OrderService:
         return order
 
     @staticmethod
-    def get_order_detail(db: Session, order_id: int, user_id: int, role_name: str):
+    def get_order_detail(db: Session, order_id: int, user_id: int, role_name: str, company_id: int | None = None):
         query = (
             db.query(Order)
             .options(
@@ -772,7 +812,15 @@ class OrderService:
             .filter(Order.id == order_id)
         )
 
-        if role_name != "funcionario":
+        # Admins can see any order. Funcionarios see orders linked to their company via the product.
+        if role_name == "administrador":
+            pass
+        elif role_name == "funcionario":
+            if not company_id:
+                return None
+            query = query.filter(Order.items.any(OrderItem.product.has(Product.company_id == company_id)))
+        else:
+            # Regular users can only see their own orders
             query = query.filter(Order.user_id == user_id)
 
         order = query.first()
@@ -780,10 +828,9 @@ class OrderService:
             return None
 
         item = order.items[0]
-        asset = item.assets[0] if item.assets else None
+        asset = OrderService._resolve_order_asset(db, item)
         params = item.parameters
         product = item.product if item.product else None
-        product_company = product.company if product and product.company else None
 
         stage_name = item.current_stage.name if item.current_stage and item.current_stage.name else "En diseño"
         stage_name = OrderService._canonical_status(stage_name)
@@ -818,16 +865,12 @@ class OrderService:
                 "width": params.width if params else 0,
                 "material": params.material if params else "",
             } if params else None,
+            "companyName": OrderService._resolve_company_name(item),
         }
 
-        if role_name == "funcionario":
-            first_name = order.user.first_name if order.user else ""
-            last_name = order.user.last_name if order.user else ""
-            payload["clientName"] = f"{first_name} {last_name}".strip() or "Cliente"
-            company_name = product_company.name if product_company and product_company.name else None
-            if not company_name and order.user and order.user.company and order.user.company.name:
-                company_name = order.user.company.name
-            payload["companyName"] = company_name
+        first_name = order.user.first_name if order.user else ""
+        last_name = order.user.last_name if order.user else ""
+        payload["clientName"] = f"{first_name} {last_name}".strip() or "Cliente"
 
         return payload
 

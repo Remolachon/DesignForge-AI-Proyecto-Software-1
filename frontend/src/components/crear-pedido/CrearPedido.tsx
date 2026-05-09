@@ -31,16 +31,6 @@ export default function CrearPedido() {
   const searchParams = useSearchParams();
   const restoreDraft = searchParams.get("resume") === "1";
 
-  const getDashboardByRole = (role: string | null) => {
-    const normalizedRole = (role || "").toLowerCase().trim();
-
-    if (normalizedRole === "funcionario") {
-      return "/funcionario/dashboard";
-    }
-
-    return "/cliente/dashboard";
-  };
-
   // 🔥 FIX navegación hacia atrás (evita bug)
   useEffect(() => {
     const handlePopState = () => {
@@ -93,13 +83,8 @@ export default function CrearPedido() {
 
       // 🚨 SI NO ESTÁ LOGUEADO
       if (!token) {
-        sessionStorage.setItem(
-          "redirect_after_login",
-          "/cliente/crear-pedido?resume=1"
-        );
-
+        localStorage.setItem("redirect_after_login", "/cliente/crear-pedido?resume=1");
         toast.error("Debes iniciar sesión");
-
         router.replace("/login");
         return;
       }
