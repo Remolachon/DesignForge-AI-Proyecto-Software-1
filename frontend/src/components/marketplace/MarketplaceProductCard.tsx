@@ -8,12 +8,14 @@ interface MarketplaceProductCardProps {
     onToggleActive: (productId: string) => void;
     onEdit: (product: MarketplaceProduct) => void;
     onDelete: (product: MarketplaceProduct) => void;
+    imageLoading?: 'eager' | 'lazy';
 }
 export function MarketplaceProductCard({
     product,
     onToggleActive,
     onEdit,
     onDelete,
+    imageLoading = 'lazy',
 }: MarketplaceProductCardProps) {
     return (
         <Card
@@ -29,6 +31,7 @@ export function MarketplaceProductCard({
                         fill
                         sizes="(max-width: 1024px) 100vw, 33vw"
                         unoptimized
+                        loading={imageLoading}
                         className="object-cover"
                     />
                 ) : (

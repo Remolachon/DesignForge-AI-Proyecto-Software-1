@@ -239,7 +239,7 @@ class OrderService:
         return transaction.payu_reference if transaction else None
 
     @staticmethod
-    def _serialize_order(db: Session, order: Order, include_client: bool = False):
+    def _serialize_order(db: Session, order: Order, include_client: bool = False, include_image_url: bool = False):
         item = order.items[0] if hasattr(order, "items") and order.items else None
         asset = OrderService._resolve_order_asset(db, item)
         product = item.product if item and getattr(item, "product", None) else None
@@ -269,7 +269,7 @@ class OrderService:
             "deliveryDate": delivery_date.isoformat(),
             "createdAt": created_at.isoformat(),
             "image": {"bucket": bucket_name, "path": storage_path},
-            "imageUrl": OrderService._safe_signed_url(bucket_name, storage_path),
+            "imageUrl": OrderService._safe_signed_url(bucket_name, storage_path) if include_image_url else None,
             "productId": item.product_id if item else None,
             "productType": product_type,
             "quantity": item.quantity if item else 1,
@@ -395,7 +395,7 @@ class OrderService:
             query = query.filter(Order.id.in_(matching_ids))
 
         page_data = OrderService._paginate(query, page, page_size)
-        serialized = [OrderService._serialize_order(db, o, include_client=False) for o in page_data["items"]]
+        serialized = [OrderService._serialize_order(db, o, include_client=False, include_image_url=False) for o in page_data["items"]]
 
         return {
             "items": serialized,
@@ -460,7 +460,7 @@ class OrderService:
             query = query.filter(Order.id.in_(matching_ids))
 
         page_data = OrderService._paginate(query, page, page_size)
-        serialized = [OrderService._serialize_order(db, o, include_client=True) for o in page_data["items"]]
+        serialized = [OrderService._serialize_order(db, o, include_client=True, include_image_url=False) for o in page_data["items"]]
 
         return {
             "items": serialized,
@@ -523,7 +523,7 @@ class OrderService:
             query = query.filter(Order.id.in_(matching_ids))
 
         page_data = OrderService._paginate(query, page, page_size)
-        serialized = [OrderService._serialize_order(db, o, include_client=True) for o in page_data["items"]]
+        serialized = [OrderService._serialize_order(db, o, include_client=True, include_image_url=False) for o in page_data["items"]]
 
         return {
             "items": serialized,

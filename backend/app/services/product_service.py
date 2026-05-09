@@ -154,6 +154,90 @@ class ProductService:
         return [ProductService._serialize_admin_product(row) for row in rows]
 
     @staticmethod
+    def get_admin_products_page(db: Session, company_id: int | None = None, page: int = 1, page_size: int = 20, search: str | None = None):
+        query = (
+            db.query(
+                Product.id,
+                Product.name,
+                Product.description,
+                Product.base_price,
+                Product.is_active,
+                Product.is_public,
+                ProductType.name.label("product_type"),
+                Inventory.quantity,
+                func.avg(Review.rating).label("avg_rating"),
+                func.count(Review.id).label("review_count"),
+                FileAsset.storage_path,
+            )
+            .join(ProductType, Product.product_type_id == ProductType.id)
+            .outerjoin(Inventory, Product.id == Inventory.product_id)
+            .outerjoin(Review, Product.id == Review.product_id)
+            .outerjoin(
+                FileAsset,
+                (FileAsset.product_id == Product.id)
+                & (FileAsset.file_type == "product_main")
+                & (FileAsset.is_active == True),
+            )
+        )
+
+        if company_id is not None:
+            query = query.filter(Product.company_id == company_id)
+
+        if search:
+            term = f"%{search.strip()}%"
+            query = query.filter((Product.name.ilike(term)) | (Product.description.ilike(term)))
+
+        query = query.filter(Product.is_active == True)
+
+        # Calcular total usando una consulta separada con COUNT(DISTINCT products.id)
+        count_q = db.query(func.count(func.distinct(Product.id)))
+        count_q = count_q.join(ProductType, Product.product_type_id == ProductType.id)
+        count_q = count_q.outerjoin(Inventory, Product.id == Inventory.product_id)
+        count_q = count_q.outerjoin(Review, Product.id == Review.product_id)
+        count_q = count_q.outerjoin(
+            FileAsset,
+            (FileAsset.product_id == Product.id)
+            & (FileAsset.file_type == "product_main")
+            & (FileAsset.is_active == True),
+        )
+
+        if company_id is not None:
+            count_q = count_q.filter(Product.company_id == company_id)
+
+        if search:
+            term = f"%{search.strip()}%"
+            count_q = count_q.filter((Product.name.ilike(term)) | (Product.description.ilike(term)))
+
+        count_q = count_q.filter(Product.is_active == True)
+
+        total = int(count_q.scalar() or 0)
+        safe_page = max(1, page)
+        safe_page_size = max(1, min(page_size, 100))
+        offset = (safe_page - 1) * safe_page_size
+
+        rows = (
+            query.group_by(
+                Product.id,
+                ProductType.name,
+                Inventory.quantity,
+                FileAsset.storage_path,
+            )
+            .offset(offset)
+            .limit(safe_page_size)
+            .all()
+        )
+
+        items = [ProductService._serialize_admin_product(row) for row in rows]
+
+        return {
+            "items": items,
+            "page": safe_page,
+            "pageSize": safe_page_size,
+            "totalItems": total,
+            "totalPages": max(1, (total + safe_page_size - 1) // safe_page_size),
+        }
+
+    @staticmethod
     def create_admin_product(
         db: Session,
         payload: AdminProductUpsertRequest,

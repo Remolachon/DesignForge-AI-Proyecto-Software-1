@@ -99,13 +99,14 @@ export default function FuncionarioMarketplace() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map((product) => (
+            {filtered.map((product, idx) => (
               <MarketplaceProductCard
                 key={product.id}
                 product={product}
                 onToggleActive={toggleActive}
                 onEdit={openEdit}
                 onDelete={setDeletingProduct}
+                imageLoading={idx === 0 ? 'eager' : 'lazy'}
               />
             ))}
           </div>

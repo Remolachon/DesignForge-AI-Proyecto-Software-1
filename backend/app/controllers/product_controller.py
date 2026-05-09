@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.database.database import get_db
 from app.services.product_service import ProductService
@@ -56,6 +56,27 @@ def get_admin_products(
         raise HTTPException(status_code=403, detail="No autorizado")
 
     return ProductService.get_admin_products(db, company_id=company_id)
+
+
+@router.get("/admin/page", response_model=dict)
+def get_admin_products_page(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    search: str | None = Query(None),
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    db_user = _get_db_user(db, current_user)
+    role_name = UserService.get_user_role_name(db, db_user.id)
+
+    if role_name == "administrador":
+        company_id = None
+    elif role_name == "funcionario":
+        company_id = db_user.company_id or None
+    else:
+        raise HTTPException(status_code=403, detail="No autorizado")
+
+    return ProductService.get_admin_products_page(db=db, company_id=company_id, page=page, page_size=page_size, search=search)
 
 
 @router.post("/admin", response_model=AdminProductResponse)

@@ -62,7 +62,7 @@ const quickActions: QuickAction[] = [
     title: "Gestión de marketplace",
     description: "Abre el marketplace operativo que usan los funcionarios.",
     icon: ShoppingBag,
-    href: "/funcionario/marketplace",
+    href: "/administrador/marketplace",
   },
 ];
 
