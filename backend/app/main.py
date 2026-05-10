@@ -8,6 +8,7 @@ from app.controllers.admin_controller import router as admin_router
 from app.controllers.company_controller import router as company_router
 from app.controllers import product_controller
 from app.controllers import order_controller
+from app.controllers import interaction_controller
 from app.controllers import upload_controller
 
 app = FastAPI(title="Embroidery Marketplace API")
@@ -32,6 +33,7 @@ app.include_router(admin_router)
 app.include_router(company_router)
 app.include_router(product_controller.router)
 app.include_router(order_controller.router)
+app.include_router(interaction_controller.router)
 app.include_router(upload_controller.router)
 
 @app.get("/")

@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { Star, Eye, EyeOff, Pencil, Trash2 } from 'lucide-react';
+import { Star, Eye, EyeOff, Pencil, Trash2, MessageSquareText } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { TypeBadge } from '@/components/marketplace/TypeBadge';
 import { type MarketplaceProduct } from '@/types/marketplace';
@@ -8,6 +8,7 @@ interface MarketplaceProductCardProps {
     onToggleActive: (productId: string) => void;
     onEdit: (product: MarketplaceProduct) => void;
     onDelete: (product: MarketplaceProduct) => void;
+    onViewReviews?: (product: MarketplaceProduct) => void;
     imageLoading?: 'eager' | 'lazy';
 }
 export function MarketplaceProductCard({
@@ -15,6 +16,7 @@ export function MarketplaceProductCard({
     onToggleActive,
     onEdit,
     onDelete,
+    onViewReviews,
     imageLoading = 'lazy',
 }: MarketplaceProductCardProps) {
     const mainMedia = product.media?.find(m => m.media_role === 'main') || product.media?.[0];
@@ -101,6 +103,14 @@ export function MarketplaceProductCard({
                 </div>
                 {/* Acciones */}
                 <div className="flex gap-2 pt-1">
+                    <button
+                        onClick={() => onViewReviews?.(product)}
+                        title="Ver comentarios"
+                        className="px-3 py-1.5 rounded-lg border border-border bg-white hover:bg-muted text-xs font-medium transition-colors flex items-center gap-1"
+                    >
+                        <MessageSquareText className="w-3.5 h-3.5" />
+                        Comentarios
+                    </button>
                     {/* Activar / Desactivar */}
                     <button
                         onClick={() => onToggleActive(product.id)}

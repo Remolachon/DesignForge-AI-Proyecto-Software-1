@@ -16,6 +16,14 @@ export interface Pedido {
     bucket: string;
     path: string;
   };
+  media?: {
+    bucket: string;
+    path: string;
+    mediaKind?: string | null;
+    mediaRole?: string | null;
+    mimeType?: string | null;
+    sortOrder?: number | null;
+  }[];
   createdAt: string;
   deliveryDate: string;
   clientName?: string;

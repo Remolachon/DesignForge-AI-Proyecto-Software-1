@@ -14,6 +14,7 @@ type DashboardOrder = {
     bucket: string;
     path: string;
   };
+  media?: OrderMedia[];
   clientName?: string | null;
   companyName?: string | null;
   productType?: string | null;
@@ -52,11 +53,21 @@ export type OrderDetail = {
     bucket: string;
     path: string;
   };
+  media?: OrderMedia[];
   clientName?: string | null;
   companyName?: string | null;
   productType?: string | null;
   quantity: number;
   parameters: OrderParameters | null;
+};
+
+export type OrderMedia = {
+  bucket: string;
+  path: string;
+  mediaKind?: string | null;
+  mediaRole?: string | null;
+  mimeType?: string | null;
+  sortOrder?: number | null;
 };
 
 function getAuthHeaders() {
@@ -98,6 +109,7 @@ function toAdminOrder(order: DashboardOrder): AdminOrder {
     createdAt: order.createdAt,
     image: order.image,
     imageUrl: order.imageUrl || undefined,
+    media: order.media || [],
     clientName: order.clientName || 'Cliente',
     companyName: order.companyName || null,
     productType: normalizeProductType(order.productType),

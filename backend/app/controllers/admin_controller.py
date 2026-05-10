@@ -34,7 +34,7 @@ def get_admin_dashboard(
 ):
     _require_admin(db, current_user)
 
-    order_data = OrderService.get_dashboard_data(db=db, user_id=0, role_name="funcionario")
+    order_data = OrderService.get_dashboard_data(db=db, user_id=0, role_name="administrador")
     recent_orders = order_data["orders"][:3]
     company_counts = CompanyService.get_admin_company_counts(db)
     client_role = db.query(Role).filter(Role.name == "cliente").first()

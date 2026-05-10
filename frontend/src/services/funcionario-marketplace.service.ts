@@ -44,7 +44,7 @@ function toMarketplaceProduct(product: AdminProductResponse): MarketplaceProduct
     media: product.media || [],
     inStock: product.inStock,
     stock: product.stock,
-    isActive: product.isPublic,
+    isActive: product.isActive,
     rating: product.rating,
     reviews: product.reviews,
     createdAt: product.createdAt,

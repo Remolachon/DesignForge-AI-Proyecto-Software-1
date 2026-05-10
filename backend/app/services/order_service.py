@@ -17,6 +17,7 @@ from app.models.company import Company
 from app.models.user import User
 from app.providers.payu_provider import payu_provider
 from app.providers.supabase_provider import supabase_admin
+from app.services.interaction_service import InteractionService
 
 
 class OrderService:
@@ -41,6 +42,33 @@ class OrderService:
         if not value:
             return ""
         return value.strip().lower()
+
+    @staticmethod
+    def _get_filter_for_pending_payment_status(db: Session):
+        """
+        Retorna una función que filtra órdenes cuyo estado efectivo es "Pendiente de pago".
+        Considera tanto ProductionStages como transaction statuses.
+        """
+        from sqlalchemy import and_, or_
+        
+        # Órdenes con transacciones en estado pending/declined/etc
+        pending_tx = (
+            db.query(Order.id)
+            .join(Transaction)
+            .filter(Transaction.status.in_(["pending", "declined", "expired", "cancelled", "refunded", "unknown"]))
+            .distinct()
+        )
+        
+        # También incluir órdenes con stage ProductionStage.name = "Pendiente de pago" si existe
+        pending_stage_ids = (
+            db.query(Order.id)
+            .join(Order.items)
+            .join(OrderItem.current_stage)
+            .filter(ProductionStage.name.in_(["Pendiente de pago"]))
+            .distinct()
+        )
+        
+        return or_(Order.id.in_(pending_tx), Order.id.in_(pending_stage_ids))
 
     @staticmethod
     def _canonical_status(value: str | None) -> str:
@@ -106,18 +134,47 @@ class OrderService:
             return None
 
     @staticmethod
-    def _resolve_order_asset(db: Session, item: OrderItem | None) -> FileAsset | None:
-        if not item:
-            return None
+    def _sort_assets(assets: list[FileAsset]) -> list[FileAsset]:
+        return sorted(
+            assets,
+            key=lambda asset: (
+                0 if (asset.media_role or "").lower() == "main" else 1,
+                asset.sort_order if asset.sort_order is not None else 9999,
+                asset.id or 0,
+            ),
+        )
 
-        if item.assets:
-            return item.assets[0]
+    @staticmethod
+    def _serialize_media_asset(asset: FileAsset) -> dict:
+        return {
+            "bucket": asset.bucket_name,
+            "path": asset.storage_path,
+            "mediaKind": asset.media_kind,
+            "mediaRole": asset.media_role,
+            "mimeType": asset.mime_type,
+            "sortOrder": asset.sort_order,
+        }
+
+    @staticmethod
+    def _is_video_asset(asset: FileAsset) -> bool:
+        media_kind = (asset.media_kind or "").lower()
+        mime_type = (asset.mime_type or "").lower()
+        return media_kind == "video" or mime_type.startswith("video/")
+
+    @staticmethod
+    def _resolve_order_assets(db: Session, item: OrderItem | None) -> list[FileAsset]:
+        if not item:
+            return []
+
+        assets = OrderService._sort_assets(list(item.assets or []))
+        if assets:
+            return assets
 
         product = item.product if getattr(item, "product", None) else None
         if not product:
-            return None
+            return []
 
-        return (
+        fallback_asset = (
             db.query(FileAsset)
             .filter(
                 FileAsset.product_id == product.id,
@@ -126,6 +183,20 @@ class OrderService:
             )
             .first()
         )
+
+        return [fallback_asset] if fallback_asset else []
+
+    @staticmethod
+    def _resolve_order_asset(db: Session, item: OrderItem | None) -> FileAsset | None:
+        assets = OrderService._resolve_order_assets(db, item)
+        if not assets:
+            return None
+
+        for asset in assets:
+            if not OrderService._is_video_asset(asset):
+                return asset
+
+        return assets[0]
 
     @staticmethod
     def _resolve_company_name(item: OrderItem | None) -> str | None:
@@ -242,6 +313,7 @@ class OrderService:
     def _serialize_order(db: Session, order: Order, include_client: bool = False, include_image_url: bool = False):
         item = order.items[0] if hasattr(order, "items") and order.items else None
         asset = OrderService._resolve_order_asset(db, item)
+        media_assets = OrderService._resolve_order_assets(db, item)
         product = item.product if item and getattr(item, "product", None) else None
 
         stage_name = item.current_stage.name if item and item.current_stage and item.current_stage.name else "En diseño"
@@ -270,6 +342,7 @@ class OrderService:
             "createdAt": created_at.isoformat(),
             "image": {"bucket": bucket_name, "path": storage_path},
             "imageUrl": OrderService._safe_signed_url(bucket_name, storage_path) if include_image_url else None,
+            "media": [OrderService._serialize_media_asset(media_asset) for media_asset in media_assets],
             "productId": item.product_id if item else None,
             "productType": product_type,
             "quantity": item.quantity if item else 1,
@@ -290,8 +363,9 @@ class OrderService:
         return payload
 
     @staticmethod
-    def get_dashboard_data(db: Session, user_id: int, role_name: str):
+    def get_dashboard_data(db: Session, user_id: int, role_name: str, company_id: int | None = None):
         is_funcionario = role_name == "funcionario"
+        is_admin = role_name == "administrador"
 
         query = (
             db.query(Order)
@@ -299,11 +373,18 @@ class OrderService:
             .order_by(Order.created_at.desc())
         )
 
-        if not is_funcionario:
+        if is_admin:
+            pass
+        elif is_funcionario:
+            if company_id is None:
+                query = query.filter(False)
+            else:
+                query = query.filter(Order.items.any(OrderItem.product.has(Product.company_id == company_id)))
+        else:
             query = query.filter(Order.user_id == user_id)
 
         orders = query.all()
-        serialized_orders = [OrderService._serialize_order(db, order, include_client=is_funcionario) for order in orders]
+        serialized_orders = [OrderService._serialize_order(db, order, include_client=is_funcionario, include_image_url=True) for order in orders]
 
         canonical_statuses = [OrderService._canonical_status(o["status"]) for o in serialized_orders]
 
@@ -384,18 +465,22 @@ class OrderService:
             query = query.filter(Order.id.in_(matching_ids))
 
         if status and status != "all":
-            candidates = OrderService._status_candidates(status)
-            matching_ids = (
-                db.query(Order.id)
-                .join(Order.items)
-                .join(OrderItem.current_stage)
-                .filter(ProductionStage.name.in_(candidates))
-                .distinct()
-            )
-            query = query.filter(Order.id.in_(matching_ids))
+            normalized_status = OrderService._normalize_status(status)
+            if normalized_status in {"pendiente de pago", "pendiente_pago"}:
+                query = query.filter(OrderService._get_filter_for_pending_payment_status(db))
+            else:
+                candidates = OrderService._status_candidates(status)
+                matching_ids = (
+                    db.query(Order.id)
+                    .join(Order.items)
+                    .join(OrderItem.current_stage)
+                    .filter(ProductionStage.name.in_(candidates))
+                    .distinct()
+                )
+                query = query.filter(Order.id.in_(matching_ids))
 
         page_data = OrderService._paginate(query, page, page_size)
-        serialized = [OrderService._serialize_order(db, o, include_client=False, include_image_url=False) for o in page_data["items"]]
+        serialized = [OrderService._serialize_order(db, o, include_client=False, include_image_url=True) for o in page_data["items"]]
 
         return {
             "items": serialized,
@@ -449,18 +534,22 @@ class OrderService:
             query = query.filter(Order.id.in_(matching_ids))
 
         if status and status != "all":
-            candidates = OrderService._status_candidates(status)
-            matching_ids = (
-                db.query(Order.id)
-                .join(Order.items)
-                .join(OrderItem.current_stage)
-                .filter(ProductionStage.name.in_(candidates))
-                .distinct()
-            )
-            query = query.filter(Order.id.in_(matching_ids))
+            normalized_status = OrderService._normalize_status(status)
+            if normalized_status in {"pendiente de pago", "pendiente_pago"}:
+                query = query.filter(OrderService._get_filter_for_pending_payment_status(db))
+            else:
+                candidates = OrderService._status_candidates(status)
+                matching_ids = (
+                    db.query(Order.id)
+                    .join(Order.items)
+                    .join(OrderItem.current_stage)
+                    .filter(ProductionStage.name.in_(candidates))
+                    .distinct()
+                )
+                query = query.filter(Order.id.in_(matching_ids))
 
         page_data = OrderService._paginate(query, page, page_size)
-        serialized = [OrderService._serialize_order(db, o, include_client=True, include_image_url=False) for o in page_data["items"]]
+        serialized = [OrderService._serialize_order(db, o, include_client=True, include_image_url=True) for o in page_data["items"]]
 
         return {
             "items": serialized,
@@ -512,18 +601,22 @@ class OrderService:
             query = query.filter(Order.id.in_(matching_ids))
 
         if status and status != "all":
-            candidates = OrderService._status_candidates(status)
-            matching_ids = (
-                db.query(Order.id)
-                .join(Order.items)
-                .join(OrderItem.current_stage)
-                .filter(ProductionStage.name.in_(candidates))
-                .distinct()
-            )
-            query = query.filter(Order.id.in_(matching_ids))
+            normalized_status = OrderService._normalize_status(status)
+            if normalized_status in {"pendiente de pago", "pendiente_pago"}:
+                query = query.filter(OrderService._get_filter_for_pending_payment_status(db))
+            else:
+                candidates = OrderService._status_candidates(status)
+                matching_ids = (
+                    db.query(Order.id)
+                    .join(Order.items)
+                    .join(OrderItem.current_stage)
+                    .filter(ProductionStage.name.in_(candidates))
+                    .distinct()
+                )
+                query = query.filter(Order.id.in_(matching_ids))
 
         page_data = OrderService._paginate(query, page, page_size)
-        serialized = [OrderService._serialize_order(db, o, include_client=True, include_image_url=False) for o in page_data["items"]]
+        serialized = [OrderService._serialize_order(db, o, include_client=True, include_image_url=True) for o in page_data["items"]]
 
         return {
             "items": serialized,
@@ -574,6 +667,28 @@ class OrderService:
 
         db.commit()
         db.refresh(order)
+
+        delivered_status = OrderService._canonical_status(target_stage.name)
+        product_item = next((order_item for order_item in order.items if order_item.product_id), item)
+
+        if delivered_status == "Entregado" and product_item and product_item.product_id:
+            try:
+                product_name = None
+                if product_item.product and product_item.product.name:
+                    product_name = product_item.product.name
+                elif product_item.product_type and product_item.product_type.name:
+                    product_name = product_item.product_type.name
+
+                InteractionService.create_delivery_review_notification(
+                    db=db,
+                    user_id=order.user_id,
+                    order_id=order.id,
+                    product_id=product_item.product_id,
+                    product_name=product_name,
+                )
+                db.commit()
+            except Exception:
+                db.rollback()
 
         updated_order = (
             db.query(Order)
@@ -856,6 +971,7 @@ class OrderService:
             "createdAt": created_at.isoformat(),
             "image": {"bucket": bucket_name, "path": storage_path},
             "imageUrl": OrderService._safe_signed_url(bucket_name, storage_path),
+            "media": [OrderService._serialize_media_asset(media_asset) for media_asset in OrderService._resolve_order_assets(db, item)],
             "productId": item.product_id if item else None,
             "productType": product_type,
             "quantity": item.quantity,

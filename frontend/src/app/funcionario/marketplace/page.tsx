@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Plus } from 'lucide-react';
 
 import Header from '@/components/Header';
@@ -13,8 +14,11 @@ import { MarketplaceProductCard } from '@/components/marketplace/MarketplaceProd
 import { ProductModal } from '@/components/marketplace/modals/ProductModal';
 import { DeleteModal } from '@/components/marketplace/modals/DeleteModal';
 import { ConfirmActionModal } from '@/components/marketplace/modals/ConfirmActionModal';
+import { ProductReviewsModal } from '@/components/marketplace/modals/ProductReviewsModal';
+import { type MarketplaceProduct } from '@/types/marketplace';
 
 export default function FuncionarioMarketplace() {
+  const [selectedReviewsProduct, setSelectedReviewsProduct] = useState<MarketplaceProduct | null>(null);
   const {
     filtered,
     products,
@@ -98,7 +102,7 @@ export default function FuncionarioMarketplace() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((product, idx) => (
               <MarketplaceProductCard
                 key={product.id}
@@ -106,6 +110,7 @@ export default function FuncionarioMarketplace() {
                 onToggleActive={toggleActive}
                 onEdit={openEdit}
                 onDelete={setDeletingProduct}
+                onViewReviews={setSelectedReviewsProduct}
                 imageLoading={idx === 0 ? 'eager' : 'lazy'}
               />
             ))}
@@ -181,6 +186,22 @@ export default function FuncionarioMarketplace() {
           productName={deletingProduct.name}
           onConfirm={confirmDelete}
           onCancel={() => setDeletingProduct(null)}
+        />
+      )}
+
+      {selectedReviewsProduct && (
+        <ProductReviewsModal
+          open={Boolean(selectedReviewsProduct)}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) {
+              setSelectedReviewsProduct(null);
+            }
+          }}
+          productId={Number(selectedReviewsProduct.id)}
+          productTitle={selectedReviewsProduct.name}
+          summaryRating={selectedReviewsProduct.rating}
+          summaryReviews={selectedReviewsProduct.reviews}
+          allowReview={false}
         />
       )}
     </div>

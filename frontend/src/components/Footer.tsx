@@ -132,18 +132,29 @@ export default function Footer() {
 
       {/* BOTTOM BAR */}
       <div className="border-t border-border">
-        <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-          <p>
-            © {new Date().getFullYear()} DesignForge AI. Todos los derechos reservados.
-          </p>
+        <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col gap-4 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-6">
+            <p>
+              © {new Date().getFullYear()} DesignForge AI. Todos los derechos reservados.
+            </p>
 
-          <div className="flex gap-6">
-            <InactiveFooterLink className="text-xs">
-              Privacidad
-            </InactiveFooterLink>
-            <InactiveFooterLink className="text-xs">
-              Cookies
-            </InactiveFooterLink>
+            <div className="flex gap-6">
+              <InactiveFooterLink className="text-xs">
+                Privacidad
+              </InactiveFooterLink>
+              <InactiveFooterLink className="text-xs">
+                Cookies
+              </InactiveFooterLink>
+            </div>
+          </div>
+
+          <div className="hidden rounded-full border border-border/70 bg-muted/30 px-4 py-2 text-right text-foreground shadow-sm sm:block">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                Centro de alertas
+              </p>
+              <p className="text-sm font-medium text-foreground">
+                Seguimiento y reseñas
+              </p>
           </div>
         </div>
       </div>

@@ -2,16 +2,17 @@
 'use client';
 
 import { Product, getProductTypeLabel } from '@/types/product';
-import { Star } from 'lucide-react';
+import { MessageSquareText, Star } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 interface Props {
   product: Product;
   onBuy: () => void;
+  onViewReviews?: () => void;
 }
 
-export const ProductCard = ({ product, onBuy }: Props) => {
+export const ProductCard = ({ product, onBuy, onViewReviews }: Props) => {
   const mainMedia = product.media?.find(m => m.media_role === 'main') || product.media?.[0];
   const displayUrl = mainMedia?.storage_path || product.imageUrl;
 
@@ -69,22 +70,36 @@ export const ProductCard = ({ product, onBuy }: Props) => {
       </Link>
       <p className="text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">{product.description}</p>
 
-      <div className="mt-auto flex justify-between items-center pt-4 border-t border-border/40">
+      <div className="mt-auto flex flex-col gap-3 pt-4 border-t border-border/40 sm:flex-row sm:items-center sm:justify-between">
         <span className="font-bold text-xl text-primary">
           ${product.price.toLocaleString()}
         </span>
 
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onBuy();
-          }}
-          disabled={!product.inStock}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg disabled:opacity-50 font-medium text-sm hover:bg-primary/90 transition-colors shadow-sm active:scale-95"
-        >
-          Comprar
-        </button>
+        <div className="flex gap-2 sm:justify-end">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onViewReviews?.();
+            }}
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-border/70 bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+          >
+            <MessageSquareText className="h-4 w-4" />
+            Comentarios
+          </button>
+
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onBuy();
+            }}
+            disabled={!product.inStock}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg disabled:opacity-50 font-medium text-sm hover:bg-primary/90 transition-colors shadow-sm active:scale-95"
+          >
+            Comprar
+          </button>
+        </div>
       </div>
     </div>
   );

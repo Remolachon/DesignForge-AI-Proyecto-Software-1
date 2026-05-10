@@ -119,6 +119,7 @@ def get_dashboard_data(
         db=db,
         user_id=db_user.id,
         role_name=role_name,
+        company_id=db_user.company_id or None,
     )
 
 

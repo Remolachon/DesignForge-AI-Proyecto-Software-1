@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class CreateOrderRequest(BaseModel):
@@ -27,6 +27,15 @@ class DashboardImage(BaseModel):
     path: str
 
 
+class DashboardMedia(BaseModel):
+    bucket: str
+    path: str
+    mediaKind: str | None = None
+    mediaRole: str | None = None
+    mimeType: str | None = None
+    sortOrder: int | None = None
+
+
 class OrderParameters(BaseModel):
     length: int
     height: int
@@ -43,6 +52,7 @@ class DashboardOrder(BaseModel):
     createdAt: str
     image: DashboardImage
     imageUrl: str | None = None
+    media: list[DashboardMedia] = Field(default_factory=list)
     clientName: str | None = None
     companyName: str | None = None
     productId: int | None = None
@@ -61,6 +71,7 @@ class OrderDetailResponse(BaseModel):
     createdAt: str
     image: DashboardImage
     imageUrl: str | None = None
+    media: list[DashboardMedia] = Field(default_factory=list)
     clientName: str | None = None
     companyName: str | None = None
     productId: int | None = None

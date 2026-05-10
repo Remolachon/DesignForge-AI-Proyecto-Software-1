@@ -6,6 +6,7 @@ import { Package } from "lucide-react";
 import { Button } from "@/components/ui/buttonMayus";
 import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect } from "react";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -69,40 +70,43 @@ export default function Header() {
               </Link>
             </div>
           ) : (
-            <div className="relative z-50 flex justify-center">
+            <div className="relative z-50 flex items-center gap-3">
+              <NotificationBell />
 
-              {/* ICONO USUARIO */}
-              <button
-                onClick={() => setOpen(!open)}
-                className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-white font-semibold"
-              >
-                {fullName?.charAt(0).toUpperCase()}
-              </button>
+              <div className="relative flex justify-center">
+                {/* ICONO USUARIO */}
+                <button
+                  onClick={() => setOpen(!open)}
+                  className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-white font-semibold"
+                >
+                  {fullName?.charAt(0).toUpperCase()}
+                </button>
 
-              {/* DROPDOWN */}
-              {open && (
-                <div className="absolute top-14 left-1/2 z-50 w-56 -translate-x-1/2 rounded-lg border border-border bg-background p-4 text-center shadow-xl">
+                {/* DROPDOWN */}
+                {open && (
+                  <div className="absolute top-14 left-1/2 z-50 w-56 -translate-x-1/2 rounded-lg border border-border bg-background p-4 text-center shadow-xl">
 
-                  <p className="text-sm font-medium text-primary mb-3">
-                    {fullName}
-                  </p>
+                    <p className="text-sm font-medium text-primary mb-3">
+                      {fullName}
+                    </p>
 
-                  <button
-                    onClick={async () => {
-                      await logout();
+                    <button
+                      onClick={async () => {
+                        await logout();
 
-                      localStorage.clear();
-                      setOpen(false);
+                        localStorage.clear();
+                        setOpen(false);
 
-                      window.location.replace("/");
-                    }}
-                    className="text-red-500 hover:underline"
-                  >
-                    Cerrar sesión
-                  </button>
+                        window.location.replace("/");
+                      }}
+                      className="text-red-500 hover:underline"
+                    >
+                      Cerrar sesión
+                    </button>
 
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

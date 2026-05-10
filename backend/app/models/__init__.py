@@ -11,3 +11,5 @@ from app.models.statusHistory import StatusHistory
 from app.models.product_type import ProductType
 from app.models.file_assets import FileAsset
 from app.models.transaction import Transaction  # noqa: F401
+from app.models.review import Review  # noqa: F401
+from app.models.notification import Notification  # noqa: F401

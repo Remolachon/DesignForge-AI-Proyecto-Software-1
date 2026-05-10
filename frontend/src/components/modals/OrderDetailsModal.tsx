@@ -8,6 +8,17 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { funcionarioOrderService, type OrderDetail } from '@/services/funcionario-order.service';
 import { getImageUrl } from '@/lib/supabase/getImageUrl';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
+type ResolvedMedia = {
+  bucket: string;
+  path: string;
+  mediaKind?: string | null;
+  mediaRole?: string | null;
+  mimeType?: string | null;
+  sortOrder?: number | null;
+  url: string | null;
+};
 
 interface OrderDetailsModalProps {
   orderId: string | number;
@@ -20,6 +31,8 @@ export function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModa
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [resolvedImageUrl, setResolvedImageUrl] = useState<string | null>(null);
+  const [resolvedMedia, setResolvedMedia] = useState<ResolvedMedia[]>([]);
+  const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -30,6 +43,7 @@ export function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModa
       setLoading(true);
       setError(null);
       setResolvedImageUrl(null);
+      setResolvedMedia([]);
 
       try {
         const data = await funcionarioOrderService.getOrderDetail(orderId);
@@ -60,26 +74,44 @@ export function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModa
 
     let cancelled = false;
 
-    const resolveImage = async () => {
+    const sourceMedia: ResolvedMedia[] =
+      order.media && order.media.length > 0
+        ? order.media.map((media) => ({ ...media, url: null }))
+        : order.image?.bucket && order.image?.path
+          ? [{ bucket: order.image.bucket, path: order.image.path, url: null }]
+          : [];
+
+    const resolveMedia = async () => {
       if (order.imageUrl) {
         setResolvedImageUrl(order.imageUrl);
-        return;
-      }
-
-      if (!order.image?.bucket || !order.image?.path) {
+      } else if (order.image?.bucket && order.image?.path) {
+        try {
+          const url = await getImageUrl(order.image.bucket, order.image.path);
+          if (!cancelled) setResolvedImageUrl(url || null);
+        } catch {
+          if (!cancelled) setResolvedImageUrl(null);
+        }
+      } else {
         setResolvedImageUrl(null);
-        return;
       }
 
-      try {
-        const url = await getImageUrl(order.image.bucket, order.image.path);
-        if (!cancelled) setResolvedImageUrl(url || null);
-      } catch {
-        if (!cancelled) setResolvedImageUrl(null);
+      const resolved = await Promise.all(
+        sourceMedia.map(async (media) => {
+          try {
+            const url = await getImageUrl(media.bucket, media.path);
+            return { ...media, url: url || null };
+          } catch {
+            return { ...media, url: null };
+          }
+        }),
+      );
+
+      if (!cancelled) {
+        setResolvedMedia(resolved);
       }
     };
 
-    void resolveImage();
+    void resolveMedia();
 
     return () => {
       cancelled = true;
@@ -133,21 +165,112 @@ export function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModa
             </div>
 
             {/* Imagen */}
-            {resolvedImageUrl && (
-              <div className="relative w-full aspect-video bg-gray-100 rounded-lg overflow-hidden">
-                <Image
-                  src={resolvedImageUrl}
-                  alt={order.title}
-                  fill
-                  unoptimized
-                  className="object-cover"
-                  priority
-                  onError={(e) => {
-                    // Fallback si la imagen falla
-                    const img = e.target as HTMLImageElement;
-                    img.style.display = 'none';
-                  }}
-                />
+            {(resolvedMedia.length > 0 || resolvedImageUrl) && (
+              <div className="space-y-3">
+                <div className="relative w-full aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                  {resolvedMedia.length > 0 ? (
+                    <>
+                      {resolvedMedia[currentMediaIndex]?.url ? (
+                        resolvedMedia[currentMediaIndex].mediaKind === 'video' || (resolvedMedia[currentMediaIndex].mimeType || '').startsWith('video/') ? (
+                          <video
+                            src={resolvedMedia[currentMediaIndex].url}
+                            controls
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <Image
+                            src={resolvedMedia[currentMediaIndex].url}
+                            alt={order.title}
+                            fill
+                            unoptimized
+                            className="object-cover"
+                            priority
+                          />
+                        )
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
+                          Sin vista previa
+                        </div>
+                      )}
+                      
+                      {resolvedMedia.length > 1 && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full w-10 h-10 p-0 gap-0"
+                            onClick={() => setCurrentMediaIndex((prev) => (prev - 1 + resolvedMedia.length) % resolvedMedia.length)}
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </Button>
+                          
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full w-10 h-10 p-0 gap-0"
+                            onClick={() => setCurrentMediaIndex((prev) => (prev + 1) % resolvedMedia.length)}
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </Button>
+                          
+                          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-full bg-black/50 px-3 py-1">
+                            <span className="text-xs text-white font-medium">
+                              {currentMediaIndex + 1} / {resolvedMedia.length}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  ) : resolvedImageUrl ? (
+                    <Image
+                      src={resolvedImageUrl}
+                      alt={order.title}
+                      fill
+                      unoptimized
+                      className="object-cover"
+                      priority
+                    />
+                  ) : null}
+                </div>
+
+                {resolvedMedia.length > 1 && (
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                    {resolvedMedia.map((media, index) => (
+                      <button
+                        key={`${media.bucket}/${media.path}-${index}`}
+                        onClick={() => setCurrentMediaIndex(index)}
+                        className={`relative aspect-square overflow-hidden rounded-lg border-2 transition-colors ${
+                          currentMediaIndex === index ? 'border-primary' : 'border-border/60'
+                        } bg-muted/30`}
+                      >
+                        {media.url ? (
+                          media.mediaKind === 'video' || (media.mimeType || '').startsWith('video/') ? (
+                            <>
+                              <video src={media.url} className="h-full w-full object-cover" />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center">
+                                  <div className="w-0 h-0 border-l-3 border-l-white border-t-2 border-t-transparent border-b-2 border-b-transparent ml-1" />
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <Image
+                              src={media.url}
+                              alt={`${order.title} thumbnail ${index + 1}`}
+                              fill
+                              unoptimized
+                              className="object-cover"
+                            />
+                          )
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+                            Sin vista
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

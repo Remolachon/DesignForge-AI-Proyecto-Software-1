@@ -17,6 +17,7 @@ export interface BaseOrder {
     bucket: string;
     path: string;
   };
+  media?: OrderMedia[];
   productId?: number | null;
   quantity?: number | null;
   parameters?: {
@@ -32,4 +33,13 @@ export interface AdminOrder extends BaseOrder {
   companyName?: string | null;
   imageUrl?: string | null;
   productType?: 'bordado' | 'neon-flex' | 'acrilico';
+}
+
+export interface OrderMedia {
+  bucket: string;
+  path: string;
+  mediaKind?: string | null;
+  mediaRole?: string | null;
+  mimeType?: string | null;
+  sortOrder?: number | null;
 }
