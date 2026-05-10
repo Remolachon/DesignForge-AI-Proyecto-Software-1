@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+import fastapi
+from fastapi import APIRouter, Depends, HTTPException, Query, Form, File, UploadFile
 from sqlalchemy.orm import Session
 from app.database.database import get_db
 from app.services.product_service import ProductService
@@ -9,6 +10,7 @@ from app.schemas.product_schema import (
     AdminProductResponse,
     AdminProductUpsertRequest,
     AdminProductVisibilityRequest,
+    FileAssetResponse,
 )
 
 router = APIRouter(prefix="/products", tags=["Products"])
@@ -25,7 +27,7 @@ def _get_funcionario_user(db: Session, current_user):
         raise HTTPException(status_code=404, detail="Usuario no existe en DB")
 
     role_name = UserService.get_user_role_name(db, db_user.id)
-    if role_name != "funcionario":
+    if role_name not in ("funcionario", "administrador"):
         raise HTTPException(status_code=403, detail="No autorizado")
 
     return db_user
@@ -160,3 +162,38 @@ def logical_delete_product(
         raise HTTPException(status_code=400, detail=str(exc))
 
     return {"message": "Producto eliminado"}
+
+@router.post("/admin/{product_id}/media", response_model=FileAssetResponse)
+async def upload_product_media_endpoint(
+    product_id: int,
+    company_id: int = Form(...),
+    media_kind: str = Form(...),
+    media_role: str = Form(...),
+    sort_order: int = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    db_user = _get_funcionario_user(db, current_user)
+    user_company_id = db_user.company_id or company_id
+
+    contents = await file.read()
+
+    try:
+        return ProductService.upload_product_media(
+            db=db,
+            product_id=product_id,
+            company_id=user_company_id,
+            user_id=db_user.id,
+            media_kind=media_kind,
+            media_role=media_role,
+            sort_order=sort_order,
+            file=contents,
+            filename=file.filename or "unknown",
+            content_type=file.content_type or "application/octet-stream",
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        print(f"FATAL ERROR in upload_product_media_endpoint: {exc}")
+        raise HTTPException(status_code=500, detail="Error interno al subir archivo")

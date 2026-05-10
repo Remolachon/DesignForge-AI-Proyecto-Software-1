@@ -8,8 +8,16 @@ export type ProductFormData = {
     productType: ProductType;
     stock: string;
 };
+export interface MediaUploadItem {
+    id: string;
+    file?: File; // Optional for existing media that was already uploaded
+    previewUrl: string;
+    media_kind: 'image' | 'video' | 'thumbnail' | 'document';
+    media_role: 'main' | 'gallery' | 'preview' | 'attachment';
+}
+
 export type ProductFormSubmit = ProductFormData & {
-    imageFile: File | null;
+    mediaItems: MediaUploadItem[];
 };
 // ─── Constantes ───────────────────────────────────────────────────────────────
 export const EMPTY_FORM: ProductFormData = {

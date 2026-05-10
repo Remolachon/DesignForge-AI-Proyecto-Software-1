@@ -1,7 +1,7 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from datetime import datetime, timedelta
-from app.schemas.product_schema import ProductResponse, AdminProductResponse, AdminProductUpsertRequest
+from app.schemas.product_schema import ProductResponse, AdminProductResponse, AdminProductUpsertRequest, FileAssetResponse
 from app.models.product import Product
 from app.models.product_type import ProductType
 from app.models.inventory import Inventory
@@ -32,23 +32,64 @@ class ProductService:
         return None
 
     @staticmethod
-    def _build_public_image(storage_path: str | None) -> str | None:
+    def _build_public_image(storage_path: str | None, bucket_name: str | None = None) -> str | None:
         if not storage_path:
             return None
-
-        return f"{SUPABASE_PUBLIC_URL}/product-catalog/{storage_path}"
+        if storage_path.startswith("http"):
+            return storage_path
+        bucket = bucket_name or "product-catalog"
+        return f"{SUPABASE_PUBLIC_URL}/{bucket}/{storage_path}"
 
     @staticmethod
-    def _serialize_admin_product(row) -> AdminProductResponse:
-        image_url = ProductService._build_public_image(row.storage_path)
+    def _serialize_admin_product(row, file_assets=None) -> AdminProductResponse:
+        file_assets = file_assets or []
+        media_responses = []
+        image_url = None
+
+        # sort assets by sort_order
+        file_assets.sort(key=lambda x: x.sort_order if x.sort_order is not None else 0)
+
+        for a in file_assets:
+            url = ProductService._build_public_image(a.storage_path, a.bucket_name)
+            if url:
+                media_responses.append(FileAssetResponse(
+                    id=a.id,
+                    storage_path=url,
+                    media_kind=a.media_kind,
+                    media_role=a.media_role,
+                    sort_order=a.sort_order,
+                    file_type=a.file_type,
+                    mime_type=a.mime_type,
+                    size_bytes=a.size_bytes,
+                    width=a.width,
+                    height=a.height,
+                    duration_seconds=a.duration_seconds,
+                    extension=a.extension
+                ))
+                if a.media_role == 'main':
+                    image_url = url
+                # Legacy fallback
+                elif a.file_type == 'product_main' and not image_url:
+                    image_url = url
+
+        if not image_url and media_responses:
+            image_url = media_responses[0].storage_path
+            
+        # Legacy single image fallback from query if media is empty
+        if not image_url and hasattr(row, 'storage_path') and row.storage_path:
+            image_url = ProductService._build_public_image(row.storage_path)
+
+        company_id = getattr(row, 'company_id', None)
 
         return AdminProductResponse(
             id=row.id,
+            companyId=company_id,
             name=row.name,
             description=row.description,
             basePrice=float(row.base_price),
             productType=row.product_type,
             imageUrl=image_url,
+            media=media_responses,
             inStock=(row.quantity or 0) > 0,
             stock=int(row.quantity or 0),
             isActive=bool(row.is_active),
@@ -62,53 +103,52 @@ class ProductService:
     def get_products(db: Session):
         results = (
             db.query(
-            Product.id,
-            Product.name,
-            Product.description,
-            Product.base_price,
-            ProductType.name.label("product_type"),
-            Inventory.quantity,
-            func.avg(Review.rating).label("avg_rating"),
-            func.count(Review.id).label("review_count"),
-            FileAsset.storage_path
-        )
-        .join(ProductType, Product.product_type_id == ProductType.id)
-        .join(Inventory, Product.id == Inventory.product_id)
-        .outerjoin(Review, Product.id == Review.product_id)
-        .outerjoin(
-            FileAsset,
-            (FileAsset.product_id == Product.id) &
-            (FileAsset.file_type == 'product_main') &
-            (FileAsset.is_active == True)
-        )
-        .filter(Product.is_active == True)
-        .filter(Product.is_public == True)
-        .group_by(
-            Product.id,
-            ProductType.name,
-            Inventory.quantity,
-            FileAsset.storage_path
-        )
+                Product.id,
+                Product.company_id,
+                Product.name,
+                Product.description,
+                Product.base_price,
+                Product.is_active,
+                Product.is_public,
+                ProductType.name.label("product_type"),
+                Inventory.quantity,
+                func.avg(Review.rating).label("avg_rating"),
+                func.count(Review.id).label("review_count"),
+            )
+            .join(ProductType, Product.product_type_id == ProductType.id)
+            .outerjoin(Inventory, Product.id == Inventory.product_id)
+            .outerjoin(Review, Product.id == Review.product_id)
+            .filter(Product.is_active == True)
+            .filter(Product.is_public == True)
+            .group_by(
+                Product.id,
+                Product.company_id,
+                ProductType.name,
+                Inventory.quantity,
+            )
             .all()
         )
 
+        product_ids = [r.id for r in results]
+        assets = db.query(FileAsset).filter(FileAsset.product_id.in_(product_ids), FileAsset.is_active == True).all()
+        assets_map = {pid: [] for pid in product_ids}
+        for a in assets:
+            assets_map[a.product_id].append(a)
+
         products = []
-
         for row in results:
-            image_url = None
-            if row.storage_path:
-                image_url = f"{SUPABASE_PUBLIC_URL}/product-catalog/{row.storage_path}"
-
+            admin_resp = ProductService._serialize_admin_product(row, assets_map.get(row.id, []))
             products.append(ProductResponse(
-                id=row.id,
-                title=row.name,
-                description=row.description,
-                imageUrl=image_url,
-                price=float(row.base_price),
-                rating=float(row.avg_rating) if row.avg_rating else 0,
-                reviews=row.review_count,
-                inStock=row.quantity > 0,
-                productType=row.product_type
+                id=admin_resp.id,
+                title=admin_resp.name,
+                description=admin_resp.description,
+                imageUrl=admin_resp.imageUrl,
+                media=admin_resp.media,
+                price=admin_resp.basePrice,
+                rating=admin_resp.rating,
+                reviews=admin_resp.reviews,
+                inStock=admin_resp.inStock,
+                productType=admin_resp.productType
             ))
 
         return products
@@ -118,6 +158,7 @@ class ProductService:
         query = (
             db.query(
                 Product.id,
+                Product.company_id,
                 Product.name,
                 Product.description,
                 Product.base_price,
@@ -127,17 +168,10 @@ class ProductService:
                 Inventory.quantity,
                 func.avg(Review.rating).label("avg_rating"),
                 func.count(Review.id).label("review_count"),
-                FileAsset.storage_path,
             )
             .join(ProductType, Product.product_type_id == ProductType.id)
             .outerjoin(Inventory, Product.id == Inventory.product_id)
             .outerjoin(Review, Product.id == Review.product_id)
-            .outerjoin(
-                FileAsset,
-                (FileAsset.product_id == Product.id)
-                & (FileAsset.file_type == "product_main")
-                & (FileAsset.is_active == True),
-            )
             .filter(Product.is_active == True)
         )
 
@@ -146,18 +180,25 @@ class ProductService:
 
         rows = query.group_by(
             Product.id,
+            Product.company_id,
             ProductType.name,
             Inventory.quantity,
-            FileAsset.storage_path,
         ).all()
+        
+        product_ids = [r.id for r in rows]
+        assets = db.query(FileAsset).filter(FileAsset.product_id.in_(product_ids), FileAsset.is_active == True).all()
+        assets_map = {pid: [] for pid in product_ids}
+        for a in assets:
+            assets_map[a.product_id].append(a)
 
-        return [ProductService._serialize_admin_product(row) for row in rows]
+        return [ProductService._serialize_admin_product(row, assets_map.get(row.id, [])) for row in rows]
 
     @staticmethod
     def get_admin_products_page(db: Session, company_id: int | None = None, page: int = 1, page_size: int = 20, search: str | None = None):
         query = (
             db.query(
                 Product.id,
+                Product.company_id,
                 Product.name,
                 Product.description,
                 Product.base_price,
@@ -167,17 +208,10 @@ class ProductService:
                 Inventory.quantity,
                 func.avg(Review.rating).label("avg_rating"),
                 func.count(Review.id).label("review_count"),
-                FileAsset.storage_path,
             )
             .join(ProductType, Product.product_type_id == ProductType.id)
             .outerjoin(Inventory, Product.id == Inventory.product_id)
             .outerjoin(Review, Product.id == Review.product_id)
-            .outerjoin(
-                FileAsset,
-                (FileAsset.product_id == Product.id)
-                & (FileAsset.file_type == "product_main")
-                & (FileAsset.is_active == True),
-            )
         )
 
         if company_id is not None:
@@ -189,17 +223,10 @@ class ProductService:
 
         query = query.filter(Product.is_active == True)
 
-        # Calcular total usando una consulta separada con COUNT(DISTINCT products.id)
         count_q = db.query(func.count(func.distinct(Product.id)))
         count_q = count_q.join(ProductType, Product.product_type_id == ProductType.id)
         count_q = count_q.outerjoin(Inventory, Product.id == Inventory.product_id)
         count_q = count_q.outerjoin(Review, Product.id == Review.product_id)
-        count_q = count_q.outerjoin(
-            FileAsset,
-            (FileAsset.product_id == Product.id)
-            & (FileAsset.file_type == "product_main")
-            & (FileAsset.is_active == True),
-        )
 
         if company_id is not None:
             count_q = count_q.filter(Product.company_id == company_id)
@@ -218,16 +245,22 @@ class ProductService:
         rows = (
             query.group_by(
                 Product.id,
+                Product.company_id,
                 ProductType.name,
                 Inventory.quantity,
-                FileAsset.storage_path,
             )
             .offset(offset)
             .limit(safe_page_size)
             .all()
         )
+        
+        product_ids = [r.id for r in rows]
+        assets = db.query(FileAsset).filter(FileAsset.product_id.in_(product_ids), FileAsset.is_active == True).all()
+        assets_map = {pid: [] for pid in product_ids}
+        for a in assets:
+            assets_map[a.product_id].append(a)
 
-        items = [ProductService._serialize_admin_product(row) for row in rows]
+        items = [ProductService._serialize_admin_product(row, assets_map.get(row.id, [])) for row in rows]
 
         return {
             "items": items,
@@ -248,9 +281,6 @@ class ProductService:
         if not product_type:
             raise ValueError("Tipo de producto inválido")
 
-        if not payload.imageStoragePath:
-            raise ValueError("La imagen del producto es obligatoria")
-
         product = Product(
             company_id=company_id,
             product_type_id=product_type.id,
@@ -264,14 +294,15 @@ class ProductService:
         db.add(product)
         db.flush()
 
-        product_asset = FileAsset(
-            bucket_name="product-catalog",
-            storage_path=payload.imageStoragePath,
-            file_type="product_main",
-            product_id=product.id,
-            is_active=True,
-        )
-        db.add(product_asset)
+        if payload.imageStoragePath:
+            product_asset = FileAsset(
+                bucket_name="product-catalog",
+                storage_path=payload.imageStoragePath,
+                file_type="product_main",
+                product_id=product.id,
+                is_active=True,
+            )
+            db.add(product_asset)
 
         inventory = Inventory(product_id=product.id, quantity=max(0, payload.stock))
         db.add(inventory)
@@ -308,16 +339,9 @@ class ProductService:
         product.base_price = payload.basePrice
         product.product_type_id = product_type.id
 
-        existing_active_image = db.query(FileAsset).filter(
-            FileAsset.product_id == product.id,
-            FileAsset.file_type == "product_main",
-            FileAsset.is_active == True,
-        ).first()
-
-        if not payload.imageStoragePath and not existing_active_image:
-            raise ValueError("La imagen del producto es obligatoria")
-
         if payload.imageStoragePath:
+            # We don't necessarily delete the rest, just the legacy main image maybe
+            # However with the new architecture, frontend might not send imageStoragePath anymore
             db.query(FileAsset).filter(
                 FileAsset.product_id == product.id,
                 FileAsset.file_type == "product_main",
@@ -390,3 +414,78 @@ class ProductService:
 
         product.is_active = False
         db.commit()
+
+    @staticmethod
+    def upload_product_media(
+        db: Session,
+        product_id: int,
+        company_id: int,
+        user_id: int,
+        media_kind: str,
+        media_role: str,
+        sort_order: int,
+        file: bytes,
+        filename: str,
+        content_type: str,
+    ) -> FileAssetResponse:
+        product_query = db.query(Product).filter(Product.id == product_id)
+        if company_id:
+            product_query = product_query.filter(Product.company_id == company_id)
+
+        product = product_query.first()
+        if not product or not product.is_active:
+            raise ValueError("Producto no encontrado")
+
+        from app.providers.supabase_provider import supabase_admin
+        from uuid import uuid4
+
+        file_ext = filename.split(".")[-1] if "." in filename else ""
+        uuid_name = f"{uuid4()}.{file_ext}"
+
+        file_path = f"companies/{company_id}/products/{product_id}/{uuid_name}"
+        bucket_name = "product-catalog"
+
+        try:
+            supabase_admin.storage.from_(bucket_name).upload(
+                path=file_path,
+                file=file,
+                file_options={"content-type": content_type}
+            )
+        except Exception as e:
+            print("ERROR UPLOAD PRODUCT MEDIA:", e)
+            raise ValueError("Error al subir el archivo a Storage")
+        
+        from app.config.settings import settings
+        public_url = f"{settings.SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{file_path}"
+
+        new_asset = FileAsset(
+            bucket_name=bucket_name,
+            storage_path=public_url,
+            file_type=None,
+            mime_type=content_type,
+            size_bytes=len(file),
+            sort_order=sort_order,
+            product_id=product_id,
+            media_kind=media_kind,
+            media_role=media_role,
+            extension=file_ext,
+            is_active=True,
+            uploaded_by=user_id,
+        )
+        db.add(new_asset)
+        db.commit()
+
+        return FileAssetResponse(
+            id=new_asset.id,
+            storage_path=public_url,
+            media_kind=media_kind,
+            media_role=media_role,
+            sort_order=sort_order,
+            file_type=None,
+            mime_type=content_type,
+            size_bytes=len(file),
+            width=None,
+            height=None,
+            duration_seconds=None,
+            extension=file_ext,
+        )

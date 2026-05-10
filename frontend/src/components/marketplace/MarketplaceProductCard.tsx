@@ -17,25 +17,41 @@ export function MarketplaceProductCard({
     onDelete,
     imageLoading = 'lazy',
 }: MarketplaceProductCardProps) {
+    const mainMedia = product.media?.find(m => m.media_role === 'main') || product.media?.[0];
+    const displayUrl = mainMedia?.storage_path || product.imageUrl;
+
     return (
         <Card
             className={`overflow-hidden transition-all ${!product.isActive ? 'opacity-60' : ''
                 }`}
         >
-            {/* Imagen */}
+            {/* Imagen / Video Principal */}
             <div className="relative aspect-video">
-                {product.imageUrl ? (
-                    <Image
-                        src={product.imageUrl}
-                        alt={product.name}
-                        fill
-                        sizes="(max-width: 1024px) 100vw, 33vw"
-                        unoptimized
-                        loading={imageLoading}
-                        className="object-cover"
-                    />
+                {displayUrl ? (
+                    mainMedia?.media_kind === 'video' ? (
+                        <video
+                            src={displayUrl}
+                            className="w-full h-full object-cover"
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                        />
+                    ) : (
+                        <Image
+                            src={displayUrl}
+                            alt={product.name}
+                            fill
+                            sizes="(max-width: 1024px) 100vw, 33vw"
+                            unoptimized
+                            loading={imageLoading}
+                            className="object-cover"
+                        />
+                    )
                 ) : (
-                    <div className="w-full h-full bg-gray-100" />
+                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                        <span className="text-sm text-muted-foreground">Sin imagen</span>
+                    </div>
                 )}
                 {/* Overlay de estado */}
                 {!product.isActive && (

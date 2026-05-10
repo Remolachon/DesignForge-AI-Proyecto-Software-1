@@ -11,6 +11,8 @@ import {
     type ProductFormData,
     type ProductFormSubmit,
 } from '@/components/marketplace/types/marketplace.types';
+import { uploadProductMedia } from '@/services/media/uploadProductMedia';
+
 export function useMarketplace() {
     const [products, setProducts] = useState<MarketplaceProduct[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -75,21 +77,32 @@ export function useMarketplace() {
             stock,
         };
         try {
-            if (pendingSave.imageFile) {
-                const uploaded = await funcionarioMarketplaceService.uploadProductImage(pendingSave.imageFile);
-                payload.imageStoragePath = uploaded.storage_path;
-            }
+            let finalProduct: MarketplaceProduct;
+            
             if (modalMode === 'create') {
-                const created = await funcionarioMarketplaceService.createProduct(payload);
-                setProducts((prev) => [created, ...prev]);
+                finalProduct = await funcionarioMarketplaceService.createProduct(payload);
                 toast.success('Producto agregado al marketplace.');
-            } else if (editingProduct) {
-                const updated = await funcionarioMarketplaceService.updateProduct(editingProduct.id, payload);
-                setProducts((prev) =>
-                    prev.map((p) => (p.id === editingProduct.id ? updated : p)),
-                );
+            } else {
+                if (!editingProduct) return;
+                finalProduct = await funcionarioMarketplaceService.updateProduct(editingProduct.id, payload);
                 toast.success('Producto actualizado correctamente.');
             }
+
+            const mediaToUpload = pendingSave.mediaItems?.filter(m => m.file);
+            if (mediaToUpload && mediaToUpload.length > 0 && finalProduct.companyId) {
+                await uploadProductMedia(finalProduct.companyId, Number(finalProduct.id), mediaToUpload);
+                const refreshedProducts = await funcionarioMarketplaceService.getProducts();
+                setProducts(refreshedProducts);
+            } else {
+                if (modalMode === 'create') {
+                    setProducts((prev) => [finalProduct, ...prev]);
+                } else {
+                    setProducts((prev) =>
+                        prev.map((p) => (p.id === finalProduct.id ? finalProduct : p)),
+                    );
+                }
+            }
+
             setPendingSave(null);
             setShowModal(false);
         } catch (error: any) {

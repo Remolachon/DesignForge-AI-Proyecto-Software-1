@@ -1,16 +1,18 @@
 import { type ProductType } from '@/types/product';
 import { type MarketplaceProduct } from '@/types/marketplace';
-import { getCatalogImageByType, normalizeProductType } from '@/constants/productCatalog';
+import { normalizeProductType } from '@/constants/productCatalog';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 type AdminProductResponse = {
   id: number;
+  companyId?: number;
   name: string;
   description: string;
   basePrice: number;
   productType: string;
   imageUrl?: string | null;
+  media?: any[];
   inStock: boolean;
   stock: number;
   isActive: boolean;
@@ -26,13 +28,6 @@ export type MarketplaceSavePayload = {
   basePrice: number;
   productType: ProductType;
   stock: number;
-  imageStoragePath?: string;
-};
-
-type UploadProductImageResponse = {
-  bucket: string;
-  storage_path: string;
-  url: string;
 };
 
 function toMarketplaceProduct(product: AdminProductResponse): MarketplaceProduct {
@@ -40,11 +35,13 @@ function toMarketplaceProduct(product: AdminProductResponse): MarketplaceProduct
 
   return {
     id: String(product.id),
+    companyId: product.companyId,
     name: product.name,
     description: product.description,
     basePrice: product.basePrice,
     productType,
-    imageUrl: getCatalogImageByType(product.productType, product.imageUrl),
+    imageUrl: product.imageUrl || undefined,
+    media: product.media || [],
     inStock: product.inStock,
     stock: product.stock,
     isActive: product.isPublic,
@@ -64,12 +61,23 @@ function getToken() {
 }
 
 export const funcionarioMarketplaceService = {
-  async uploadProductImage(file: File): Promise<UploadProductImageResponse> {
+  async uploadProductMedia(
+    productId: number,
+    companyId: number,
+    mediaKind: string,
+    mediaRole: string,
+    sortOrder: number,
+    file: File
+  ): Promise<any> {
     const token = getToken();
     const formData = new FormData();
+    formData.append('company_id', String(companyId));
+    formData.append('media_kind', mediaKind);
+    formData.append('media_role', mediaRole);
+    formData.append('sort_order', String(sortOrder));
     formData.append('file', file);
 
-    const response = await fetch(`${API_URL}/upload-product-image`, {
+    const response = await fetch(`${API_URL}/products/admin/${productId}/media`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -79,7 +87,7 @@ export const funcionarioMarketplaceService = {
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
-      throw new Error(err?.detail || 'No se pudo subir la imagen');
+      throw new Error(err?.detail || 'No se pudo subir el archivo multimedia');
     }
 
     return response.json();

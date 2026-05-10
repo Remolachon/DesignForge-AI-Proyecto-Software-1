@@ -129,7 +129,19 @@ export default function FuncionarioMarketplace() {
         <ProductModal
           mode={modalMode}
           initialData={editInitialData}
-          initialImageUrl={editingProduct?.imageUrl}
+          initialMediaItems={
+              editingProduct?.media?.map((m: any) => ({
+                  id: m.id?.toString() || crypto.randomUUID(),
+                  previewUrl: m.storage_path,
+                  media_kind: m.media_kind,
+                  media_role: m.media_role,
+              })) || (editingProduct?.imageUrl ? [{
+                  id: crypto.randomUUID(),
+                  previewUrl: editingProduct.imageUrl,
+                  media_kind: 'image' as const,
+                  media_role: 'main' as const
+              }] : [])
+          }
           onClose={() => setShowModal(false)}
           onSave={handleSave}
         />

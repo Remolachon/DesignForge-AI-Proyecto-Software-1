@@ -1,12 +1,14 @@
-import { ProductType } from '@/types/product';
+import { ProductType, FileAsset } from '@/types/product';
 
 export interface MarketplaceProduct {
   id: string;
+  companyId?: number;
   name: string;
   description: string;
   basePrice: number;
   productType: ProductType;
-  imageUrl: string;
+  imageUrl?: string;
+  media?: FileAsset[];
   inStock: boolean;
   stock: number;
   isActive: boolean;

@@ -16,3 +16,4 @@ class Product(Base):
     is_active = Column(Boolean, default=True)
 
     company = relationship("Company")
+    file_assets = relationship("FileAsset", back_populates="product", cascade="all, delete-orphan")

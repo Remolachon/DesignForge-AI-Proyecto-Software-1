@@ -8,6 +8,7 @@ import { Product, getProductTypeLabel } from '@/types/product';
 import { useMarketplaceBuy } from '@/components/marketplace/hooks/useMarketplaceBuy';
 import { BuyOrderModal } from '@/components/marketplace/modals/BuyOrderModal';
 import { ConfirmBuyModal } from '@/components/marketplace/modals/ConfirmBuyModal';
+import { ProductCarousel } from '@/components/multimedia/ProductCarousel';
 import { Star, ShoppingBag, Settings2, ShieldCheck, Truck, RefreshCcw, Leaf } from 'lucide-react';
 
 interface Props {
@@ -75,49 +76,8 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
 
           {/* Left: Image Gallery */}
-          <div className="lg:col-span-7 flex flex-col md:flex-row-reverse gap-4 lg:gap-6">
-            {/* Main Hero Image */}
-            <div className="flex-1 bg-muted/30 rounded-2xl overflow-hidden aspect-[4/5] relative group border border-border/40 shadow-sm w-full">
-              {mainImage ? (
-                <Image
-                  src={mainImage}
-                  alt={initialProduct.title}
-                  fill
-                  loading="eager"
-                  className="object-cover object-center transition-transform duration-700 group-hover:scale-[1.03]"
-                  unoptimized
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-muted">
-                  <span className="text-muted-foreground">Sin imagen</span>
-                </div>
-              )}
-              {/* Type Badge Overlay */}
-              <div className="absolute top-4 left-4 bg-background/80 backdrop-blur-md px-3 lg:px-4 py-1 lg:py-1.5 rounded-full flex items-center gap-2 shadow-sm border border-border/50">
-                <span className="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
-                <span className="text-[10px] lg:text-xs font-semibold text-foreground tracking-wide uppercase">
-                  {getProductTypeLabel(initialProduct.productType)}
-                </span>
-              </div>
-            </div>
-
-            {/* Thumbnails (Vertical on Desktop, Horizontal on Mobile) */}
-            <div className="flex md:flex-col gap-3 w-full md:w-24 overflow-x-auto md:overflow-visible pb-2 md:pb-0 scrollbar-hide snap-x md:snap-none touch-pan-x">
-              {thumbnails.map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setMainImage(img)}
-                  className={`shrink-0 snap-center w-20 h-24 md:w-full md:h-28 rounded-xl overflow-hidden relative border-2 transition-all duration-200
-                    ${mainImage === img ? 'border-primary opacity-100 shadow-md scale-[1.02]' : 'border-transparent opacity-60 hover:opacity-100 bg-muted/30 hover:scale-[1.02]'}`}
-                >
-                  {img ? (
-                    <Image src={img} alt={`Thumbnail ${idx}`} fill className="object-cover" unoptimized />
-                  ) : (
-                    <div className="w-full h-full bg-muted" />
-                  )}
-                </button>
-              ))}
-            </div>
+          <div className="lg:col-span-7 w-full">
+            <ProductCarousel media={initialProduct.media || []} altText={initialProduct.title} />
           </div>
 
           {/* Right: Product Information */}

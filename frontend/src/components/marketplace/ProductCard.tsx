@@ -12,22 +12,36 @@ interface Props {
 }
 
 export const ProductCard = ({ product, onBuy }: Props) => {
+  const mainMedia = product.media?.find(m => m.media_role === 'main') || product.media?.[0];
+  const displayUrl = mainMedia?.storage_path || product.imageUrl;
+
   return (
     <div className="border border-border/50 rounded-xl p-4 flex flex-col hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300 bg-background group relative overflow-hidden">
       {/* Decorative hover effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
       <Link href={`/marketplace/${product.id}`} className="relative aspect-square mb-4 overflow-hidden rounded-lg block">
-        {product.imageUrl ? (
-          <Image
-            src={product.imageUrl}
-            alt={product.title}
-            fill
-            sizes="(max-width: 768px) 100vw, 33vw"
-            loading="eager"
-            unoptimized
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
-          />
+        {displayUrl ? (
+          mainMedia?.media_kind === 'video' ? (
+              <video
+                  src={displayUrl}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+              />
+          ) : (
+              <Image
+                src={displayUrl}
+                alt={product.title}
+                fill
+                sizes="(max-width: 768px) 100vw, 33vw"
+                loading="eager"
+                unoptimized
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+          )
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted/50">
             <span className="text-sm text-muted-foreground">Sin imagen</span>
