@@ -9,7 +9,7 @@ import { useMarketplaceBuy } from '@/components/marketplace/hooks/useMarketplace
 import { BuyOrderModal } from '@/components/marketplace/modals/BuyOrderModal';
 import { ConfirmBuyModal } from '@/components/marketplace/modals/ConfirmBuyModal';
 import { ProductCarousel } from '@/components/multimedia/ProductCarousel';
-import { ProductReviewsModal } from '@/components/marketplace/modals/ProductReviewsModal';
+import { ProductCommentsSection } from '@/components/marketplace/ProductCommentsSection';
 import { Star, ShoppingBag, Settings2, ShieldCheck, Truck, RefreshCcw, Leaf, MessageSquareText } from 'lucide-react';
 
 interface Props {
@@ -23,7 +23,6 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
 
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [showReviewsModal, setShowReviewsModal] = useState(false);
   const [hasToken, setHasToken] = useState(false);
   // Optional: Add state for image gallery if we had multiple images.
   const [mainImage, setMainImage] = useState(initialProduct.imageUrl);
@@ -31,7 +30,9 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
   useEffect(() => {
     const shouldOpenReviews = searchParams.get('review') === '1';
     if (shouldOpenReviews) {
-      setShowReviewsModal(true);
+      setTimeout(() => {
+        document.getElementById('opiniones')?.scrollIntoView({ behavior: 'smooth' });
+      }, 500);
     }
   }, [searchParams]);
 
@@ -110,7 +111,7 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
                 {initialProduct.reviews > 0 && (
                   <button
                     type="button"
-                    onClick={() => setShowReviewsModal(true)}
+                    onClick={() => document.getElementById('opiniones')?.scrollIntoView({ behavior: 'smooth' })}
                     className="ml-auto mr-8 flex items-center gap-1.5 bg-yellow-500/10 px-2.5 py-1 rounded-full border border-yellow-500/20 hover:bg-yellow-500/15 transition-colors"
                   >
                     <Star className="w-3.5 lg:w-4 h-3.5 lg:h-4 fill-yellow-500 text-yellow-500" />
@@ -193,6 +194,15 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
 
           </div>
         </div>
+
+        {/* Comments Section */}
+        <ProductCommentsSection
+          productId={initialProduct.id}
+          productTitle={initialProduct.title}
+          summaryRating={initialProduct.rating}
+          summaryReviews={initialProduct.reviews}
+          allowReview={hasToken}
+        />
       </div>
 
       {/* Buy Modals */}
@@ -215,17 +225,6 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
           setShowBuyModal(true);
         }}
         loading={loading}
-      />
-
-      <ProductReviewsModal
-        open={showReviewsModal}
-        onOpenChange={setShowReviewsModal}
-        productId={initialProduct.id}
-        productTitle={initialProduct.title}
-        summaryRating={initialProduct.rating}
-        summaryReviews={initialProduct.reviews}
-        allowReview={hasToken}
-        initialMode={searchParams.get('review') === '1' ? 'review' : 'comments'}
       />
     </div>
   );
