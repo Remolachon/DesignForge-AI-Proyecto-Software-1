@@ -48,7 +48,6 @@ export default function CrearPedido() {
     currentStep,
     productType,
     uploadedImage,
-    selectedVariant,
     loading,
     setProductType,
     handleFileUpload,
@@ -56,9 +55,13 @@ export default function CrearPedido() {
     prevStep,
     canProceed,
     setLoading,
-    setSelectedVariant,
     reset,
     setUploadedImage,
+    generatedImages,
+    selectedGeneratedImage,
+    generateAIImages,
+    resetGeneratedImages,
+    setSelectedGeneratedImage,
   } = useCrearPedido({ restoreDraft });
 
   const designSettings = {
@@ -96,7 +99,7 @@ export default function CrearPedido() {
 
       const result = await paymentService.createCustomOrder({
         product_type: productType,
-        image_url: uploadedImage,
+        image_url: selectedGeneratedImage || uploadedImage,
         size: designSettings.size,
         material: designSettings.material,
         color: designSettings.color,
@@ -205,13 +208,17 @@ export default function CrearPedido() {
 
         {currentStep === 3 && (
           <Step3AIResults
-            selectedVariant={selectedVariant}
-            setSelectedVariant={setSelectedVariant}
-            uploadedImage={uploadedImage}
+            productType={productType}
+            generatedImages={generatedImages}
+            selectedGeneratedImage={selectedGeneratedImage}
+            setSelectedGeneratedImage={setSelectedGeneratedImage}
+            generateAIImages={generateAIImages}
+            resetGeneratedImages={resetGeneratedImages}
+            loading={loading}
           />
         )}
 
-        {currentStep === 5 && (
+        {currentStep === 4 && (
           <Step5Confirm
             productType={productType}
             designSettings={designSettings}
@@ -230,7 +237,7 @@ export default function CrearPedido() {
           Anterior
         </Button>
 
-        {currentStep < 5 ? (
+        {currentStep < 4 ? (
           <Button onClick={nextStep} disabled={!canProceed()}>
             Siguiente
             <ChevronRight className="w-5 h-5" />
