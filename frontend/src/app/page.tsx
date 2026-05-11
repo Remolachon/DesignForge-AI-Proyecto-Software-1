@@ -6,6 +6,7 @@ import { getPublicImageUrl } from "@/lib/supabase/getPublicImageUrl";
 import { HOME_CATALOG_PRODUCTS } from "@/constants/productCatalog";
 import { InfiniteGrid } from "@/components/ui/infinite-grid";
 import { Magnetic } from "@/components/core/magnetic";
+import { Tilt } from "@/components/core/tilt";
 
 export default function Landing() {
   return (
@@ -97,28 +98,30 @@ function ProductCard({
   const imageUrl = getPublicImageUrl(storagePath);
 
   return (
-    <div className="group relative overflow-hidden rounded-xl bg-white border border-border hover:shadow-lg transition-all duration-300">
-      <div className="relative aspect-[4/3] overflow-hidden">
-        <Image
-          src={imageUrl}
-          alt={title}
-          fill
-          loading="lazy"
-          unoptimized
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-      </div>
-
-      <div className="p-6">
-        <h3 className="text-xl font-semibold mb-2">{title}</h3>
-        <p className="text-muted-foreground">{description}</p>
-      </div>
-
-      {accent && (
-        <div className="absolute top-4 right-4 px-3 py-1 bg-accent text-accent-foreground rounded-full text-sm font-medium">
-          Popular
+    <Tilt rotationFactor={8} isRevese>
+      <div className="group relative overflow-hidden rounded-xl bg-white border border-border hover:shadow-lg transition-all duration-300 h-full flex flex-col">
+        <div className="relative aspect-[4/3] overflow-hidden">
+          <Image
+            src={imageUrl}
+            alt={title}
+            fill
+            loading="lazy"
+            unoptimized
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+          />
         </div>
-      )}
-    </div>
+
+        <div className="p-6 flex-1">
+          <h3 className="text-xl font-semibold mb-2">{title}</h3>
+          <p className="text-muted-foreground">{description}</p>
+        </div>
+
+        {accent && (
+          <div className="absolute top-4 right-4 px-3 py-1 bg-accent text-accent-foreground rounded-full text-sm font-medium">
+            Popular
+          </div>
+        )}
+      </div>
+    </Tilt>
   );
 }
