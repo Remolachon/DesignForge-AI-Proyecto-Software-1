@@ -138,19 +138,23 @@ export function ProductReviewsModal({
           <div className="flex items-start justify-between gap-4">
             <div>
               <DialogTitle className="text-xl">{productTitle}</DialogTitle>
-              <DialogDescription className="mt-2">
-                {mode === 'review' ? (
-                  'Deja tu valoración para este producto.'
-                ) : visibleComments.length > 0 ? (
-                  <span className="flex items-center gap-2">
-                    <span className="font-semibold text-foreground">{averageRating.toFixed(1)}</span>
-                    <StarDisplay value={averageRating} />
-                    <span className="text-muted-foreground">({visibleComments.length} comentarios)</span>
-                  </span>
-                ) : (
-                  'Todavía no hay valoraciones registradas.'
-                )}
+              <DialogDescription className="mt-1">
+                {summaryReviews > 0
+                  ? 'Resumen de valoraciones del producto.'
+                  : 'Todavía no hay valoraciones registradas.'}
               </DialogDescription>
+
+              {summaryReviews > 0 && (
+                <div className="mt-2 inline-flex items-center gap-2 text-sm text-muted-foreground">
+                  <span className="font-semibold text-foreground">
+                    {averageRating.toFixed(1)}
+                  </span>
+
+                  <StarDisplay value={averageRating} />
+
+                  <span>({summaryReviews} comentarios)</span>
+                </div>
+              )}
             </div>
           </div>
         </DialogHeader>
