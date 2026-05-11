@@ -24,6 +24,7 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showReviewsModal, setShowReviewsModal] = useState(false);
+  const [reviewNotificationId, setReviewNotificationId] = useState<number | null>(null);
   const [hasToken, setHasToken] = useState(false);
   // Optional: Add state for image gallery if we had multiple images.
   const [mainImage, setMainImage] = useState(initialProduct.imageUrl);
@@ -32,6 +33,8 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
     const shouldOpenReviews = searchParams.get('review') === '1';
     if (shouldOpenReviews) {
       setShowReviewsModal(true);
+      const notificationId = Number(searchParams.get('notification'));
+      setReviewNotificationId(Number.isFinite(notificationId) ? notificationId : null);
     }
   }, [searchParams]);
 
@@ -219,13 +222,18 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
 
       <ProductReviewsModal
         open={showReviewsModal}
-        onOpenChange={setShowReviewsModal}
+        onOpenChange={(nextOpen) => {
+          setShowReviewsModal(nextOpen);
+          if (!nextOpen) {
+            setReviewNotificationId(null);
+          }
+        }}
         productId={initialProduct.id}
         productTitle={initialProduct.title}
         summaryRating={initialProduct.rating}
         summaryReviews={initialProduct.reviews}
         allowReview={hasToken}
-        initialMode={searchParams.get('review') === '1' ? 'review' : 'comments'}
+        initialMode={reviewNotificationId !== null || searchParams.get('review') === '1' ? 'review' : 'comments'}
       />
     </div>
   );

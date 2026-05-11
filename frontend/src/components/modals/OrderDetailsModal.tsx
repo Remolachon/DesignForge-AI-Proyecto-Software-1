@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { funcionarioOrderService, type OrderDetail } from '@/services/funcionario-order.service';
+import { ProductService } from '@/services/product.service';
 import { getImageUrl } from '@/lib/supabase/getImageUrl';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -32,6 +33,7 @@ export function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModa
   const [error, setError] = useState<string | null>(null);
   const [resolvedImageUrl, setResolvedImageUrl] = useState<string | null>(null);
   const [resolvedMedia, setResolvedMedia] = useState<ResolvedMedia[]>([]);
+  const [fallbackMedia, setFallbackMedia] = useState<ResolvedMedia[]>([]);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
 
   useEffect(() => {
@@ -44,6 +46,7 @@ export function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModa
       setError(null);
       setResolvedImageUrl(null);
       setResolvedMedia([]);
+      setFallbackMedia([]);
 
       try {
         const data = await funcionarioOrderService.getOrderDetail(orderId);
@@ -81,6 +84,33 @@ export function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModa
           ? [{ bucket: order.image.bucket, path: order.image.path, url: null }]
           : [];
 
+    const loadFallbackMedia = async () => {
+      if (sourceMedia.length > 1 || !order.productId) return;
+
+      try {
+        const product = await ProductService.getProductById(String(order.productId));
+        const productMedia = (product.media || []).map((media) => ({
+          bucket: media.bucket_name || 'product-catalog',
+          path: media.storage_path,
+          mediaKind: media.media_kind,
+          mediaRole: media.media_role,
+          mimeType: media.mime_type,
+          sortOrder: media.sort_order,
+          url: null,
+        }));
+
+        if (!cancelled && productMedia.length > 1) {
+          setFallbackMedia(productMedia);
+        }
+      } catch {
+        if (!cancelled) {
+          setFallbackMedia([]);
+        }
+      }
+    };
+
+    void loadFallbackMedia();
+
     const resolveMedia = async () => {
       if (order.imageUrl) {
         setResolvedImageUrl(order.imageUrl);
@@ -117,6 +147,8 @@ export function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModa
       cancelled = true;
     };
   }, [order, isOpen]);
+
+  const displayMedia = resolvedMedia.length > 1 ? resolvedMedia : fallbackMedia;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -168,57 +200,23 @@ export function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModa
             {(resolvedMedia.length > 0 || resolvedImageUrl) && (
               <div className="space-y-3">
                 <div className="relative w-full aspect-video bg-gray-100 rounded-lg overflow-hidden">
-                  {resolvedMedia.length > 0 ? (
+                  {displayMedia.length > 0 && displayMedia[currentMediaIndex]?.url ? (
                     <>
-                      {resolvedMedia[currentMediaIndex]?.url ? (
-                        resolvedMedia[currentMediaIndex].mediaKind === 'video' || (resolvedMedia[currentMediaIndex].mimeType || '').startsWith('video/') ? (
-                          <video
-                            src={resolvedMedia[currentMediaIndex].url}
-                            controls
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <Image
-                            src={resolvedMedia[currentMediaIndex].url}
-                            alt={order.title}
-                            fill
-                            unoptimized
-                            className="object-cover"
-                            priority
-                          />
-                        )
+                      {displayMedia[currentMediaIndex].mediaKind === 'video' || (displayMedia[currentMediaIndex].mimeType || '').startsWith('video/') ? (
+                        <video
+                          src={displayMedia[currentMediaIndex].url}
+                          controls
+                          className="h-full w-full object-cover"
+                        />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
-                          Sin vista previa
-                        </div>
-                      )}
-                      
-                      {resolvedMedia.length > 1 && (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full w-10 h-10 p-0 gap-0"
-                            onClick={() => setCurrentMediaIndex((prev) => (prev - 1 + resolvedMedia.length) % resolvedMedia.length)}
-                          >
-                            <ChevronLeft className="w-4 h-4" />
-                          </Button>
-                          
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full w-10 h-10 p-0 gap-0"
-                            onClick={() => setCurrentMediaIndex((prev) => (prev + 1) % resolvedMedia.length)}
-                          >
-                            <ChevronRight className="w-4 h-4" />
-                          </Button>
-                          
-                          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-full bg-black/50 px-3 py-1">
-                            <span className="text-xs text-white font-medium">
-                              {currentMediaIndex + 1} / {resolvedMedia.length}
-                            </span>
-                          </div>
-                        </>
+                        <Image
+                          src={displayMedia[currentMediaIndex].url}
+                          alt={order.title}
+                          fill
+                          unoptimized
+                          className="object-cover"
+                          priority
+                        />
                       )}
                     </>
                   ) : resolvedImageUrl ? (
@@ -230,12 +228,44 @@ export function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModa
                       className="object-cover"
                       priority
                     />
-                  ) : null}
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
+                      Sin vista previa
+                    </div>
+                  )}
+                  
+                  {displayMedia.length > 1 && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full w-10 h-10 p-0 gap-0"
+                        onClick={() => setCurrentMediaIndex((prev) => (prev - 1 + displayMedia.length) % displayMedia.length)}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full w-10 h-10 p-0 gap-0"
+                        onClick={() => setCurrentMediaIndex((prev) => (prev + 1) % displayMedia.length)}
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                      
+                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-full bg-black/50 px-3 py-1">
+                        <span className="text-xs text-white font-medium">
+                          {currentMediaIndex + 1} / {displayMedia.length}
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
 
-                {resolvedMedia.length > 1 && (
+                {displayMedia.length > 1 && (
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-                    {resolvedMedia.map((media, index) => (
+                    {displayMedia.map((media, index) => (
                       <button
                         key={`${media.bucket}/${media.path}-${index}`}
                         onClick={() => setCurrentMediaIndex(index)}

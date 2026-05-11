@@ -158,14 +158,18 @@ export const ProductCarousel: React.FC<ProductCarouselProps> = ({ media, altText
                 {sortedMedia.length > 1 && (
                     <>
                         <button
+                            type="button"
                             onClick={scrollPrev}
-                            className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 items-center justify-center bg-background/60 hover:bg-background/90 text-foreground rounded-full shadow-lg backdrop-blur-md border border-border/50 transition-all duration-300 opacity-0 group-hover:opacity-100 focus:opacity-100 hover:scale-110 z-10"
+                            aria-label="Ver media anterior"
+                            className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 items-center justify-center bg-background/80 hover:bg-background text-foreground rounded-full shadow-lg backdrop-blur-md border border-border/60 transition-all duration-300 opacity-90 hover:opacity-100 hover:scale-110 z-20"
                         >
                             <ChevronLeft className="w-5 h-5" />
                         </button>
                         <button
+                            type="button"
                             onClick={scrollNext}
-                            className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 items-center justify-center bg-background/60 hover:bg-background/90 text-foreground rounded-full shadow-lg backdrop-blur-md border border-border/50 transition-all duration-300 opacity-0 group-hover:opacity-100 focus:opacity-100 hover:scale-110 z-10"
+                            aria-label="Ver media siguiente"
+                            className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 items-center justify-center bg-background/80 hover:bg-background text-foreground rounded-full shadow-lg backdrop-blur-md border border-border/60 transition-all duration-300 opacity-90 hover:opacity-100 hover:scale-110 z-20"
                         >
                             <ChevronRight className="w-5 h-5" />
                         </button>

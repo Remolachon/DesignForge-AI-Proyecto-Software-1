@@ -5,6 +5,7 @@ import "./globals.css";
 
 import { AuthProvider } from "@/context/AuthContext";
 import Footer from "@/components/Footer";
+import { ReviewModalHost } from "@/components/marketplace/modals/ReviewModalHost";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,6 +36,8 @@ export default function RootLayout({
           <div className="flex flex-col min-h-screen">
             {/* Contenido principal */}
             <main className="flex-grow">{children}</main>
+
+            <ReviewModalHost />
 
             {/* Footer en todas las páginas */}
             <Footer />

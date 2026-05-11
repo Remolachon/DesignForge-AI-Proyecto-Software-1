@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bell, CheckCheck, LogIn, RefreshCcw } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -37,6 +38,12 @@ export function NotificationBell() {
 
   const [displayName, setDisplayName] = useState('Usuario');
 
+  const parseMarketplaceProductId = (linkUrl?: string | null) => {
+    if (!linkUrl) return null;
+    const match = linkUrl.match(/\/marketplace\/(\d+)/);
+    return match ? Number(match[1]) : null;
+  };
+
   const refreshNotifications = async () => {
     const token = localStorage.getItem('token');
     setHasToken(Boolean(token));
@@ -50,7 +57,7 @@ export function NotificationBell() {
     setLoading(true);
     try {
       const data = await interactionService.getNotifications();
-      setItems(data.items);
+      setItems((data.items || []).slice(0, 10));
       setUnreadCount(data.unreadCount);
     } catch {
       setItems([]);
@@ -75,10 +82,35 @@ export function NotificationBell() {
   }, []);
 
   const handleNotificationClick = async (item: NotificationItem) => {
+    if (item.type === 'order-delivered-review') {
+      if (!item.isRead) {
+        try {
+          await interactionService.markNotificationAsRead(item.id);
+          setItems((prev) => prev.filter((notification) => notification.id !== item.id));
+          setUnreadCount((prev) => Math.max(0, prev - 1));
+        } catch {
+          // Si falla el marcado, igual permitimos abrir el modal.
+        }
+      }
+
+      window.dispatchEvent(
+        new CustomEvent('open-review-modal', {
+          detail: {
+            productId: parseMarketplaceProductId(item.linkUrl),
+            notificationId: item.id,
+            linkUrl: item.linkUrl,
+          },
+        }),
+      );
+
+      setOpen(false);
+      return;
+    }
+
     if (!item.isRead) {
       try {
         await interactionService.markNotificationAsRead(item.id);
-        setItems((prev) => prev.map((notification) => (notification.id === item.id ? { ...notification, isRead: true } : notification)));
+        setItems((prev) => prev.filter((notification) => notification.id !== item.id));
         setUnreadCount((prev) => Math.max(0, prev - 1));
       } catch {
         // Si falla el marcado, igual permitimos navegar.
@@ -151,7 +183,7 @@ export function NotificationBell() {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-1 flex-col">
+              <div className="flex flex-1 min-h-0 flex-col">
                 <div className="flex items-center justify-between gap-3 px-6 py-4">
                   <div className="text-sm text-muted-foreground">
                     {unreadCount > 0
@@ -164,7 +196,7 @@ export function NotificationBell() {
                   </Button>
                 </div>
 
-                <ScrollArea className="flex-1 px-3 pb-3">
+                <ScrollArea className="flex-1 min-h-0 px-3 pb-3">
                   {items.length === 0 ? (
                     <div className="flex min-h-[260px] flex-col items-center justify-center rounded-3xl border border-dashed border-border/70 bg-muted/20 px-6 text-center">
                       <CheckCheck className="mb-3 h-10 w-10 text-muted-foreground" />

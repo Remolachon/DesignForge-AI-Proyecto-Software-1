@@ -19,20 +19,55 @@ export function useDashboard(role: Role) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+    let retryTimer: number | undefined;
+
+    const emptyStats = { total: 0, pending_payment: 0, design: 0, production: 0, ready: 0, active: 0 };
+
     const load = async () => {
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        retryTimer = window.setTimeout(() => {
+          void load();
+        }, 250);
+        return;
+      }
+
       try {
         const data = await dashboardService.getDashboardData();
+        if (cancelled) return;
         setOrders(data.orders);
         setStats(data.stats);
       } catch {
+        if (cancelled) return;
         setOrders([]);
-        setStats({ total: 0, pending_payment: 0, design: 0, production: 0, ready: 0, active: 0 });
+        setStats(emptyStats);
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
-    load();
+    void load();
+
+    const handleStorage = () => {
+      if (!cancelled) {
+        setLoading(true);
+        void load();
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      cancelled = true;
+      if (retryTimer) {
+        window.clearTimeout(retryTimer);
+      }
+      window.removeEventListener('storage', handleStorage);
+    };
   }, [role]);
 
   return {

@@ -88,24 +88,15 @@ class InteractionService:
         if not has_delivered_order:
             raise ValueError("Solo puedes valorar productos de pedidos entregados")
 
-        review = (
-            db.query(Review)
-            .filter(Review.product_id == product_id, Review.user_id == user_id)
-            .first()
+        # Crear una nueva review siempre que el pedido del producto ya esté entregado
+        review = Review(
+            product_id=product_id,
+            user_id=user_id,
+            rating=rating,
+            comment=comment.strip() if isinstance(comment, str) and comment.strip() else None,
+            created_at=InteractionService._now_local(),
         )
-
-        if review:
-            review.rating = rating
-            review.comment = comment.strip() if isinstance(comment, str) and comment.strip() else None
-        else:
-            review = Review(
-                product_id=product_id,
-                user_id=user_id,
-                rating=rating,
-                comment=comment.strip() if isinstance(comment, str) and comment.strip() else None,
-                created_at=InteractionService._now_local(),
-            )
-            db.add(review)
+        db.add(review)
 
         db.flush()
         db.refresh(review)
@@ -131,7 +122,9 @@ class InteractionService:
         notifications = (
             db.query(Notification)
             .filter(Notification.user_id == user_id)
+            .filter(Notification.is_read == False)
             .order_by(Notification.created_at.desc(), Notification.id.desc())
+            .limit(10)
             .all()
         )
         unread_count = (
@@ -181,11 +174,12 @@ class InteractionService:
             title=title,
             message=message,
             type="order-delivered-review",
-            link_url=f"/marketplace/{product_id}?review=1",
             is_read=False,
             created_at=InteractionService._now_local(),
         )
         db.add(notification)
+        db.flush()
+        notification.link_url = f"/marketplace/{product_id}?review=1&notification={notification.id}"
         db.flush()
         db.refresh(notification)
         return InteractionService._serialize_notification(notification)

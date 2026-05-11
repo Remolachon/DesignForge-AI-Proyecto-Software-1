@@ -820,16 +820,16 @@ class OrderService:
         if not product_type_id:
             raise ValueError("El producto no tiene un tipo de producto asociado")
 
-        product_asset = (
+        product_assets = (
             db.query(FileAsset)
             .filter(
                 FileAsset.product_id == product.id,
-                FileAsset.file_type == "product_main",
                 FileAsset.is_active == True,
             )
-            .first()
+            .order_by(FileAsset.sort_order.asc().nullslast(), FileAsset.id.asc())
+            .all()
         )
-        if not product_asset:
+        if not product_assets:
             raise ValueError("El producto no tiene una imagen principal configurada")
 
         order = Order(
@@ -859,28 +859,43 @@ class OrderService:
             )
         )
 
-        source_bucket = product_asset.bucket_name
-        source_path = product_asset.storage_path
-        file_ext = source_path.split(".")[-1] if "." in source_path else "png"
         order_bucket = "order-references"
-        order_storage_path = f"{user_id}/orders/{order.id}/{uuid4().hex}.{file_ext}"
+        copied_assets = 0
 
-        image_bytes = supabase_admin.storage.from_(source_bucket).download(source_path)
-        supabase_admin.storage.from_(order_bucket).upload(
-            path=order_storage_path,
-            file=image_bytes,
-            file_options={"content-type": f"image/{file_ext}"},
-        )
+        for source_asset in product_assets:
+            try:
+                source_bucket = source_asset.bucket_name
+                source_path = source_asset.storage_path
+                file_ext = source_path.split(".")[-1] if "." in source_path else (source_asset.extension or "png")
+                order_storage_path = f"{user_id}/orders/{order.id}/{uuid4().hex}.{file_ext}"
 
-        db.add(
-            FileAsset(
-                bucket_name=order_bucket,
-                storage_path=order_storage_path,
-                file_type="reference_image",
-                order_item_id=item.id,
-                is_active=True,
-            )
-        )
+                file_bytes = supabase_admin.storage.from_(source_bucket).download(source_path)
+                fallback_content_type = f"video/{file_ext}" if (source_asset.media_kind or "").lower() == "video" else f"image/{file_ext}"
+                supabase_admin.storage.from_(order_bucket).upload(
+                    path=order_storage_path,
+                    file=file_bytes,
+                    file_options={"content-type": source_asset.mime_type or fallback_content_type},
+                )
+
+                db.add(
+                    FileAsset(
+                        bucket_name=order_bucket,
+                        storage_path=order_storage_path,
+                        file_type="reference_image",
+                        order_item_id=item.id,
+                        is_active=True,
+                        media_kind=source_asset.media_kind,
+                        media_role=source_asset.media_role,
+                        sort_order=source_asset.sort_order,
+                        mime_type=source_asset.mime_type,
+                    )
+                )
+                copied_assets += 1
+            except Exception:
+                continue
+
+        if copied_assets == 0:
+            raise ValueError("No se pudo copiar la media del producto")
 
         db.add(
             Parameters(
