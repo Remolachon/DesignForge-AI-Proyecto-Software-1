@@ -138,6 +138,7 @@ export function ProductReviewsModal({
           <div className="flex items-start justify-between gap-4">
             <div>
               <DialogTitle className="text-xl">{productTitle}</DialogTitle>
+
               <DialogDescription className="mt-1">
                 {summaryReviews > 0
                   ? 'Resumen de valoraciones del producto.'
