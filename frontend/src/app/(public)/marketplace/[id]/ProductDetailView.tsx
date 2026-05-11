@@ -3,13 +3,12 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Product, getProductTypeLabel } from '@/types/product';
 import { useMarketplaceBuy } from '@/components/marketplace/hooks/useMarketplaceBuy';
 import { BuyOrderModal } from '@/components/marketplace/modals/BuyOrderModal';
 import { ConfirmBuyModal } from '@/components/marketplace/modals/ConfirmBuyModal';
 import { ProductCarousel } from '@/components/multimedia/ProductCarousel';
-import { ProductCommentsSection } from '@/components/marketplace/ProductCommentsSection';
 import { Star, ShoppingBag, Settings2, ShieldCheck, Truck, RefreshCcw, Leaf, MessageSquareText } from 'lucide-react';
 
 interface Props {
@@ -18,7 +17,6 @@ interface Props {
 
 export const ProductDetailView = ({ initialProduct }: Props) => {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { formData, errors, loading, setField, createOrder, resetForm, validateForm } = useMarketplaceBuy();
 
   const [showBuyModal, setShowBuyModal] = useState(false);
@@ -26,15 +24,6 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
   const [hasToken, setHasToken] = useState(false);
   // Optional: Add state for image gallery if we had multiple images.
   const [mainImage, setMainImage] = useState(initialProduct.imageUrl);
-
-  useEffect(() => {
-    const shouldOpenReviews = searchParams.get('review') === '1';
-    if (shouldOpenReviews) {
-      setTimeout(() => {
-        document.getElementById('opiniones')?.scrollIntoView({ behavior: 'smooth' });
-      }, 500);
-    }
-  }, [searchParams]);
 
   useEffect(() => {
     setHasToken(Boolean(localStorage.getItem('token')));
@@ -107,20 +96,15 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
 
               <div className="flex flex-wrap items-center gap-3 lg:gap-4 mb-4">
                 <span className="text-2xl lg:text-3xl font-bold text-primary">${initialProduct.price.toLocaleString()}</span>
-                {/* Optional: Add previous price to show discount if applicable, for now just show rating here */}
                 {initialProduct.reviews > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => document.getElementById('opiniones')?.scrollIntoView({ behavior: 'smooth' })}
-                    className="ml-auto mr-8 flex items-center gap-1.5 bg-yellow-500/10 px-2.5 py-1 rounded-full border border-yellow-500/20 hover:bg-yellow-500/15 transition-colors"
-                  >
+                  <div className="ml-auto mr-8 flex items-center gap-1.5 bg-yellow-500/10 px-2.5 py-1 rounded-full border border-yellow-500/20">
                     <Star className="w-3.5 lg:w-4 h-3.5 lg:h-4 fill-yellow-500 text-yellow-500" />
                     <span className="font-semibold text-yellow-600 dark:text-yellow-400 text-xs lg:text-sm flex items-center gap-2">
                       {initialProduct.rating} <span className="text-yellow-600/70 dark:text-yellow-400/70">({initialProduct.reviews})</span>
                       <MessageSquareText className="w-3.5 h-3.5" />
-                      Ver comentarios
+                      Valoraciones
                     </span>
-                  </button>
+                  </div>
                 )}
               </div>
 
@@ -194,15 +178,6 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
 
           </div>
         </div>
-
-        {/* Comments Section */}
-        <ProductCommentsSection
-          productId={initialProduct.id}
-          productTitle={initialProduct.title}
-          summaryRating={initialProduct.rating}
-          summaryReviews={initialProduct.reviews}
-          allowReview={hasToken}
-        />
       </div>
 
       {/* Buy Modals */}

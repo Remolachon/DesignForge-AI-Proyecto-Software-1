@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Sparkles, CheckCircle, RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -39,12 +39,19 @@ export default function Step3AIResults({
   loading,
 }: Props) {
   const style = styleForProductType(productType);
+  const autoGenerationRequestedRef = useRef(false);
 
   useEffect(() => {
+    if (!productType) {
+      autoGenerationRequestedRef.current = false;
+      return;
+    }
     if (!productType) return;
     if (generatedImages.length > 0) return;
     if (loading) return;
+    if (autoGenerationRequestedRef.current) return;
 
+    autoGenerationRequestedRef.current = true;
     generateAIImages(style);
   }, [productType, generatedImages.length, generateAIImages, loading, style]);
 

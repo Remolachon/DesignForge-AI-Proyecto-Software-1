@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { ProductType } from "@/types/types";
 
@@ -135,7 +135,7 @@ export function useCrearPedido({
   };
 
   // 🔥 GENERAR IMÁGENES CON IA
-  const generateAIImages = async (style: string, reset = false) => {
+  const generateAIImages = useCallback(async (style: string, reset = false) => {
     if (!state.uploadedImage) {
       toast.error("Primero sube una imagen");
       return;
@@ -202,7 +202,7 @@ export function useCrearPedido({
     } finally {
       setLoading(false);
     }
-  };
+  }, [state.uploadedImage]);
 
   const resetGeneratedImages = () => {
     setState((prev) => ({

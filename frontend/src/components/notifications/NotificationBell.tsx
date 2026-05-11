@@ -83,6 +83,8 @@ export function NotificationBell() {
 
   const handleNotificationClick = async (item: NotificationItem) => {
     if (item.type === 'order-delivered-review') {
+      const productId = parseMarketplaceProductId(item.linkUrl);
+
       if (!item.isRead) {
         try {
           await interactionService.markNotificationAsRead(item.id);
@@ -93,17 +95,22 @@ export function NotificationBell() {
         }
       }
 
+      setOpen(false);
+
+      if (!productId) {
+        toast.error('No se pudo abrir la valoración porque faltó el producto.');
+        return;
+      }
+
       window.dispatchEvent(
         new CustomEvent('open-review-modal', {
           detail: {
-            productId: parseMarketplaceProductId(item.linkUrl),
+            productId,
             notificationId: item.id,
             linkUrl: item.linkUrl,
           },
         }),
       );
-
-      setOpen(false);
       return;
     }
 
