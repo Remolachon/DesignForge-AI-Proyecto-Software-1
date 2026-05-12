@@ -23,19 +23,31 @@ const InteractiveImage = ({ src, alt }: { src: string; alt: string }) => {
         setPosition({ x, y });
     };
 
+    const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!isZoomed) {
+            const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+            const x = ((e.clientX - left) / width) * 100;
+            const y = ((e.clientY - top) / height) * 100;
+            setPosition({ x, y });
+            setIsZoomed(true);
+        } else {
+            setIsZoomed(false);
+            setPosition({ x: 50, y: 50 });
+        }
+    };
+
     return (
         <div 
             className={`relative w-full h-full overflow-hidden transition-all duration-300 ${isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
-            onMouseEnter={() => setIsZoomed(true)}
             onMouseLeave={() => { setIsZoomed(false); setPosition({ x: 50, y: 50 }); }}
             onMouseMove={handleMouseMove}
-            onClick={() => setIsZoomed(!isZoomed)}
+            onClick={handleClick}
         >
             <Image
                 src={src}
                 alt={alt}
                 fill
-                className={`object-cover transition-transform duration-200 ease-out ${isZoomed ? 'scale-[2.5]' : 'scale-100'}`}
+                className={`object-contain transition-transform duration-200 ease-out ${isZoomed ? 'scale-[2.5]' : 'scale-100'}`}
                 style={{ transformOrigin: `${position.x}% ${position.y}%` }}
                 unoptimized
             />
@@ -63,7 +75,7 @@ const InteractiveVideo = ({ src }: { src: string }) => {
             <video
                 ref={videoRef}
                 src={src}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain bg-black/5"
                 autoPlay
                 muted
                 loop

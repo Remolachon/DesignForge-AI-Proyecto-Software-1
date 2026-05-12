@@ -11,8 +11,8 @@ interface AuthShellProps {
 
 export function AuthShell({ title, description, children }: AuthShellProps) {
   return (
-    <AuroraBackground className="min-h-screen bg-background dark:bg-background">
-      <div className="relative z-10 flex flex-col items-center justify-center px-4 py-8 sm:px-6 lg:px-8 lg:py-12 w-full">
+    <AuroraBackground className="min-h-screen bg-background dark:bg-background !justify-start py-6 sm:py-12">
+      <div className="relative z-10 flex flex-col items-center w-full px-4 sm:px-6 lg:px-8 m-auto">
         <div className="mb-8 flex flex-col items-center gap-2">
           <Link href="/" className="flex items-center gap-2">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent-magenta shadow-sm">
