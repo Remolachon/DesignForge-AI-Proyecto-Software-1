@@ -8,10 +8,11 @@ import { ProductType } from "@/types/types";
 
 type Props = {
   productType: ProductType | null;
+  uploadedImage: string | null;
   generatedImages: string[];
   selectedGeneratedImage: string | null;
   setSelectedGeneratedImage: (image: string | null) => void;
-  generateAIImages: (style: string, reset?: boolean) => void;
+  generateAIImages: (style: string, reset?: boolean, sourceImageUrl?: string) => void;
   resetGeneratedImages: () => void;
   loading: boolean;
 };
@@ -31,6 +32,7 @@ const styleForProductType = (productType: ProductType | null) => {
 
 export default function Step3AIResults({
   productType,
+  uploadedImage,
   generatedImages,
   selectedGeneratedImage,
   setSelectedGeneratedImage,
@@ -40,20 +42,28 @@ export default function Step3AIResults({
 }: Props) {
   const style = styleForProductType(productType);
   const autoGenerationRequestedRef = useRef(false);
+  const lastUploadedImageRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!productType) {
       autoGenerationRequestedRef.current = false;
+      lastUploadedImageRef.current = uploadedImage;
       return;
     }
-    if (!productType) return;
+
+    if (lastUploadedImageRef.current !== uploadedImage) {
+      autoGenerationRequestedRef.current = false;
+      lastUploadedImageRef.current = uploadedImage;
+    }
+
     if (generatedImages.length > 0) return;
     if (loading) return;
     if (autoGenerationRequestedRef.current) return;
+    if (!uploadedImage) return;
 
     autoGenerationRequestedRef.current = true;
-    generateAIImages(style);
-  }, [productType, generatedImages.length, generateAIImages, loading, style]);
+    generateAIImages(style, false, uploadedImage);
+  }, [productType, uploadedImage, generatedImages.length, generateAIImages, loading, style]);
 
   return (
     <div>
@@ -67,8 +77,8 @@ export default function Step3AIResults({
 
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button
-            onClick={() => generateAIImages(style)}
-            disabled={loading || generatedImages.length >= 3}
+            onClick={() => generateAIImages(style, false, uploadedImage || undefined)}
+            disabled={loading || !uploadedImage || generatedImages.length >= 3}
             className="flex items-center gap-2"
           >
             <Sparkles className="w-4 h-4" />

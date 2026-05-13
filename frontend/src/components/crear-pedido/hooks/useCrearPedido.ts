@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { ProductType } from "@/types/types";
 
@@ -48,6 +48,7 @@ export function useCrearPedido({
   });
 
   const [loading, setLoading] = useState(false);
+  const latestUploadedImageRef = useRef<string | null>(initialState.uploadedImage);
 
   useEffect(() => {
     if (!restoreDraft) {
@@ -72,6 +73,7 @@ export function useCrearPedido({
 
   // 🔹 SET IMAGE DIRECT (para quitar imagen)
   const setUploadedImage = (img: string | null) => {
+    latestUploadedImageRef.current = img;
     setState((prev) => ({
       ...prev,
       uploadedImage: img,
@@ -125,6 +127,7 @@ export function useCrearPedido({
       }
 
       setUploadedImage(imageUrl);
+      latestUploadedImageRef.current = imageUrl;
 
       toast.success("Imagen subida correctamente");
     } catch (error) {
@@ -135,8 +138,10 @@ export function useCrearPedido({
   };
 
   // 🔥 GENERAR IMÁGENES CON IA
-  const generateAIImages = useCallback(async (style: string, reset = false) => {
-    if (!state.uploadedImage) {
+  const generateAIImages = useCallback(async (style: string, reset = false, sourceImageUrl?: string) => {
+    const referenceImageUrl = sourceImageUrl || latestUploadedImageRef.current || state.uploadedImage;
+
+    if (!referenceImageUrl) {
       toast.error("Primero sube una imagen");
       return;
     }
@@ -152,7 +157,7 @@ export function useCrearPedido({
         }));
       }
 
-      const response = await fetch(state.uploadedImage, {
+      const response = await fetch(referenceImageUrl, {
         mode: "cors",
       });
 
