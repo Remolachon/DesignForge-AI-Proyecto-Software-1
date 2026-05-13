@@ -1,0 +1,257 @@
+## Table `cart_items`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int4` | Primary |
+| `cart_id` | `int4` |  |
+| `product_id` | `int4` |  Nullable |
+| `quantity` | `int4` |  |
+
+## Table `carts`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int4` | Primary |
+| `user_id` | `int4` |  Unique |
+| `created_at` | `timestamp` |  Nullable |
+| `is_active` | `bool` |  Nullable |
+
+## Table `companies`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int4` | Primary |
+| `nit` | `varchar` |  Unique |
+| `name` | `varchar` |  |
+| `description` | `text` |  Nullable |
+| `address` | `text` |  Nullable |
+| `phone` | `varchar` |  Nullable |
+| `email` | `varchar` |  Unique |
+| `start_date` | `timestamp` |  Nullable |
+| `status` | `varchar` |  |
+| `created_by_user_id` | `int4` |  Nullable |
+
+## Table `credentials`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int4` | Primary |
+| `user_id` | `int4` |  Unique |
+| `password_hash` | `text` |  |
+| `last_login` | `timestamp` |  Nullable |
+| `created_at` | `timestamp` |  Nullable |
+| `updated_at` | `timestamp` |  Nullable |
+
+## Table `file_assets`
+
+Fuente de verdad para todos los archivos en Supabase Storage. Cada fila vincula un archivo físico con exactamente una entidad de negocio. Las columnas legacy reference_image_url y ai_generated_image_url fueron eliminadas de order_items en este script.
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int4` | Primary Identity |
+| `bucket_name` | `text` |  |
+| `storage_path` | `text` |  |
+| `file_type` | `file_type_enum` |  Nullable |
+| `mime_type` | `text` |  Nullable |
+| `size_bytes` | `int8` |  Nullable |
+| `sort_order` | `int2` |  Nullable |
+| `company_id` | `int4` |  Nullable |
+| `product_id` | `int4` |  Nullable |
+| `order_item_id` | `int4` |  Nullable |
+| `transaction_id` | `int4` |  Nullable |
+| `uploaded_by` | `int4` |  Nullable |
+| `uploaded_at` | `timestamptz` |  |
+| `updated_at` | `timestamptz` |  |
+| `is_active` | `bool` |  |
+| `generation_prompt` | `text` |  Nullable |
+| `generation_version` | `int2` |  Nullable |
+| `media_kind` | `media_kind_enum` |  |
+| `media_role` | `media_role_enum` |  |
+| `width` | `int4` |  Nullable |
+| `height` | `int4` |  Nullable |
+| `duration_seconds` | `int4` |  Nullable |
+| `extension` | `varchar` |  Nullable |
+| `checksum_sha256` | `text` |  Nullable |
+| `processing_status` | `varchar` |  Nullable |
+| `visibility` | `varchar` |  Nullable |
+| `deleted_at` | `timestamptz` |  Nullable |
+
+## Table `inventory`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int4` | Primary |
+| `product_id` | `int4` |  Unique |
+| `quantity` | `int4` |  |
+| `last_updated` | `timestamp` |  Nullable |
+
+## Table `order_items`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int4` | Primary |
+| `order_id` | `int4` |  |
+| `product_id` | `int4` |  Nullable |
+| `quantity` | `int4` |  |
+| `current_stage_id` | `int4` |  Nullable |
+| `order_date` | `timestamp` |  Nullable |
+| `product_type_id` | `int4` |  Nullable |
+
+## Table `orders`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int4` | Primary |
+| `user_id` | `int4` |  |
+| `created_at` | `timestamp` |  Nullable |
+| `total_amount` | `numeric` |  Nullable |
+
+## Table `parameters`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int4` | Primary |
+| `product_id` | `int4` |  Nullable |
+| `order_item_id` | `int4` |  Nullable |
+| `length` | `int4` |  |
+| `height` | `int4` |  |
+| `width` | `int4` |  |
+| `material` | `varchar` |  |
+
+## Table `product_types`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int4` | Primary |
+| `name` | `varchar` |  Unique |
+
+## Table `production_stages`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int4` | Primary |
+| `name` | `varchar` |  |
+
+## Table `products`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int4` | Primary |
+| `company_id` | `int4` |  |
+| `product_type_id` | `int4` |  Nullable |
+| `created_by_user_id` | `int4` |  Nullable |
+| `name` | `varchar` |  |
+| `description` | `text` |  Nullable |
+| `base_price` | `numeric` |  |
+| `is_public` | `bool` |  Nullable |
+| `is_active` | `bool` |  Nullable |
+| `created_at` | `timestamp` |  Nullable |
+
+## Table `reviews`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int4` | Primary |
+| `product_id` | `int4` |  |
+| `user_id` | `int4` |  Nullable |
+| `rating` | `int4` |  Nullable |
+| `comment` | `text` |  Nullable |
+| `created_at` | `timestamp` |  Nullable |
+
+## Table `roles`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int4` | Primary |
+| `name` | `varchar` |  Unique |
+| `is_active` | `bool` |  Nullable |
+
+## Table `status_history`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int4` | Primary |
+| `order_item_id` | `int4` |  |
+| `previous_stage_id` | `int4` |  Nullable |
+| `new_stage_id` | `int4` |  Nullable |
+| `changed_by` | `int4` |  Nullable |
+| `changed_at` | `timestamp` |  Nullable |
+
+## Table `transactions`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int4` | Primary |
+| `order_id` | `int4` |  Nullable Unique |
+| `user_id` | `int4` |  |
+| `payment_method` | `varchar` |  Nullable |
+| `amount` | `numeric` |  |
+| `status` | `varchar` |  Nullable |
+| `transaction_date` | `timestamp` |  Nullable |
+| `payu_reference` | `varchar` |  Nullable |
+| `payu_transaction_id` | `varchar` |  Nullable |
+| `payu_response_code` | `varchar` |  Nullable |
+| `payu_state_pol` | `varchar` |  Nullable |
+| `notes` | `text` |  Nullable |
+| `approved_at` | `timestamp` |  Nullable |
+
+## Table `user_roles`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int4` | Primary |
+| `user_id` | `int4` |  |
+| `role_id` | `int4` |  |
+| `assigned_at` | `timestamp` |  Nullable |
+| `is_active` | `bool` |  Nullable |
+
+## Table `users`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int4` | Primary |
+| `company_id` | `int4` |  Nullable |
+| `first_name` | `varchar` |  |
+| `last_name` | `varchar` |  |
+| `email` | `varchar` |  Unique |
+| `phone` | `varchar` |  Nullable |
+| `start_date` | `timestamp` |  Nullable |
+| `is_active` | `bool` |  Nullable |
+| `supabase_id` | `uuid` |  Nullable |
+

@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================
+   VARIABLES BASE
+========================= */
+:root {
+  --font-size: 16px;
+
+  --background: #ffffff;
+  --foreground: oklch(0.145 0 0);
+
+  --primary: #0B213F;
+  --primary-foreground: oklch(1 0 0);
+
+  --secondary: oklch(0.95 0.0058 264.53);
+  --secondary-foreground: #030213;
+
+  --accent: #00E5C2;
+  --accent-foreground: #0B213F;
+  --accent-magenta: #FF2D95; 
+
+  --muted: #ececf0;
+  --muted-foreground: #717182;
+
+  --destructive: #d4183d;
+  --destructive-foreground: #ffffff;
+
+  --border: rgba(0, 0, 0, 0.1);
+  --input: transparent;
+  --input-background: #f3f3f5;
+
+  --ring: oklch(0.708 0 0);
+
+  --radius: 0.625rem;
+
+  /* extras */
+  --gray-900: #1a1a1a;
+  --gray-700: #4a4a4a;
+  --gray-400: #9ca3af;
+  --gray-100: #f3f4f6;
+
+  --success: #10b981;
+  --warning: #f59e0b;
+}
+
+/* =========================
+   DARK MODE
+========================= */
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+
+  --border: oklch(0.269 0 0);
+}
+
+/* =========================
+   BASE STYLES
+========================= */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-size: var(--font-size);
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+}
+
+/* =========================
+   CUSTOM ANIMATIONS
+========================= */
+@keyframes shine-sweep {
+  0% { left: -100%; }
+  20% { left: 200%; }
+  100% { left: 200%; }
+}
