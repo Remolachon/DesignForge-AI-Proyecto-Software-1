@@ -1,7 +1,8 @@
 import logging
 import os
+import re
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 import app.models
@@ -58,9 +59,47 @@ if extra_origins:
 # Deduplicate while preserving order
 origins = list(dict.fromkeys(origins))
 
+allow_origin_regex = os.getenv(
+    "CORS_ORIGIN_REGEX",
+    r"^https://.*\.vercel\.app$",
+)
+
+allowed_origin_pattern = re.compile(allow_origin_regex)
+
+
+def _is_allowed_origin(origin: str | None) -> bool:
+    if not origin:
+        return False
+
+    normalized_origin = origin.rstrip("/")
+    if normalized_origin in origins:
+        return True
+
+    return bool(allowed_origin_pattern.fullmatch(normalized_origin))
+
+
+@app.middleware("http")
+async def explicit_cors_middleware(request: Request, call_next):
+    origin = request.headers.get("origin")
+
+    if request.method == "OPTIONS" and _is_allowed_origin(origin):
+        response = Response(status_code=204)
+    else:
+        response = await call_next(request)
+
+    if _is_allowed_origin(origin):
+        response.headers["Access-Control-Allow-Origin"] = origin.rstrip("/")
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Vary"] = "Origin"
+
+    return response
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -15,6 +15,7 @@ interface State {
 }
 
 const STORAGE_KEY = "crear-pedido";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const initialState: State = {
   currentStep: 1,
@@ -108,7 +109,7 @@ export function useCrearPedido({
       formData.append("file", file);
 
       // 🔥 SIN TOKEN → subida pública o con service role backend
-      const res = await fetch("http://localhost:8000/upload-image", {
+      const res = await fetch(`${API_URL}/upload-image`, {
         method: "POST",
         body: formData,
       });
@@ -173,7 +174,7 @@ export function useCrearPedido({
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch(`http://localhost:8000/generate-preview?style=${encodeURIComponent(
+      const res = await fetch(`${API_URL}/generate-preview?style=${encodeURIComponent(
         style
       )}`, {
         method: "POST",
