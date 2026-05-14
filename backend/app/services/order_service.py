@@ -18,7 +18,9 @@ from app.models.user import User
 from app.providers.payu_provider import payu_provider
 from app.providers.supabase_provider import supabase_admin
 from app.services.interaction_service import InteractionService
+import logging
 
+logger = logging.getLogger(__name__)
 
 class OrderService:
     VAT_RATE_CO = 0.19
@@ -863,12 +865,28 @@ class OrderService:
         copied_assets = 0
 
         for source_asset in product_assets:
-            try:
-                source_bucket = source_asset.bucket_name
-                source_path = source_asset.storage_path
-                file_ext = source_path.split(".")[-1] if "." in source_path else (source_asset.extension or "png")
-                order_storage_path = f"{user_id}/orders/{order.id}/{uuid4().hex}.{file_ext}"
+            source_bucket = source_asset.bucket_name
+            source_path = source_asset.storage_path
+            
+            # Si storage_path es una URL completa, extraer solo la ruta relativa
+            if source_path and source_path.startswith("http"):
+                # Formato: https://ttfwjexqplbbcfdfhxsg.supabase.co/storage/v1/object/public/product-catalog/companies/1/products/1/uuid.jpg
+                # Necesitamos: companies/1/products/1/uuid.jpg
+                try:
+                    parts = source_path.split(f"/storage/v1/object/public/{source_bucket}/")
+                    if len(parts) == 2:
+                        source_path = parts[1]
+                    else:
+                        logger.warning(f"No pude parsear storage_path para asset {source_asset.id}: {source_path}")
+                        continue
+                except Exception as exc:
+                    logger.error(f"Error parseando storage_path para asset {source_asset.id}: {str(exc)}")
+                    continue
+            
+            file_ext = source_path.split(".")[-1] if "." in source_path else (source_asset.extension or "png")
+            order_storage_path = f"{user_id}/orders/{order.id}/{uuid4().hex}.{file_ext}"
 
+            try:
                 file_bytes = supabase_admin.storage.from_(source_bucket).download(source_path)
                 fallback_content_type = f"video/{file_ext}" if (source_asset.media_kind or "").lower() == "video" else f"image/{file_ext}"
                 supabase_admin.storage.from_(order_bucket).upload(
@@ -891,8 +909,27 @@ class OrderService:
                     )
                 )
                 copied_assets += 1
-            except Exception:
-                continue
+            except Exception as exc:
+                logger.error(f"Error copiando asset {source_bucket}/{source_path} para orden {order.id}: {str(exc)}")
+                # Fallback: referenciar el asset original en caso de fallo al copiar
+                try:
+                    db.add(
+                        FileAsset(
+                            bucket_name=source_bucket,
+                            storage_path=source_path,
+                            file_type="reference_image",
+                            order_item_id=item.id,
+                            is_active=True,
+                            media_kind=source_asset.media_kind,
+                            media_role=source_asset.media_role,
+                            sort_order=source_asset.sort_order,
+                            mime_type=source_asset.mime_type,
+                        )
+                    )
+                    copied_assets += 1
+                except Exception as exc2:
+                    logger.error(f"Error al crear FileAsset de fallback para {source_bucket}/{source_path}: {str(exc2)}")
+                    continue
 
         if copied_assets == 0:
             raise ValueError("No se pudo copiar la media del producto")
