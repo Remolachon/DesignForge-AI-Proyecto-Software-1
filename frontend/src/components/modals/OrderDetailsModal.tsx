@@ -85,10 +85,10 @@ export function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModa
           : [];
 
     const loadFallbackMedia = async () => {
-      if (sourceMedia.length > 1 || !order.productId) return;
+      if (sourceMedia.length > 1 || !(order as any).productId) return;
 
       try {
-        const product = await ProductService.getProductById(String(order.productId));
+        const product = await ProductService.getProductById(String((order as any).productId));
         const productMedia = (product.media || []).map((media) => ({
           bucket: media.bucket_name || 'product-catalog',
           path: media.storage_path,
