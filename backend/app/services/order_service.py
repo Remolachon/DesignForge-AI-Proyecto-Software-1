@@ -7,6 +7,9 @@ from sqlalchemy.orm import Session, joinedload
 from app.models.file_assets import FileAsset
 from app.models.order import Order
 from app.models.order_item import OrderItem
+from app.models.order_item_attribute import OrderItemAttribute
+from app.models.product_attribute import ProductAttribute
+from app.models.product_attribute_option import ProductAttributeOption
 from app.models.parameters import Parameters
 from app.models.product import Product
 from app.models.product_type import ProductType
@@ -346,12 +349,14 @@ class OrderService:
             "productId": item.product_id if item else None,
             "productType": product_type,
             "quantity": item.quantity if item else 1,
-            "parameters": {
-                "length": item.parameters.length if item and item.parameters else 0,
-                "height": item.parameters.height if item and item.parameters else 0,
-                "width": item.parameters.width if item and item.parameters else 0,
-                "material": item.parameters.material if item and item.parameters else "",
-            } if item and item.parameters else None,
+            "attributes": [
+                {
+                    "code": attr.attribute_code or (attr.attribute.code if attr.attribute else ""),
+                    "label": attr.custom_label or (attr.attribute.label if attr.attribute else ""),
+                    "value": attr.value,
+                }
+                for attr in (item.attributes if item else [])
+            ],
         }
 
         if include_client:
@@ -705,8 +710,8 @@ class OrderService:
             raise ValueError("user_id debe ser INTEGER (id interno de users)")
         if not data.image_url:
             raise ValueError("La imagen es obligatoria")
-        if not data.size or not data.material:
-            raise ValueError("Faltan datos de configuración")
+        if not data.attributes:
+            raise ValueError("Faltan datos de configuración (atributos)")
 
         pending_stage = OrderService._ensure_stage(db, "Pendiente de pago")
         OrderService._ensure_stage(db, "En diseño")
@@ -754,29 +759,30 @@ class OrderService:
                 file_type="reference_image",
                 order_item_id=item.id,
                 is_active=True,
+                media_kind="image",
+                media_role="main",
             )
         )
 
-        db.add(
-            Parameters(
-                order_item_id=item.id,
-                length=10,
-                height=10,
-                width=10,
-                material=data.material,
+        for code, attr in data.attributes.items():
+            db.add(
+                OrderItemAttribute(
+                    order_item_id=item.id,
+                    attribute_id=None,
+                    attribute_code=code,
+                    value=attr["value"],
+                    custom_label=attr["label"],
+                )
             )
-        )
 
-        base_price = 10000
-        size_map = {"small": 1, "medium": 1.5, "large": 2, "xlarge": 2.5}
-        material_map = {"standard": 1, "premium": 1.3, "deluxe": 1.6}
-        size_multiplier = size_map.get(data.size)
-        material_multiplier = material_map.get(data.material)
-
-        if size_multiplier is None or material_multiplier is None:
-            raise ValueError("Valores inválidos en tamaño o material")
-
-        subtotal = base_price * size_multiplier * material_multiplier
+        base_prices = {
+            "bordado": 15000,
+            "neon-flex": 45000,
+            "acrilico": 35000,
+            "vinilo": 20000,
+            "sublimacion": 25000,
+        }
+        subtotal = base_prices.get(data.product_type, 10000)
         _, _, total_amount = OrderService._calculate_amounts_with_vat(subtotal)
         order.total_amount = total_amount
         db.commit()
@@ -800,10 +806,8 @@ class OrderService:
             raise ValueError("user_id debe ser INTEGER (id interno de users)")
         if not data.product_id:
             raise ValueError("El product_id es obligatorio")
-        if data.length <= 0 or data.height <= 0 or data.width <= 0:
-            raise ValueError("Las dimensiones deben ser mayores que 0")
-        if not data.material:
-            raise ValueError("El material es obligatorio")
+        if not isinstance(data.attributes, dict):
+            raise ValueError("Los atributos deben ser un diccionario")
 
         product = db.query(Product).filter(
             Product.id == data.product_id,
@@ -843,7 +847,7 @@ class OrderService:
         item = OrderItem(
             order_id=order.id,
             product_id=product.id,
-            quantity=1,
+            quantity=data.quantity,
             order_date=OrderService._now_local(),
             current_stage_id=pending_stage.id,
             product_type_id=product_type_id,
@@ -866,6 +870,10 @@ class OrderService:
             try:
                 source_bucket = source_asset.bucket_name
                 source_path = source_asset.storage_path
+                prefix = f"/object/public/{source_bucket}/"
+                if prefix in source_path:
+                    source_path = source_path.split(prefix)[1]
+                
                 file_ext = source_path.split(".")[-1] if "." in source_path else (source_asset.extension or "png")
                 order_storage_path = f"{user_id}/orders/{order.id}/{uuid4().hex}.{file_ext}"
 
@@ -885,32 +893,57 @@ class OrderService:
                         order_item_id=item.id,
                         is_active=True,
                         media_kind=source_asset.media_kind,
-                        media_role=source_asset.media_role,
-                        sort_order=source_asset.sort_order,
+                        media_role="attachment",
+                        sort_order=None,
                         mime_type=source_asset.mime_type,
                     )
                 )
+                db.flush()
                 copied_assets += 1
-            except Exception:
+            except Exception as e:
+                import logging
+                logging.error(f"Error copying asset {source_path}: {e}")
                 continue
 
         if copied_assets == 0:
             raise ValueError("No se pudo copiar la media del producto")
 
-        db.add(
-            Parameters(
-                order_item_id=item.id,
-                length=data.length,
-                height=data.height,
-                width=data.width,
-                material=data.material,
-            )
-        )
-
+        from app.models.product_attribute import ProductAttribute
+        from app.models.product_attribute_option import ProductAttributeOption
+        from app.models.order_item_attribute import OrderItemAttribute
+        
         base_price = float(product.base_price)
-        # En marketplace el valor comercial base del producto es el subtotal.
-        subtotal = base_price
+        price_modifier_sum = 0
+        
+        for code, value in data.attributes.items():
+            attr = db.query(ProductAttribute).filter(
+                ProductAttribute.product_type_id == product.product_type_id,
+                ProductAttribute.code == code
+            ).first()
+            
+            if attr:
+                db.add(
+                    OrderItemAttribute(
+                        order_item_id=item.id,
+                        attribute_id=attr.id,
+                        value=str(value)
+                    )
+                )
+                
+                if attr.type == 'select':
+                    opt = db.query(ProductAttributeOption).filter(
+                        ProductAttributeOption.attribute_id == attr.id,
+                        ProductAttributeOption.value == str(value)
+                    ).first()
+                    if opt:
+                        price_modifier_sum += float(opt.price_modifier)
+
+        subtotal = (base_price + price_modifier_sum) * data.quantity
         _, _, total_amount = OrderService._calculate_amounts_with_vat(subtotal)
+        
+        item.unit_price = base_price + price_modifier_sum
+        item.total_price = subtotal
+        
         order.total_amount = total_amount
         db.commit()
         db.refresh(order)

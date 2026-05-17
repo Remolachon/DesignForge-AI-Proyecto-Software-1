@@ -34,17 +34,13 @@ async function parseError(res: Response): Promise<never> {
 export type CreateCustomOrderPayload = {
   product_type: string;
   image_url: string | null;
-  size: string;
-  material: string;
-  color: string;
+  attributes: Record<string, { label: string; value: string }>;
 };
 
-export type CreateMarketplaceOrderPayload = {
+export interface CreateMarketplaceOrderPayload {
   product_id: number;
-  length: number;
-  height: number;
-  width: number;
-  material: string;
+  quantity?: number;
+  attributes?: Record<string, string>;
 };
 
 export type CreateOrderResponse = {

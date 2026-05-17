@@ -4,17 +4,13 @@ from pydantic import BaseModel, Field
 class CreateOrderRequest(BaseModel):
     product_type: str
     image_url: str | None
-    size: str
-    material: str
-    color: str
+    attributes: dict[str, dict[str, str]] = Field(default_factory=dict)
 
 
 class CreateMarketplaceOrderRequest(BaseModel):
     product_id: int
-    length: int
-    height: int
-    width: int
-    material: str
+    quantity: int = 1
+    attributes: dict[str, str] = Field(default_factory=dict)
 
 
 class OrderResponse(BaseModel):
@@ -36,11 +32,10 @@ class DashboardMedia(BaseModel):
     sortOrder: int | None = None
 
 
-class OrderParameters(BaseModel):
-    length: int
-    height: int
-    width: int
-    material: str
+class AttributeResponse(BaseModel):
+    code: str
+    label: str
+    value: str
 
 
 class DashboardOrder(BaseModel):
@@ -58,7 +53,7 @@ class DashboardOrder(BaseModel):
     productId: int | None = None
     productType: str | None = None
     quantity: int | None = None
-    parameters: OrderParameters | None = None
+    attributes: list[AttributeResponse] = Field(default_factory=list)
 
 
 class OrderDetailResponse(BaseModel):
@@ -77,7 +72,7 @@ class OrderDetailResponse(BaseModel):
     productId: int | None = None
     productType: str | None = None
     quantity: int
-    parameters: OrderParameters | None = None
+    attributes: list[AttributeResponse] = Field(default_factory=list)
 
 
 class DashboardStats(BaseModel):

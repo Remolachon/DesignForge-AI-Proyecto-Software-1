@@ -2,8 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useCrearPedido } from "@/components/crear-pedido/hooks/useCrearPedido";
+import { customOrderAttributes } from "@/config/customOrderAttributes";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ export default function CrearPedido() {
     };
   }, []);
 
+  const [isStep5Valid, setIsStep5Valid] = useState(false);
   const {
     currentStep,
     productType,
@@ -62,13 +64,11 @@ export default function CrearPedido() {
     generateAIImages,
     resetGeneratedImages,
     setSelectedGeneratedImage,
+    attributeValues,
+    setAttributeValues,
   } = useCrearPedido({ restoreDraft });
 
-  const designSettings = {
-    color: "#00E5C2",
-    size: "medium",
-    material: "standard",
-  } as const;
+
 
   const steps = [
     { number: 1, title: "Tipo de Producto", icon: Settings },
@@ -97,12 +97,20 @@ export default function CrearPedido() {
         return;
       }
 
+      const attributesPayload: Record<string, { label: string; value: string }> = {};
+      const config = productType ? customOrderAttributes[productType] || [] : [];
+      
+      for (const [key, val] of Object.entries(attributeValues)) {
+        const attrConfig = config.find((a: any) => a.code === key);
+        if (attrConfig) {
+          attributesPayload[key] = { label: attrConfig.label, value: val as string };
+        }
+      }
+
       const result = await paymentService.createCustomOrder({
         product_type: productType,
         image_url: selectedGeneratedImage || uploadedImage,
-        size: designSettings.size,
-        material: designSettings.material,
-        color: designSettings.color,
+        attributes: attributesPayload,
       });
 
       if (!result.payment_url) {
@@ -143,46 +151,42 @@ export default function CrearPedido() {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Progress Bar */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
+      <div className="mb-12 sm:mb-16 relative w-full pt-2">
+        {/* Línea de fondo */}
+        <div className="absolute top-8 left-6 right-6 sm:left-10 sm:right-10 h-1 bg-gray-200 -z-10 rounded">
+          <div
+            className="h-full bg-green-500 transition-all duration-300 rounded"
+            style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
+          />
+        </div>
+
+        <div className="flex justify-between w-full">
           {steps.map((step, index) => {
             const Icon = step.icon;
             const isActive = currentStep === step.number;
             const isCompleted = currentStep > step.number;
 
             return (
-              <div key={step.number} className="flex items-center flex-1">
-                <div className="flex flex-col items-center">
-                  <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-                      isActive
-                        ? "bg-accent text-white"
-                        : isCompleted
-                        ? "bg-green-500 text-white"
-                        : "bg-gray-200 text-gray-500"
-                    }`}
-                  >
-                    <Icon className="w-6 h-6" />
-                  </div>
-
-                  <span
-                    className={`mt-2 text-xs text-center hidden sm:block ${
-                      isActive ? "font-semibold" : ""
-                    }`}
-                  >
-                    {step.title}
-                  </span>
+              <div key={step.number} className="flex flex-col items-center relative w-12 sm:w-20">
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center border-4 border-background transition-all shrink-0 ${
+                    isActive
+                      ? "bg-accent text-primary-foreground"
+                      : isCompleted
+                      ? "bg-green-500 text-white"
+                      : "bg-gray-200 text-gray-500"
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
                 </div>
 
-                {index < steps.length - 1 && (
-                  <div
-                    className={`flex-1 h-1 mx-2 ${
-                      currentStep > step.number
-                        ? "bg-green-500"
-                        : "bg-gray-200"
-                    }`}
-                  />
-                )}
+                <span
+                  className={`mt-2 text-[10px] sm:text-xs text-center hidden sm:block absolute top-14 w-24 sm:w-32 ${
+                    isActive ? "font-semibold text-foreground" : "text-muted-foreground"
+                  }`}
+                >
+                  {step.title}
+                </span>
               </div>
             );
           })}
@@ -222,7 +226,10 @@ export default function CrearPedido() {
         {currentStep === 4 && (
           <Step5Confirm
             productType={productType}
-            designSettings={designSettings}
+            image={selectedGeneratedImage || uploadedImage}
+            attributeValues={attributeValues}
+            setAttributeValues={setAttributeValues}
+            onValidationChange={setIsStep5Valid}
           />
         )}
       </Card>
@@ -244,7 +251,7 @@ export default function CrearPedido() {
             <ChevronRight className="w-5 h-5" />
           </Button>
         ) : (
-          <Button onClick={handleConfirmOrder} disabled={loading}>
+          <Button onClick={handleConfirmOrder} disabled={loading || !isStep5Valid}>
             {loading && <Loader2 className="w-5 h-5 animate-spin" />}
             Confirmar Pedido
           </Button>

@@ -16,7 +16,7 @@ export const Marketplace = () => {
   const { products } = useProducts();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { formData, errors, loading, setField, createOrder, resetForm, validateForm } =
+  const { attrValues, errors, loading, initAttributes, setField, createOrder, resetForm, validateForm } =
     useMarketplaceBuy();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -67,7 +67,8 @@ export const Marketplace = () => {
   };
 
   const handleBuyConfirm = () => {
-    const isValid = validateForm();
+    if (!selectedProduct) return;
+    const isValid = validateForm(selectedProduct.attributes);
     if (!isValid) return;
 
     setShowBuyModal(false);
@@ -80,7 +81,8 @@ export const Marketplace = () => {
 
     const success = await createOrder(
       selectedProduct.id,
-      selectedProduct.title
+      selectedProduct.title,
+      selectedProduct.attributes
     );
 
     if (success) {
@@ -130,14 +132,15 @@ export const Marketplace = () => {
       {/* Modal de parámetros */}
       {selectedProduct && (
         <BuyOrderModal
-          productTitle={selectedProduct.title}
+          product={selectedProduct}
           isOpen={showBuyModal}
           onClose={handleCloseBuyModal}
-          formData={formData}
+          attrValues={attrValues}
           errors={errors}
           loading={loading}
           onFieldChange={setField}
           onConfirm={handleBuyConfirm}
+          initAttributes={initAttributes}
         />
       )}
 

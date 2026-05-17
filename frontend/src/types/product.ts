@@ -32,6 +32,7 @@ export interface Product {
   reviews: number;
   inStock: boolean;
   productType: ProductType;
+  attributes: ProductAttribute[];
 }
 
 export const getProductTypeLabel = (type: ProductType) => {
@@ -44,3 +45,31 @@ export const getProductTypeLabel = (type: ProductType) => {
       return 'Acrílico';
   }
 };
+
+export type AttributeType = "select" | "number" | "color" | "text";
+
+export interface AttributeOption {
+  value: string;
+  label: string;
+  price_modifier: number;
+  sort_order: number;
+}
+
+export interface ProductAttribute {
+  id: number;
+  code: string;
+  label: string;
+  type: 'number' | 'select' | 'color' | 'text';
+  required: boolean;
+  unit: string | null;
+  sort_order: number;
+  options: AttributeOption[];
+}
+
+export type AttributeValues = Record<string, string>;
+
+export interface CreateOrderItemPayload {
+  productId: number;
+  quantity: number;
+  attributes: AttributeValues;
+}

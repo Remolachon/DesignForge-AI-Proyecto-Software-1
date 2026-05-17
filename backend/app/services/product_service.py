@@ -138,6 +138,7 @@ class ProductService:
         products = []
         for row in results:
             admin_resp = ProductService._serialize_admin_product(row, assets_map.get(row.id, []))
+            product_attributes = ProductService.get_product_attributes(db, row.id)
             products.append(ProductResponse(
                 id=admin_resp.id,
                 title=admin_resp.name,
@@ -148,7 +149,8 @@ class ProductService:
                 rating=admin_resp.rating,
                 reviews=admin_resp.reviews,
                 inStock=admin_resp.inStock,
-                productType=admin_resp.productType
+                productType=admin_resp.productType,
+                attributes=product_attributes
             ))
 
         return products
@@ -489,3 +491,64 @@ class ProductService:
             duration_seconds=None,
             extension=file_ext,
         )
+
+    @staticmethod
+    def get_product_attributes(db: Session, product_id: int):
+        from sqlalchemy import text
+        from app.schemas.product_schema import ProductAttributeSchema, ProductAttributeOptionSchema
+        
+        query = text("""
+            SELECT
+              pa.id,
+              pa.code,
+              pa.label,
+              pa.type,
+              pa.required,
+              pa.unit,
+              pa.sort_order,
+              COALESCE(
+                json_agg(
+                  json_build_object(
+                    'id',             pao.id,
+                    'value',          pao.value,
+                    'label',          pao.label,
+                    'price_modifier', pao.price_modifier,
+                    'sort_order',     pao.sort_order
+                  ) ORDER BY pao.sort_order
+                ) FILTER (WHERE pao.id IS NOT NULL),
+                '[]'
+              ) AS options
+            FROM product_attributes pa
+            LEFT JOIN product_attribute_options pao ON pao.attribute_id = pa.id
+            WHERE pa.product_type_id = (
+              SELECT product_type_id FROM products WHERE id = :productId
+            )
+            GROUP BY pa.id
+            ORDER BY pa.sort_order;
+        """)
+        
+        results = db.execute(query, {"productId": product_id}).fetchall()
+        
+        response = []
+        for row in results:
+            opts = []
+            for opt in row.options:
+                opts.append(ProductAttributeOptionSchema(
+                    id=opt["id"],
+                    value=opt["value"],
+                    label=opt["label"],
+                    price_modifier=float(opt["price_modifier"])
+                ))
+            
+            response.append(ProductAttributeSchema(
+                id=row.id,
+                code=row.code,
+                label=row.label,
+                type=row.type,
+                required=bool(row.required),
+                unit=row.unit,
+                sort_order=row.sort_order,
+                options=opts
+            ))
+            
+        return response

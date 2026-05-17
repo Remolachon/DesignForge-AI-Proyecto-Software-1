@@ -12,6 +12,7 @@ interface State {
   uploadedImage: string | null; // 🔥 ahora será URL (no base64)
   generatedImages: string[]; // URLs de imágenes generadas con IA
   selectedGeneratedImage: string | null; // Imagen seleccionada
+  attributeValues: Record<string, string>; // Atributos dinámicos del producto
 }
 
 const STORAGE_KEY = "crear-pedido";
@@ -22,6 +23,7 @@ const initialState: State = {
   uploadedImage: null,
   generatedImages: [],
   selectedGeneratedImage: null,
+  attributeValues: {},
 };
 
 export function useCrearPedido({
@@ -68,6 +70,14 @@ export function useCrearPedido({
       uploadedImage: null,
       generatedImages: [],
       selectedGeneratedImage: null,
+      attributeValues: {},
+    }));
+  };
+
+  const setAttributeValues = (values: Record<string, string>) => {
+    setState((prev) => ({
+      ...prev,
+      attributeValues: values,
     }));
   };
 
@@ -276,5 +286,6 @@ export function useCrearPedido({
     resetGeneratedImages,
 
     setSelectedGeneratedImage,
+    setAttributeValues,
   };
 }

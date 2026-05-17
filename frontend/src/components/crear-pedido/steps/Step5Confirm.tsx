@@ -1,103 +1,157 @@
 "use client";
 
+import { useEffect, useMemo } from "react";
 import { ProductType } from "@/types/types";
-
-type DesignSettings = {
-  color: string;
-  size: "small" | "medium" | "large" | "xlarge";
-  material: "standard" | "premium" | "deluxe";
-};
+import { customOrderAttributes } from "@/config/customOrderAttributes";
 
 type Props = {
   productType: ProductType | null;
-  designSettings: DesignSettings;
+  image: string | null;
+  attributeValues: Record<string, string>;
+  setAttributeValues: (values: Record<string, string>) => void;
+  onValidationChange?: (isValid: boolean) => void;
 };
 
 export default function Step5Confirm({
   productType,
-  designSettings,
+  image,
+  attributeValues,
+  setAttributeValues,
+  onValidationChange,
 }: Props) {
-  // 🔥 lógica separada (más limpia)
-  const basePrice = 10000;
-
-  const sizeMultiplierMap = {
-    small: 1,
-    medium: 1.5,
-    large: 2,
-    xlarge: 2.5,
+  // Estimated base price for custom design
+  const getEstimatedBasePrice = (type: ProductType | null) => {
+    switch (type) {
+      case "bordado": return 15000;
+      case "neon-flex": return 45000;
+      case "acrilico": return 35000;
+      case "vinilo": return 20000;
+      case "sublimacion": return 25000;
+      default: return 10000;
+    }
   };
 
-  const materialMultiplierMap = {
-    standard: 1,
-    premium: 1.3,
-    deluxe: 1.6,
-  };
+  const estimatedPrice = getEstimatedBasePrice(productType);
+  const attributes = productType ? customOrderAttributes[productType] || [] : [];
 
-  const totalPrice = Math.round(
-    basePrice *
-      sizeMultiplierMap[designSettings.size] *
-      materialMultiplierMap[designSettings.material]
-  );
+  const isValid = useMemo(() => {
+    return attributes.every(attr => {
+      if (attr.required) {
+        return !!attributeValues[attr.code];
+      }
+      return true;
+    });
+  }, [attributes, attributeValues]);
+
+  useEffect(() => {
+    if (onValidationChange) {
+      onValidationChange(isValid);
+    }
+  }, [isValid, onValidationChange]);
+
+  const handleChange = (code: string, value: string) => {
+    setAttributeValues({ ...attributeValues, [code]: value });
+  };
 
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-2">
-        Resumen del pedido
+        Resumen y Detalles del Pedido
       </h2>
 
       <p className="text-muted-foreground mb-6">
-        Revisa los detalles antes de confirmar
+        Revisa la imagen y configura los detalles finales para la cotización.
       </p>
 
-      <div className="space-y-4">
-        <div className="flex justify-between py-3 border-b border-border">
-          <span className="text-muted-foreground">
-            Tipo de producto
-          </span>
-          <span className="font-semibold capitalize">
-            {productType}
-          </span>
+      <div className="grid md:grid-cols-2 gap-8">
+        <div>
+          {image ? (
+            <div className="border rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
+              <img src={image} alt="Referencia de diseño" className="w-full h-auto max-h-[300px] object-contain" />
+            </div>
+          ) : (
+            <div className="border rounded-lg bg-gray-50 flex items-center justify-center h-48 text-muted-foreground">
+              Sin imagen
+            </div>
+          )}
         </div>
 
-        <div className="flex justify-between py-3 border-b border-border">
-          <span className="text-muted-foreground">Tamaño</span>
-          <span className="font-semibold capitalize">
-            {designSettings.size}
-          </span>
-        </div>
-
-        <div className="flex justify-between py-3 border-b border-border">
-          <span className="text-muted-foreground">Material</span>
-          <span className="font-semibold capitalize">
-            {designSettings.material}
-          </span>
-        </div>
-
-        <div className="flex justify-between py-3 border-b border-border">
-          <span className="text-muted-foreground">Color</span>
-          <div className="flex items-center gap-2">
-            <div
-              className="w-6 h-6 rounded border border-border"
-              style={{ backgroundColor: designSettings.color }}
-            />
-            <span className="font-semibold">
-              {designSettings.color}
+        <div className="space-y-4">
+          <div className="flex justify-between py-3 border-b border-border">
+            <span className="text-muted-foreground">Tipo de producto</span>
+            <span className="font-semibold capitalize">
+              {productType || "No especificado"}
             </span>
           </div>
-        </div>
 
-        <div className="flex justify-between py-4 text-lg">
-          <span className="font-semibold">Total</span>
-          <span className="font-bold text-accent text-2xl">
-            ${totalPrice.toLocaleString()}
-          </span>
-        </div>
-      </div>
+          {attributes.map(attr => (
+            <div key={attr.code} className="py-2 border-b border-border">
+              <label className="block text-sm text-muted-foreground mb-1">
+                {attr.label}
+                {attr.unit && ` (${attr.unit})`}
+                {attr.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+              
+              {attr.type === "select" && (
+                <select 
+                  className="w-full p-2 border rounded-md bg-transparent"
+                  value={attributeValues[attr.code] || ""}
+                  onChange={(e) => handleChange(attr.code, e.target.value)}
+                >
+                  <option value="">Seleccionar...</option>
+                  {attr.options?.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              )}
+              
+              {attr.type === "number" && (
+                <input 
+                  type="number"
+                  className="w-full p-2 border rounded-md bg-transparent"
+                  value={attributeValues[attr.code] || ""}
+                  onChange={(e) => handleChange(attr.code, e.target.value)}
+                  placeholder={`Ej: 50`}
+                />
+              )}
+              
+              {attr.type === "text" && (
+                <input 
+                  type="text"
+                  className="w-full p-2 border rounded-md bg-transparent"
+                  value={attributeValues[attr.code] || ""}
+                  onChange={(e) => handleChange(attr.code, e.target.value)}
+                  placeholder={`Escribe el ${attr.label.toLowerCase()}`}
+                />
+              )}
+              
+              {attr.type === "color" && (
+                <div className="flex items-center gap-3">
+                  <input 
+                    type="color"
+                    className="w-10 h-10 rounded cursor-pointer border border-border"
+                    value={attributeValues[attr.code] || "#000000"}
+                    onChange={(e) => handleChange(attr.code, e.target.value)}
+                  />
+                  <span className="text-sm font-mono">{attributeValues[attr.code] || "#000000"}</span>
+                </div>
+              )}
+            </div>
+          ))}
 
-      <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-        <p className="text-sm text-primary">
-          <strong>Tiempo estimado de entrega:</strong> 7-10 días hábiles
-        </p>
+          <div className="flex justify-between py-4 text-lg">
+            <span className="font-semibold">Precio base estimado</span>
+            <span className="font-bold text-accent text-2xl">
+              ${estimatedPrice.toLocaleString()}
+            </span>
+          </div>
+
+          <div className="p-4 bg-blue-50 rounded-lg">
+            <p className="text-sm text-primary">
+              <strong>Aviso:</strong> El pago a continuación es un adelanto. El costo final dependerá de los atributos seleccionados.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

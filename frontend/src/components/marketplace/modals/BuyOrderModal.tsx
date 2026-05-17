@@ -2,36 +2,51 @@
 
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { FormField } from '@/components/marketplace/FormField';
-import type { BuyFormData, BuyFormErrors } from '@/components/marketplace/hooks/useMarketplaceBuy';
+import { Product, ProductAttribute } from '@/types/product';
+import { AttributeInput } from '../AttributeInput';
+import { useEffect } from 'react';
 
 interface BuyOrderModalProps {
-  productTitle: string;
+  product: Product;
   isOpen: boolean;
   onClose: () => void;
-  formData: BuyFormData;
-  errors: Partial<BuyFormErrors>;
+  attrValues: Record<string, string>;
+  errors: Record<string, string>;
   loading: boolean;
-  onFieldChange: (field: keyof BuyFormData, value: string) => void;
+  onFieldChange: (code: string, value: string) => void;
   onConfirm: () => void;
+  initAttributes: (attributes: ProductAttribute[]) => void;
 }
 
 export function BuyOrderModal({
-  productTitle,
+  product,
   isOpen,
   onClose,
-  formData,
+  attrValues,
   errors,
   loading,
   onFieldChange,
   onConfirm,
+  initAttributes,
 }: BuyOrderModalProps) {
+  useEffect(() => {
+    if (isOpen && product.attributes && product.attributes.length > 0) {
+      initAttributes(product.attributes);
+    }
+  }, [isOpen, product.attributes]);
+
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onConfirm();
   };
+
+  const extraPrice = product.attributes?.reduce((total, attr) => {
+    if (attr.type !== 'select') return total;
+    const selected = attr.options?.find(o => o.value === attrValues[attr.code]);
+    return total + (selected?.price_modifier ?? 0);
+  }, 0) || 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -40,7 +55,7 @@ export function BuyOrderModal({
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div>
             <h2 className="text-lg font-semibold">Parámetros del Pedido</h2>
-            <p className="text-sm text-muted-foreground mt-1">{productTitle}</p>
+            <p className="text-sm text-muted-foreground mt-1">{product.title}</p>
           </div>
           <button
             onClick={onClose}
@@ -53,69 +68,40 @@ export function BuyOrderModal({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-          <FormField label="Longitud (cm)" error={errors.length}>
-            <input
-              type="number"
-              min="1"
-              step="0.1"
-              value={formData.length}
-              onChange={(e) => onFieldChange('length', e.target.value)}
-              placeholder="Ej: 20"
-              disabled={loading}
-              className="w-full px-3 py-2 border border-border rounded-lg text-sm
-                       focus:outline-none focus:ring-2 focus:ring-accent transition-shadow
-                       disabled:opacity-50"
-            />
-          </FormField>
+          {product.attributes && product.attributes.length > 0 ? (
+            <div className="space-y-4">
+              {product.attributes
+                .sort((a, b) => a.sort_order - b.sort_order)
+                .map(attr => (
+                  <div key={attr.code}>
+                    <AttributeInput
+                      attribute={attr}
+                      value={attrValues[attr.code] ?? ''}
+                      onChange={onFieldChange}
+                      disabled={loading}
+                    />
+                    {errors[attr.code] && (
+                      <p className="text-xs text-red-500 mt-1">{errors[attr.code]}</p>
+                    )}
+                  </div>
+                ))}
 
-          <FormField label="Altura (cm)" error={errors.height}>
-            <input
-              type="number"
-              min="1"
-              step="0.1"
-              value={formData.height}
-              onChange={(e) => onFieldChange('height', e.target.value)}
-              placeholder="Ej: 30"
-              disabled={loading}
-              className="w-full px-3 py-2 border border-border rounded-lg text-sm
-                       focus:outline-none focus:ring-2 focus:ring-accent transition-shadow
-                       disabled:opacity-50"
-            />
-          </FormField>
-
-          <FormField label="Ancho (cm)" error={errors.width}>
-            <input
-              type="number"
-              min="1"
-              step="0.1"
-              value={formData.width}
-              onChange={(e) => onFieldChange('width', e.target.value)}
-              placeholder="Ej: 15"
-              disabled={loading}
-              className="w-full px-3 py-2 border border-border rounded-lg text-sm
-                       focus:outline-none focus:ring-2 focus:ring-accent transition-shadow
-                       disabled:opacity-50"
-            />
-          </FormField>
-
-          <FormField label="Material" error={errors.material}>
-            <select
-              value={formData.material}
-              onChange={(e) => onFieldChange('material', e.target.value)}
-              disabled={loading}
-              className="w-full px-3 py-2 border border-border rounded-lg text-sm
-                       bg-white focus:outline-none focus:ring-2 focus:ring-accent
-                       transition-shadow disabled:opacity-50"
-            >
-              <option value="">Seleccionar material</option>
-              <option value="standard">Estándar</option>
-              <option value="premium">Premium</option>
-              <option value="deluxe">Deluxe</option>
-            </select>
-          </FormField>
+              {/* Precio extra acumulado */}
+              {extraPrice > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 text-sm text-amber-800">
+                  Costo adicional por opciones:
+                  <span className="font-bold ml-1">+${extraPrice.toLocaleString('es-CO')}</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 italic py-2">
+              Este producto no requiere parámetros adicionales.
+            </p>
+          )}
 
           {/* Actions */}
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
             <Button
               type="button"
               variant="outline"

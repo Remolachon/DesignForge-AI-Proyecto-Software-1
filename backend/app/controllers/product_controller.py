@@ -277,3 +277,17 @@ async def upload_product_media_endpoint(
     except Exception as exc:
         logger.error(f"FATAL ERROR in upload_product_media_endpoint: {exc}")
         raise HTTPException(status_code=500, detail="Error interno al subir archivo")
+
+@router.get("/{product_id}/attributes", response_model=list[dict])
+def get_product_attributes(
+    product_id: int,
+    db: Session = Depends(get_db)
+):
+    try:
+        return ProductService.get_product_attributes(db, product_id)
+    except OperationalError as e:
+        logger.error(f"Error de BD al obtener atributos de producto: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Servicio de base de datos temporalmente no disponible"
+        )
