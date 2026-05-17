@@ -6,6 +6,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import Footer from "@/components/Footer";
 import { ReviewModalHost } from "@/components/marketplace/modals/ReviewModalHost";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,6 +44,7 @@ export default function RootLayout({
             <Footer />
           </div>
         </AuthProvider>
+        <Toaster />
       </body>
     </html>
   );

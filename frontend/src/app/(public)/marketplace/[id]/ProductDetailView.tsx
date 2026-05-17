@@ -121,7 +121,7 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
                   >
                     <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
                     <span className="font-bold text-yellow-600 dark:text-yellow-400 text-sm flex items-center gap-1.5">
-                      {initialProduct.rating}
+                      {Number(initialProduct.rating).toFixed(1)}
                       <span className="font-normal text-yellow-600/70 dark:text-yellow-400/70">({initialProduct.reviews})</span>
                     </span>
                   </button>

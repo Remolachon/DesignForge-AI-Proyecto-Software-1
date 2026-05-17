@@ -65,7 +65,7 @@ export function ReviewModalHost() {
         }}
         productId={product?.id ?? 0}
         productTitle={product?.title ?? 'Producto'}
-        summaryRating={product?.rating ?? 0}
+        summaryRating={Number(Number(product?.rating ?? 0).toFixed(1))}
         summaryReviews={product?.reviews ?? 0}
         allowReview={hasToken}
         initialMode={notificationId !== null ? 'review' : 'comments'}

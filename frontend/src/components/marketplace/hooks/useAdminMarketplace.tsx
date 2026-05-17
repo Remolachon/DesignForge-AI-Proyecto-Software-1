@@ -18,6 +18,7 @@ export function useAdminMarketplace() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState<FilterType>('all');
     const [loading, setLoading] = useState(true);
+    const [isProcessing, setIsProcessing] = useState(false);
     const [page, setPage] = useState(1);
     const [pageSize] = useState(20);
     // Modales
@@ -76,6 +77,8 @@ export function useAdminMarketplace() {
 
     const confirmSave = async () => {
         if (!pendingSave) return;
+        setIsProcessing(true);
+        const toastId = toast.loading(modalMode === 'create' ? 'Creando producto...' : 'Guardando cambios...');
         const price = Number(pendingSave.basePrice);
         const stock = Number(pendingSave.stock);
         const payload: MarketplaceSavePayload = {
@@ -91,11 +94,11 @@ export function useAdminMarketplace() {
 
             if (modalMode === 'create') {
                 finalProduct = await adminMarketplaceService.createProduct(payload);
-                toast.success('Producto agregado al marketplace.');
+                toast.success('Producto agregado al marketplace.', { id: toastId });
             } else {
                 if (!editingProduct) return;
                 finalProduct = await adminMarketplaceService.updateProduct(editingProduct.id, payload);
-                toast.success('Producto actualizado correctamente.');
+                toast.success('Producto actualizado correctamente.', { id: toastId });
             }
 
             const mediaToUpload = pendingSave.mediaItems?.filter(m => m.file);
@@ -116,7 +119,9 @@ export function useAdminMarketplace() {
             setPendingSave(null);
             setShowModal(false);
         } catch (error: any) {
-            toast.error(error?.message || 'No se pudo guardar el producto');
+            toast.error(error?.message || 'No se pudo guardar el producto', { id: toastId });
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -128,32 +133,41 @@ export function useAdminMarketplace() {
 
     const confirmToggleActive = async () => {
         if (!pendingVisibility) return;
+        setIsProcessing(true);
+        const toastId = toast.loading(pendingVisibility.isPublic ? 'Desactivando producto...' : 'Activando producto...');
         try {
             const updated = await adminMarketplaceService.setVisibility(
                 pendingVisibility.id,
-                !pendingVisibility.isActive,
+                !pendingVisibility.isPublic,
             );
             setProducts((prev) => prev.map((p) => (p.id === pendingVisibility.id ? updated : p)));
             toast.success(
-                pendingVisibility.isActive
+                pendingVisibility.isPublic
                     ? `"${pendingVisibility.name}" desactivado del marketplace.`
                     : `"${pendingVisibility.name}" activado en el marketplace.`,
+                { id: toastId }
             );
             setPendingVisibility(null);
         } catch (error: any) {
-            toast.error(error?.message || 'No se pudo cambiar visibilidad');
+            toast.error(error?.message || 'No se pudo cambiar visibilidad', { id: toastId });
+        } finally {
+            setIsProcessing(false);
         }
     };
 
     const confirmDelete = async () => {
         if (!deletingProduct) return;
+        setIsProcessing(true);
+        const toastId = toast.loading('Eliminando producto...');
         try {
             await adminMarketplaceService.deleteProduct(deletingProduct.id);
             setProducts((prev) => prev.filter((p) => p.id !== deletingProduct.id));
-            toast.success(`"${deletingProduct.name}" eliminado.`);
+            toast.success(`"${deletingProduct.name}" eliminado.`, { id: toastId });
             setDeletingProduct(null);
         } catch (error: any) {
-            toast.error(error?.message || 'No se pudo eliminar el producto');
+            toast.error(error?.message || 'No se pudo eliminar el producto', { id: toastId });
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -177,6 +191,7 @@ export function useAdminMarketplace() {
         filterType,
         setFilterType,
         loading,
+        isProcessing,
         page,
         setPage,
         pageSize,

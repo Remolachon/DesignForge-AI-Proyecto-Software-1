@@ -12,6 +12,7 @@ export interface MarketplaceProduct {
   inStock: boolean;
   stock: number;
   isActive: boolean;
+  isPublic: boolean;
   rating: number;
   reviews: number;
   createdAt: string;

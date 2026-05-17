@@ -27,6 +27,7 @@ export default function AdminMarketplace() {
     filterType,
     setFilterType,
     loading,
+    isProcessing,
     totalActive,
     totalInactive,
     outOfStock,
@@ -163,20 +164,22 @@ export default function AdminMarketplace() {
           confirmLabel={modalMode === 'create' ? 'Crear producto' : 'Guardar cambios'}
           onConfirm={confirmSave}
           onCancel={() => setPendingSave(null)}
+          loading={isProcessing}
         />
       )}
 
       {pendingVisibility && (
         <ConfirmActionModal
-          title={pendingVisibility.isActive ? 'Desactivar producto' : 'Activar producto'}
+          title={pendingVisibility.isPublic ? 'Desactivar producto' : 'Activar producto'}
           description={
-            pendingVisibility.isActive
+            pendingVisibility.isPublic
               ? `"${pendingVisibility.name}" dejará de mostrarse en el marketplace público.`
               : `"${pendingVisibility.name}" volverá a mostrarse en el marketplace público.`
           }
-          confirmLabel={pendingVisibility.isActive ? 'Desactivar' : 'Activar'}
+          confirmLabel={pendingVisibility.isPublic ? 'Desactivar' : 'Activar'}
           onConfirm={confirmToggleActive}
           onCancel={() => setPendingVisibility(null)}
+          loading={isProcessing}
         />
       )}
 
@@ -186,6 +189,7 @@ export default function AdminMarketplace() {
           productName={deletingProduct.name}
           onConfirm={confirmDelete}
           onCancel={() => setDeletingProduct(null)}
+          loading={isProcessing}
         />
       )}
 

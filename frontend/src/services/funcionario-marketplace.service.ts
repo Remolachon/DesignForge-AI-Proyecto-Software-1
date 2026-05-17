@@ -45,6 +45,7 @@ function toMarketplaceProduct(product: AdminProductResponse): MarketplaceProduct
     inStock: product.inStock,
     stock: product.stock,
     isActive: product.isActive,
+    isPublic: product.isPublic,
     rating: product.rating,
     reviews: product.reviews,
     createdAt: product.createdAt,

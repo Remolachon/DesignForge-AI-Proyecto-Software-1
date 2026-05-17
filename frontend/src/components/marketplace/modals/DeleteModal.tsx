@@ -1,11 +1,14 @@
-import { Trash2 } from 'lucide-react';
+import { Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+
 interface DeleteModalProps {
     productName: string;
     onConfirm: () => void;
     onCancel: () => void;
+    loading?: boolean;
 }
-export function DeleteModal({ productName, onConfirm, onCancel }: DeleteModalProps) {
+
+export function DeleteModal({ productName, onConfirm, onCancel, loading = false }: DeleteModalProps) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 text-center">
@@ -19,15 +22,17 @@ export function DeleteModal({ productName, onConfirm, onCancel }: DeleteModalPro
                     Esta acción no se puede deshacer.
                 </p>
                 <div className="flex gap-3">
-                    <Button variant="outline" className="flex-1" onClick={onCancel}>
+                    <Button variant="outline" className="flex-1" onClick={onCancel} disabled={loading}>
                         Cancelar
                     </Button>
                     <Button
                         variant="destructive"
-                        className="flex-1"
+                        className="flex-1 gap-2"
                         onClick={onConfirm}
+                        disabled={loading}
                     >
-                        Eliminar
+                        {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                        {loading ? 'Eliminando...' : 'Eliminar'}
                     </Button>
                 </div>
             </div>

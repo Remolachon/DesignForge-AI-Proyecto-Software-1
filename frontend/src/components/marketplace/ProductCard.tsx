@@ -61,7 +61,7 @@ export const ProductCard = ({ product, onBuy, onViewReviews }: Props) => {
         </span>
         <div className="flex items-center gap-1 bg-yellow-500/10 px-2 py-1 rounded-md">
           <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
-          <span className="text-xs font-semibold text-yellow-600 dark:text-yellow-400">{product.rating}</span>
+          <span className="text-xs font-semibold text-yellow-600 dark:text-yellow-400">{Number(product.rating).toFixed(1)}</span>
         </div>
       </div>
 
