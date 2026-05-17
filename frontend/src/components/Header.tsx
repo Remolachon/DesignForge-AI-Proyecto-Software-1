@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Package } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Package, User, Shield } from "lucide-react";
 import { Button } from "@/components/ui/buttonMayus";
 import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect } from "react";
@@ -11,6 +11,7 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 export default function Header() {
   const { user, logout } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
 
   const [open, setOpen] = useState(false);
   const [storedName, setStoredName] = useState<string | null>(null);
@@ -47,6 +48,39 @@ export default function Header() {
     ? `/login?next=${encodeURIComponent("/cliente/crear-pedido?resume=1")}`
     : "/login";
 
+  // Determinar si estamos en el modo del rol o en el modo cliente
+  const isRoleMode = pathname?.startsWith(`/${role}`);
+
+  const handleModeToggle = (targetIsRole: boolean) => {
+    if (!pathname || !role) return;
+
+    if (targetIsRole) {
+      // Switched to Admin/Funcionario mode
+      if (pathname.startsWith("/cliente")) {
+        router.push(pathname.replace("/cliente", `/${role}`));
+      } else if (pathname.startsWith("/marketplace")) {
+        router.push(`/${role}${pathname}`);
+      } else {
+        router.push(`/${role}/dashboard`);
+      }
+    } else {
+      // Switched to Cliente mode
+      if (pathname.startsWith(`/${role}`)) {
+        const strippedPath = pathname.replace(`/${role}`, "");
+        
+        if (strippedPath.startsWith("/marketplace")) {
+          router.push(strippedPath);
+        } else if (strippedPath === "" || strippedPath === "/") {
+          router.push("/cliente/dashboard");
+        } else {
+          router.push(`/cliente${strippedPath}`);
+        }
+      } else {
+        router.push("/cliente/dashboard");
+      }
+    }
+  };
+
   return (
     <header className="relative z-50 border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -71,6 +105,37 @@ export default function Header() {
             </div>
           ) : (
             <div className="relative z-50 flex items-center gap-3">
+              
+              {/* SWITCH DE MODO ELEGANTE */}
+              {(role === "administrador" || role === "funcionario") && (
+                <div className="flex items-center mr-2 sm:mr-4 bg-secondary/30 backdrop-blur-md border border-border/40 rounded-full p-1 shadow-sm">
+                  <button
+                    onClick={() => handleModeToggle(false)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                      !isRoleMode
+                        ? "bg-background text-primary shadow-sm ring-1 ring-border/50"
+                        : "text-muted-foreground hover:text-primary hover:bg-secondary/50"
+                    }`}
+                  >
+                    <User className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline-block">Cliente</span>
+                  </button>
+                  <button
+                    onClick={() => handleModeToggle(true)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                      isRoleMode
+                        ? "bg-gradient-to-r from-accent to-accent-magenta text-white shadow-md ring-1 ring-accent/50"
+                        : "text-muted-foreground hover:text-primary hover:bg-secondary/50"
+                    }`}
+                  >
+                    <Shield className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline-block">
+                      {role === "administrador" ? "Admin" : "Func."}
+                    </span>
+                  </button>
+                </div>
+              )}
+
               <NotificationBell />
 
               <div className="relative flex justify-center">
