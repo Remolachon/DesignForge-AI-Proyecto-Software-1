@@ -12,6 +12,7 @@ type ProductApiResponse = {
   reviews: number;
   inStock: boolean;
   productType: string;
+  attributes?: any[];
 };
 
 function toProduct(apiProduct: ProductApiResponse): Product {
@@ -28,6 +29,7 @@ function toProduct(apiProduct: ProductApiResponse): Product {
     reviews: Number(apiProduct.reviews || 0),
     inStock: Boolean(apiProduct.inStock),
     productType: normalizedType,
+    attributes: apiProduct.attributes || [],
   };
 }
 

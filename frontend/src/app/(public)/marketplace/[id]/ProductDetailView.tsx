@@ -17,7 +17,7 @@ interface Props {
 
 export const ProductDetailView = ({ initialProduct }: Props) => {
   const router = useRouter();
-  const { formData, errors, loading, setField, createOrder, resetForm, validateForm } = useMarketplaceBuy();
+  const { attrValues, errors, loading, initAttributes, setField, createOrder, resetForm, validateForm } = useMarketplaceBuy();
 
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -35,14 +35,14 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
   };
 
   const handleBuyConfirm = () => {
-    const isValid = validateForm();
+    const isValid = validateForm(initialProduct.attributes);
     if (!isValid) return;
     setShowBuyModal(false);
     setShowConfirmModal(true);
   };
 
   const handleFinalConfirm = async () => {
-    const success = await createOrder(initialProduct.id, initialProduct.title);
+    const success = await createOrder(initialProduct.id, initialProduct.title, initialProduct.attributes);
     if (success) {
       setShowConfirmModal(false);
       resetForm();
@@ -189,14 +189,15 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
 
       {/* Buy Modals */}
       <BuyOrderModal
-        productTitle={initialProduct.title}
+        product={initialProduct}
         isOpen={showBuyModal}
         onClose={() => setShowBuyModal(false)}
-        formData={formData}
+        attrValues={attrValues}
         errors={errors}
         loading={loading}
         onFieldChange={setField}
         onConfirm={handleBuyConfirm}
+        initAttributes={initAttributes}
       />
       <ConfirmBuyModal
         productTitle={initialProduct.title}

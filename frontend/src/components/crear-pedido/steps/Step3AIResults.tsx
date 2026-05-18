@@ -104,7 +104,7 @@ export default function Step3AIResults({
       </div>
 
       {generatedImages.length === 0 && !loading ? (
-        <div className="rounded-lg border border-border bg-muted/50 p-8 text-center text-muted-foreground">
+        <div className="rounded-lg border border-border bg-muted/50 p-8 text-center text-muted-foreground mb-4">
           <Sparkles className="mx-auto mb-3 h-12 w-12 opacity-70" />
           <p>Genera tu primera variante IA para continuar.</p>
         </div>
@@ -140,6 +140,16 @@ export default function Step3AIResults({
             </div>
           </Card>
         ))}
+
+        {loading && (
+          <div className="rounded-lg border border-border p-0 overflow-hidden animate-pulse">
+            <div className="aspect-square bg-muted" />
+            <div className="p-4 bg-background">
+              <div className="h-4 w-24 bg-muted rounded mx-auto mb-2" />
+              <div className="h-3 w-16 bg-muted rounded mx-auto" />
+            </div>
+          </div>
+        )}
       </div>
 
       {generatedImages.length >= 1 && (

@@ -20,12 +20,11 @@ export interface BaseOrder {
   media?: OrderMedia[];
   productId?: number | null;
   quantity?: number | null;
-  parameters?: {
-    length: number;
-    height: number;
-    width: number;
-    material: string;
-  } | null;
+  attributes?: {
+    code: string;
+    label: string;
+    value: string;
+  }[];
 }
 
 export interface AdminOrder extends BaseOrder {

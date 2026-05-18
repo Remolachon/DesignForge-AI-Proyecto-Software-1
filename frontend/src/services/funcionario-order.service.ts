@@ -19,7 +19,7 @@ type DashboardOrder = {
   companyName?: string | null;
   productType?: string | null;
   quantity?: number | null;
-  parameters?: OrderParameters | null;
+  attributes?: OrderAttribute[] | null;
 };
 
 type DashboardResponse = {
@@ -34,11 +34,10 @@ export type PaginatedOrders<T> = {
   totalPages: number;
 };
 
-export type OrderParameters = {
-  length: number;
-  height: number;
-  width: number;
-  material: string;
+export type OrderAttribute = {
+  code: string;
+  label: string;
+  value: string;
 };
 
 export type OrderDetail = {
@@ -58,7 +57,7 @@ export type OrderDetail = {
   companyName?: string | null;
   productType?: string | null;
   quantity: number;
-  parameters: OrderParameters | null;
+  attributes: OrderAttribute[] | null;
 };
 
 export type OrderMedia = {
@@ -114,7 +113,7 @@ function toAdminOrder(order: DashboardOrder): AdminOrder {
     companyName: order.companyName || null,
     productType: normalizeProductType(order.productType),
     quantity: order.quantity ?? 1,
-    parameters: order.parameters || null,
+    attributes: order.attributes || null,
   };
 }
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, ForeignKey, Text, DateTime
+from sqlalchemy import Column, Integer, ForeignKey, Text, DateTime, Numeric
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database.database import Base
@@ -11,6 +11,8 @@ class OrderItem(Base):
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=True)
     quantity = Column(Integer, nullable=False, default=1)
+    unit_price = Column(Numeric(10, 2), nullable=True)
+    total_price = Column(Numeric(10, 2), nullable=True)
     order_date = Column(DateTime, server_default=func.now())
     product_type_id = Column(Integer, ForeignKey("product_types.id"))
     current_stage_id = Column(Integer, ForeignKey("production_stages.id"))
@@ -24,3 +26,4 @@ class OrderItem(Base):
     order = relationship("Order", back_populates="items")
     assets = relationship("FileAsset", back_populates="order_item")
     parameters = relationship("Parameters", uselist=False)
+    attributes = relationship("OrderItemAttribute", back_populates="order_item", cascade="all, delete-orphan")

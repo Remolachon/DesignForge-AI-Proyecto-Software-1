@@ -13,3 +13,6 @@ from app.models.file_assets import FileAsset
 from app.models.transaction import Transaction  # noqa: F401
 from app.models.review import Review  # noqa: F401
 from app.models.notification import Notification  # noqa: F401
+from app.models.product_attribute import ProductAttribute  # noqa: F401
+from app.models.product_attribute_option import ProductAttributeOption  # noqa: F401
+from app.models.order_item_attribute import OrderItemAttribute  # noqa: F401

@@ -14,6 +14,24 @@ class FileAssetResponse(BaseModel):
     duration_seconds: int | None = None
     extension: str | None = None
 
+
+class ProductAttributeOptionSchema(BaseModel):
+    id: int
+    value: str
+    label: str
+    price_modifier: float
+
+
+class ProductAttributeSchema(BaseModel):
+    id: int
+    code: str
+    label: str
+    type: str
+    required: bool
+    unit: str | None = None
+    sort_order: int
+    options: list[ProductAttributeOptionSchema] = []
+
 class ProductResponse(BaseModel):
     id: int
     title: str
@@ -25,6 +43,7 @@ class ProductResponse(BaseModel):
     reviews: int
     inStock: bool
     productType: str
+    attributes: list[ProductAttributeSchema] = []
 
 
 class AdminProductResponse(BaseModel):
@@ -43,6 +62,7 @@ class AdminProductResponse(BaseModel):
     rating: float
     reviews: int
     createdAt: str
+    attributes: list[ProductAttributeSchema] = []
 
 
 class AdminProductUpsertRequest(BaseModel):

@@ -353,26 +353,16 @@ export function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModa
             </Card>
 
             {/* Parámetros del Pedido */}
-            {order.parameters && (
+            {order.attributes && order.attributes.length > 0 && (
               <Card className="p-4 space-y-3">
                 <h3 className="font-semibold text-sm">Parámetros del Pedido</h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Largo (cm)</p>
-                    <p className="text-sm font-medium">{order.parameters.length}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Ancho (cm)</p>
-                    <p className="text-sm font-medium">{order.parameters.width}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Alto (cm)</p>
-                    <p className="text-sm font-medium">{order.parameters.height}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Material</p>
-                    <p className="text-sm font-medium capitalize">{order.parameters.material}</p>
-                  </div>
+                  {order.attributes.map(attr => (
+                    <div key={attr.code}>
+                      <p className="text-xs text-muted-foreground">{attr.label}</p>
+                      <p className="text-sm font-medium capitalize">{attr.value}</p>
+                    </div>
+                  ))}
                 </div>
               </Card>
             )}
