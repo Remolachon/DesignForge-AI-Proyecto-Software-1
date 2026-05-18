@@ -92,10 +92,8 @@ def create_marketplace_order(
     Requiere autenticación.
     Body:
         - product_id: int (ID del producto del marketplace)
-        - length: int (largo en cm)
-        - height: int (alto en cm)
-        - width: int (ancho en cm)
-        - material: str ("standard", "premium", "deluxe")
+        - quantity: int (cantidad, por defecto 1)
+        - attributes: dict[str, str] (atributos personalizados del producto, opcionales)
     """
     db_user = _get_db_user_with_retry(db, current_user)
 

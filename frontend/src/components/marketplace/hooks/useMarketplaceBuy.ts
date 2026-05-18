@@ -64,6 +64,7 @@ export function useMarketplaceBuy() {
 
       const result = await paymentService.createMarketplaceOrder({
         product_id: productId,
+        quantity: 1,
         attributes: customAttributes,
       });
 
@@ -97,7 +98,15 @@ export function useMarketplaceBuy() {
         return false;
       }
 
-      toast.error(message);
+      // Log detailed error for debugging
+      console.error('Error creating marketplace order:', error);
+
+      // Show user-friendly error message
+      const userMessage = message.includes('body.')
+        ? `Datos inválidos: ${message.split('; ').join(', ')}`
+        : message;
+
+      toast.error(userMessage);
       return false;
     } finally {
       setLoading(false);
