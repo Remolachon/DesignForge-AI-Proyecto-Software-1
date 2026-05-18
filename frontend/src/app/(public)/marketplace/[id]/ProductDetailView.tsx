@@ -21,13 +21,8 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
 
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [hasToken, setHasToken] = useState(false);
   // Optional: Add state for image gallery if we had multiple images.
   const [mainImage, setMainImage] = useState(initialProduct.imageUrl);
-
-  useEffect(() => {
-    setHasToken(Boolean(localStorage.getItem('token')));
-  }, []);
 
   const handleBuyClick = () => {
     const token = localStorage.getItem('token');
@@ -113,7 +108,7 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
                       {Number(initialProduct.rating).toFixed(1)}
                       <span className="font-normal text-yellow-600/70 dark:text-yellow-400/70">({initialProduct.reviews})</span>
                     </span>
-                  </div>
+                  </button>
                 )}
               </div>
 
