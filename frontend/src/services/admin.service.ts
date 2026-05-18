@@ -3,7 +3,7 @@ import axios from "axios";
 import { CompanyAdmin } from "@/types/company";
 import { AdminOrder } from "@/types/order";
 
-const API_URL = "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 function getAuthHeaders() {
   return {
