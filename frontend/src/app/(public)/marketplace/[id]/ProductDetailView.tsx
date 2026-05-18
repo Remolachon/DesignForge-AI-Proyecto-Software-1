@@ -3,13 +3,12 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Product, getProductTypeLabel } from '@/types/product';
 import { useMarketplaceBuy } from '@/components/marketplace/hooks/useMarketplaceBuy';
 import { BuyOrderModal } from '@/components/marketplace/modals/BuyOrderModal';
 import { ConfirmBuyModal } from '@/components/marketplace/modals/ConfirmBuyModal';
 import { ProductCarousel } from '@/components/multimedia/ProductCarousel';
-import { ProductCommentsSection } from '@/components/marketplace/ProductCommentsSection';
 import { Star, ShoppingBag, Settings2, ShieldCheck, Truck, RefreshCcw, Leaf, MessageSquareText } from 'lucide-react';
 
 interface Props {
@@ -18,7 +17,6 @@ interface Props {
 
 export const ProductDetailView = ({ initialProduct }: Props) => {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { formData, errors, loading, setField, createOrder, resetForm, validateForm } = useMarketplaceBuy();
 
   const [showBuyModal, setShowBuyModal] = useState(false);
@@ -26,15 +24,6 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
   const [hasToken, setHasToken] = useState(false);
   // Optional: Add state for image gallery if we had multiple images.
   const [mainImage, setMainImage] = useState(initialProduct.imageUrl);
-
-  useEffect(() => {
-    const shouldOpenReviews = searchParams.get('review') === '1';
-    if (shouldOpenReviews) {
-      setTimeout(() => {
-        document.getElementById('opiniones')?.scrollIntoView({ behavior: 'smooth' });
-      }, 500);
-    }
-  }, [searchParams]);
 
   useEffect(() => {
     setHasToken(Boolean(localStorage.getItem('token')));
@@ -124,7 +113,7 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
                       {Number(initialProduct.rating).toFixed(1)}
                       <span className="font-normal text-yellow-600/70 dark:text-yellow-400/70">({initialProduct.reviews})</span>
                     </span>
-                  </button>
+                  </div>
                 )}
               </div>
 
@@ -201,15 +190,6 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
 
           </div>
         </div>
-
-        {/* Comments Section */}
-        <ProductCommentsSection
-          productId={initialProduct.id}
-          productTitle={initialProduct.title}
-          summaryRating={initialProduct.rating}
-          summaryReviews={initialProduct.reviews}
-          allowReview={hasToken}
-        />
       </div>
 
       {/* Buy Modals */}

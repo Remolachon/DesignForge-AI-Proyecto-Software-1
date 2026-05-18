@@ -1,7 +1,10 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import OperationalError
 
 from app.database.database import get_db
+from app.database.connection_retry import retry_on_connection_error
 from app.services.order_service import OrderService
 from app.schemas.order_schema import (
     CreateOrderRequest,
@@ -19,7 +22,26 @@ from app.models.user import User
 from app.services.user_service import UserService
 from app.models.order import Order
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/orders", tags=["Orders"])
+
+
+def _get_db_user_with_retry(db: Session, current_user):
+    """Obtiene usuario con reintentos automáticos en errores de conexión"""
+    def _query():
+        db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
+        if not db_user:
+            raise HTTPException(status_code=404, detail="Usuario no existe en DB")
+        return db_user
+    
+    try:
+        return retry_on_connection_error(_query, max_retries=3)
+    except OperationalError as e:
+        logger.error(f"Error de BD en order_controller: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Servicio de base de datos temporalmente no disponible"
+        )
 
 
 @router.post("/")
@@ -28,31 +50,35 @@ def create_order(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
+    db_user = _get_db_user_with_retry(db, current_user)
 
-    if not db_user:
-        raise HTTPException(status_code=404, detail="Usuario no existe en DB")
+    try:
+        order = OrderService.create_order(
+            db=db,
+            user_id=db_user.id,
+            data=data
+        )
 
-    order = OrderService.create_order(
-        db=db,
-        user_id=db_user.id,
-        data=data
-    )
+        payment_result = OrderService.generate_payment_url(db, order.id)
 
-    payment_result = OrderService.generate_payment_url(db, order.id)
+        if payment_result.get("status") == "error":
+            raise HTTPException(status_code=400, detail=payment_result.get("error", "Error generando URL de pago"))
 
-    if payment_result.get("status") == "error":
-        raise HTTPException(status_code=400, detail=payment_result.get("error", "Error generando URL de pago"))
-
-    return {
-        "message": "Order created successfully",
-        "order_id": order.id,
-        "total_amount": float(order.total_amount),
-        "payment_url": payment_result.get("payment_url"),
-        "payment_action_url": payment_result.get("payment_action_url"),
-        "payment_payload": payment_result.get("payment_payload"),
-        "payment_reference": payment_result.get("payment_reference"),
-    }
+        return {
+            "message": "Order created successfully",
+            "order_id": order.id,
+            "total_amount": float(order.total_amount),
+            "payment_url": payment_result.get("payment_url"),
+            "payment_action_url": payment_result.get("payment_action_url"),
+            "payment_payload": payment_result.get("payment_payload"),
+            "payment_reference": payment_result.get("payment_reference"),
+        }
+    except OperationalError as e:
+        logger.error(f"Error de BD al crear orden: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Servicio de base de datos temporalmente no disponible"
+        )
 
 
 @router.post("/marketplace")
@@ -71,10 +97,7 @@ def create_marketplace_order(
         - width: int (ancho en cm)
         - material: str ("standard", "premium", "deluxe")
     """
-    db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
-
-    if not db_user:
-        raise HTTPException(status_code=404, detail="Usuario no existe en DB")
+    db_user = _get_db_user_with_retry(db, current_user)
 
     try:
         order = OrderService.create_marketplace_order(
@@ -99,8 +122,9 @@ def create_marketplace_order(
         }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error creating order: {str(e)}")
+    except OperationalError as e:
+        logger.error(f"Error de BD al crear marketplace order: {e}")
+        raise HTTPException(status_code=503, detail="Servicio de base de datos temporalmente no disponible")
 
 
 @router.get("/dashboard", response_model=DashboardResponse)
@@ -108,19 +132,23 @@ def get_dashboard_data(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
+    db_user = _get_db_user_with_retry(db, current_user)
 
-    if not db_user:
-        raise HTTPException(status_code=404, detail="Usuario no existe en DB")
+    try:
+        role_name = UserService.get_user_role_name(db, db_user.id)
 
-    role_name = UserService.get_user_role_name(db, db_user.id)
-
-    return OrderService.get_dashboard_data(
-        db=db,
-        user_id=db_user.id,
-        role_name=role_name,
-        company_id=db_user.company_id or None,
-    )
+        return OrderService.get_dashboard_data(
+            db=db,
+            user_id=db_user.id,
+            role_name=role_name,
+            company_id=db_user.company_id or None,
+        )
+    except OperationalError as e:
+        logger.error(f"Error de BD al obtener dashboard: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Servicio de base de datos temporalmente no disponible"
+        )
 
 
 @router.get("/my-orders", response_model=list[DashboardOrder])
@@ -128,12 +156,16 @@ def get_my_orders(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
+    db_user = _get_db_user_with_retry(db, current_user)
 
-    if not db_user:
-        raise HTTPException(status_code=404, detail="Usuario no existe en DB")
-
-    return OrderService.get_user_orders(db=db, user_id=db_user.id)
+    try:
+        return OrderService.get_user_orders(db=db, user_id=db_user.id)
+    except OperationalError as e:
+        logger.error(f"Error de BD al obtener órdenes del usuario: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Servicio de base de datos temporalmente no disponible"
+        )
 
 
 @router.get("/my-orders/page", response_model=OrdersPageResponse)
@@ -145,19 +177,23 @@ def get_my_orders_page(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
+    db_user = _get_db_user_with_retry(db, current_user)
 
-    if not db_user:
-        raise HTTPException(status_code=404, detail="Usuario no existe en DB")
-
-    return OrderService.get_user_orders_page(
-        db=db,
-        user_id=db_user.id,
-        page=page,
-        page_size=page_size,
-        search=search,
-        status=status,
-    )
+    try:
+        return OrderService.get_user_orders_page(
+            db=db,
+            user_id=db_user.id,
+            page=page,
+            page_size=page_size,
+            search=search,
+            status=status,
+        )
+    except OperationalError as e:
+        logger.error(f"Error de BD al obtener página de órdenes: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Servicio de base de datos temporalmente no disponible"
+        )
 
 
 @router.get("/funcionario-orders/page", response_model=OrdersPageResponse)
@@ -169,23 +205,27 @@ def get_funcionario_orders_page(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
+    db_user = _get_db_user_with_retry(db, current_user)
 
-    if not db_user:
-        raise HTTPException(status_code=404, detail="Usuario no existe en DB")
+    try:
+        role_name = UserService.get_user_role_name(db, db_user.id)
+        if role_name != "funcionario":
+            raise HTTPException(status_code=403, detail="No autorizado")
 
-    role_name = UserService.get_user_role_name(db, db_user.id)
-    if role_name != "funcionario":
-        raise HTTPException(status_code=403, detail="No autorizado")
-
-    return OrderService.get_funcionario_orders_page(
-        db=db,
-        page=page,
-        page_size=page_size,
-        search=search,
-        status=status,
-        company_id=db_user.company_id,
-    )
+        return OrderService.get_funcionario_orders_page(
+            db=db,
+            page=page,
+            page_size=page_size,
+            search=search,
+            status=status,
+            company_id=db_user.company_id,
+        )
+    except OperationalError as e:
+        logger.error(f"Error de BD al obtener órdenes de funcionario: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Servicio de base de datos temporalmente no disponible"
+        )
 
 
 @router.patch("/{order_id}/status", response_model=UpdateOrderStatusResponse)
@@ -195,16 +235,13 @@ def update_order_status(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
-
-    if not db_user:
-        raise HTTPException(status_code=404, detail="Usuario no existe en DB")
-
-    role_name = UserService.get_user_role_name(db, db_user.id)
-    if role_name != "funcionario":
-        raise HTTPException(status_code=403, detail="No autorizado")
+    db_user = _get_db_user_with_retry(db, current_user)
 
     try:
+        role_name = UserService.get_user_role_name(db, db_user.id)
+        if role_name != "funcionario":
+            raise HTTPException(status_code=403, detail="No autorizado")
+
         updated_order = OrderService.update_order_status(
             db=db,
             order_id=order_id,
@@ -213,6 +250,12 @@ def update_order_status(
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+    except OperationalError as e:
+        logger.error(f"Error de BD al actualizar estado de orden: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Servicio de base de datos temporalmente no disponible"
+        )
 
     return {
         "message": "Estado actualizado",
@@ -227,10 +270,7 @@ def get_order_detail(
     current_user=Depends(get_current_user),
 ):
     """Obtiene detalles completos de un pedido (incluyendo parámetros)"""
-    db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
-
-    if not db_user:
-        raise HTTPException(status_code=404, detail="Usuario no existe en DB")
+    db_user = _get_db_user_with_retry(db, current_user)
 
     role_name = UserService.get_user_role_name(db, db_user.id)
 
@@ -274,6 +314,8 @@ def get_payment_url(
 
     if result.get("status") == "error":
         raise HTTPException(status_code=400, detail=result.get("error", "Error generando URL de pago"))
+
+    return result
 
     return result
 

@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,16 +12,33 @@ from app.controllers import product_controller
 from app.controllers import order_controller
 from app.controllers import interaction_controller
 from app.controllers import upload_controller
-from contextlib import asynccontextmanager
-
 from app.controllers import ai_controller
+from app.database.database import check_db_connection
+
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Startup
+    logger.info("🚀 Iniciando servidor...")
+    
+    # Verificar conexión a BD
+    db_available = await check_db_connection()
+    if not db_available:
+        logger.warning("⚠️  Advertencia: No se pudo verificar conexión a BD al iniciar")
+    else:
+        logger.info("✅ Conexión a BD verificada")
+    
     yield
+    
+    # Shutdown
+    logger.info("🛑 Deteniendo servidor...")
 
-app = FastAPI(lifespan=lifespan)
-app = FastAPI(title="Embroidery Marketplace API", lifespan=lifespan)
+app = FastAPI(
+    title="Embroidery Marketplace API",
+    description="API para gestionar marketplace de bordados",
+    lifespan=lifespan
+)
 
 origins = [
     "http://localhost:3000",
@@ -48,4 +66,19 @@ app.include_router(ai_controller.router)
 
 @app.get("/")
 def root():
+    return {"message": "Bienvenido a Embroidery Marketplace API"}
+
+
+@app.get("/health")
+async def health_check():
+    """
+    Endpoint para verificar salud de la aplicación.
+    Incluye estado de la conexión a BD.
+    """
+    db_available = await check_db_connection()
+    
+    return {
+        "status": "healthy" if db_available else "degraded",
+        "database": "connected" if db_available else "disconnected",
+    }
     return {"message": "API running"}

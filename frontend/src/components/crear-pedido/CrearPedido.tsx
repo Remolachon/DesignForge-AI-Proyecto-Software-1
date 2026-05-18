@@ -209,6 +209,7 @@ export default function CrearPedido() {
         {currentStep === 3 && (
           <Step3AIResults
             productType={productType}
+            uploadedImage={uploadedImage}
             generatedImages={generatedImages}
             selectedGeneratedImage={selectedGeneratedImage}
             setSelectedGeneratedImage={setSelectedGeneratedImage}

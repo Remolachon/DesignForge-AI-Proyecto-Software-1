@@ -133,7 +133,7 @@ export function ProductReviewsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[88vh] overflow-hidden p-0 gap-0">
+      <DialogContent className="max-w-4xl max-h-[94vh] overflow-hidden p-0 gap-0">
         <DialogHeader className="border-b border-border/60 px-6 py-5 text-left">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -153,7 +153,7 @@ export function ProductReviewsModal({
 
                   <StarDisplay value={averageRating} />
 
-                  <span>({summaryReviews} comentarios)</span>
+                  <span>({summaryReviews} valoraciones)</span>
                 </div>
               )}
             </div>
@@ -161,7 +161,7 @@ export function ProductReviewsModal({
         </DialogHeader>
 
         {mode === 'comments' ? (
-          <div className="flex flex-col max-h-[calc(88vh-88px)]">
+          <div className="flex flex-col max-h-[calc(94vh-88px)]">
             <div className="border-b border-border/60 px-6 py-3 flex items-center justify-between">
               <h3 className="font-semibold text-sm text-foreground">Comentarios ({visibleComments.length})</h3>
               <Button
@@ -232,7 +232,7 @@ export function ProductReviewsModal({
             </ScrollArea>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto px-6 py-5">
+          <div className="flex-1 overflow-y-auto px-6 py-5 pb-8">
             <form
               className="space-y-4"
               onSubmit={(event) => {

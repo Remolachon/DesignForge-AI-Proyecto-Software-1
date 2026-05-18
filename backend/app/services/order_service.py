@@ -1011,11 +1011,42 @@ class OrderService:
             order = db.query(Order).filter(Order.id == order_id).first()
             if not order:
                 return {"error": "Orden no encontrada", "status": "error"}
-            
-            # Validar que el pago está pendiente (leer de transactions)
+            # Validar estado de la transacción más reciente
             payment_status = OrderService._get_transaction_payment_status(db, order_id)
-            if payment_status != "pending":
-                return {"error": "La orden no está en estado pendiente de pago", "status": "error"}
+            # Si ya fue aprobada, no permitir nueva URL
+            if payment_status == "approved":
+                return {"error": "La orden ya fue pagada", "status": "error"}
+
+            # Si no hay transacción o la última transacción está en estado que permite reintento,
+            # crear una nueva transacción en estado 'pending'. Permitir reintentos para declined/expired/cancelled/refunded/unknown/None.
+            if payment_status not in {"pending"}:
+                # Si ya existe una transacción previa, no insertamos una nueva (existe unique constraint);
+                # reseteamos la transacción más reciente a estado 'pending' para permitir reintento de pago.
+                try:
+                    transaction = (
+                        db.query(Transaction)
+                        .filter(Transaction.order_id == order.id)
+                        .order_by(Transaction.transaction_date.desc())
+                        .first()
+                    )
+                    amount = float(order.total_amount or 0)
+                    if transaction:
+                        transaction.status = "pending"
+                        transaction.transaction_date = OrderService._now_local()
+                        transaction.amount = amount
+                        transaction.payu_reference = None
+                        transaction.payu_transaction_id = None
+                        transaction.payu_response_code = None
+                        transaction.payu_state_pol = None
+                        transaction.approved_at = None
+                        db.flush()
+                    else:
+                        # Como fallback, crear una nueva transacción si no existe ninguna
+                        OrderService._create_transaction(db=db, order_id=order.id, user_id=order.user_id, amount=amount, payment_method="payu")
+                    db.commit()
+                except Exception as e:
+                    db.rollback()
+                    return {"error": f"Error creando transacción de pago: {str(e)}", "status": "error"}
             
             user = order.user
             if not user:
