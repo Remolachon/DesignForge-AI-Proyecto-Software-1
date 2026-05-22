@@ -4,12 +4,13 @@ from pydantic import BaseModel, Field
 class CreateOrderRequest(BaseModel):
     product_type: str
     image_url: str | None
+    quantity: int = Field(default=1, ge=1, le=10)
     attributes: dict[str, dict[str, str]] = Field(default_factory=dict)
 
 
 class CreateMarketplaceOrderRequest(BaseModel):
     product_id: int
-    quantity: int = 1
+    quantity: int = Field(default=1, ge=1, le=10)
     attributes: dict[str, str] = Field(default_factory=dict)
 
 

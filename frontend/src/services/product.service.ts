@@ -11,7 +11,10 @@ type ProductApiResponse = {
   rating: number;
   reviews: number;
   inStock: boolean;
+  stock: number;
   productType: string;
+  productShape?: string | null;
+  productShapeId?: number | null;
   attributes?: any[];
 };
 
@@ -28,7 +31,10 @@ function toProduct(apiProduct: ProductApiResponse): Product {
     rating: Number(apiProduct.rating || 0),
     reviews: Number(apiProduct.reviews || 0),
     inStock: Boolean(apiProduct.inStock),
+    stock: Number(apiProduct.stock || 0),
     productType: normalizedType,
+    productShape: apiProduct.productShape || null,
+    productShapeId: apiProduct.productShapeId ?? null,
     attributes: apiProduct.attributes || [],
   };
 }

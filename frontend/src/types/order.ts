@@ -31,7 +31,7 @@ export interface AdminOrder extends BaseOrder {
   clientName: string;
   companyName?: string | null;
   imageUrl?: string | null;
-  productType?: 'bordado' | 'neon-flex' | 'acrilico';
+  productType?: 'bordado' | 'neon-flex' | 'acrilico' | 'vinilo' | 'sublimacion';
 }
 
 export interface OrderMedia {

@@ -29,6 +29,42 @@ Antes de ejecutar el proyecto, asegúrate de tener instalado **Node.js**.
    ```bash
    npm run dev
    ```
+
+## 🔄 Cambiar entre Backend Local y Render
+
+El frontend puede conectarse a dos backends diferentes:
+
+### 📍 Backend Local (tu PC - Recomendado para desarrollo)
+```bash
+# 1. Edita frontend/.env.local
+NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# 2. Frontend se recargará automáticamente en http://localhost:3000
+```
+
+### ☁️ Backend en Render (Servidor remoto)
+```bash
+# 1. Edita frontend/.env.local
+NEXT_PUBLIC_API_URL=https://designforge-ai-proyecto-software-1.onrender.com
+
+# 2. Frontend se recargará automáticamente en http://localhost:3000
+```
+
+✅ **Ambos funcionan sin problemas** - El CORS está configurado en el backend.
+
+### 🔍 Verificar Conectividad
+Windows (PowerShell):
+```bash
+.\test_backends.ps1
+```
+
+Linux/Mac (Bash):
+```bash
+bash test_backends.sh
+```
+
+---
+
 # ▶️ Ejecución del Backend
 
 1. Activar el entorno virtual:
@@ -43,10 +79,47 @@ Antes de ejecutar el proyecto, asegúrate de tener instalado **Node.js**.
 
 3. Iniciar el servidor de desarrollo:
    ```bash
+   python -m app.main
+   ```
+   O con uvicorn:
+   ```bash
    uvicorn app.main:app --reload
    ```
 
-Una vez iniciado, el proyecto estará disponible en el navegador según la configuración mostrada en la terminal.
+El backend estará disponible en **http://localhost:8000**
+- Documentación interactiva: http://localhost:8000/docs
+- Documentación alternativa: http://localhost:8000/redoc
+
+---
+
+## 🚀 Flujo Recomendado para Desarrollo
+
+**Terminal 1 (Frontend):**
+```bash
+cd frontend
+npm run dev
+# Abierto en http://localhost:3000
+```
+
+**Terminal 2 (Backend):**
+```bash
+cd backend
+venv\Scripts\activate
+python -m app.main
+# Abierto en http://localhost:8000
+```
+
+**Configuración:**
+```bash
+# frontend/.env.local
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+**Resultado:**
+- Frontend en `http://localhost:3000` ✅
+- Backend en `http://localhost:8000` ✅
+- Base de datos: Supabase ✅
+- Todo funcionando localmente 🎉
 
 ---
 

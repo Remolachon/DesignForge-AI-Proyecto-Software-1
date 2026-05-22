@@ -49,9 +49,11 @@ export default function CrearPedido() {
   const {
     currentStep,
     productType,
+    quantity,
     uploadedImage,
     loading,
     setProductType,
+    setQuantity,
     handleFileUpload,
     nextStep,
     prevStep,
@@ -110,6 +112,7 @@ export default function CrearPedido() {
       const result = await paymentService.createCustomOrder({
         product_type: productType,
         image_url: selectedGeneratedImage || uploadedImage,
+        quantity,
         attributes: attributesPayload,
       });
 
@@ -226,6 +229,8 @@ export default function CrearPedido() {
         {currentStep === 4 && (
           <Step5Confirm
             productType={productType}
+            quantity={quantity}
+            setQuantity={setQuantity}
             image={selectedGeneratedImage || uploadedImage}
             attributeValues={attributeValues}
             setAttributeValues={setAttributeValues}

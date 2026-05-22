@@ -4,6 +4,9 @@ from datetime import datetime, timedelta
 from app.schemas.product_schema import ProductResponse, AdminProductResponse, AdminProductUpsertRequest, FileAssetResponse
 from app.models.product import Product
 from app.models.product_type import ProductType
+from app.models.product_shape import ProductShape
+from app.models.product_attribute import ProductAttribute
+from app.models.product_attribute_value import ProductAttributeValue
 from app.models.inventory import Inventory
 from app.models.review import Review
 from app.models.file_assets import FileAsset
@@ -11,6 +14,46 @@ from app.models.file_assets import FileAsset
 SUPABASE_PUBLIC_URL = "https://ttfwjexqplbbcfdfhxsg.supabase.co/storage/v1/object/public"
 
 class ProductService:
+
+    @staticmethod
+    def _ensure_product_attribute_values_table(db: Session) -> None:
+        ProductAttributeValue.__table__.create(bind=db.get_bind(), checkfirst=True)
+
+    @staticmethod
+    def _upsert_product_attribute_values(
+        db: Session,
+        product_id: int,
+        shape_attributes: list[ProductAttribute],
+        values: dict[str, str],
+    ) -> None:
+        ProductService._ensure_product_attribute_values_table(db)
+
+        db.query(ProductAttributeValue).filter(ProductAttributeValue.product_id == product_id).delete(synchronize_session=False)
+
+        normalized_values = {
+            str(code).strip(): str(value).strip()
+            for code, value in (values or {}).items()
+        }
+
+        for attribute in shape_attributes:
+            if attribute.code == "color" or attribute.input_type == "color":
+                continue
+
+            value = normalized_values.get(attribute.code, "")
+            if attribute.required and not value:
+                raise ValueError(f"El campo {attribute.label} es obligatorio")
+
+            if not value:
+                continue
+
+            db.add(
+                ProductAttributeValue(
+                    product_id=product_id,
+                    attribute_code=attribute.code,
+                    attribute_label=attribute.label,
+                    value=value,
+                )
+            )
 
     @staticmethod
     def _now_local_iso() -> str:
@@ -32,6 +75,17 @@ class ProductService:
         return None
 
     @staticmethod
+    def _resolve_product_shape(db: Session, product_shape: str) -> ProductShape | None:
+        target = ProductService._normalize_type_name(product_shape)
+
+        all_shapes = db.query(ProductShape).all()
+        for item in all_shapes:
+            if ProductService._normalize_type_name(item.name) == target:
+                return item
+
+        return None
+
+    @staticmethod
     def _build_public_image(storage_path: str | None, bucket_name: str | None = None) -> str | None:
         if not storage_path:
             return None
@@ -41,8 +95,9 @@ class ProductService:
         return f"{SUPABASE_PUBLIC_URL}/{bucket}/{storage_path}"
 
     @staticmethod
-    def _serialize_admin_product(row, file_assets=None) -> AdminProductResponse:
+    def _serialize_admin_product(row, file_assets=None, attributes=None) -> AdminProductResponse:
         file_assets = file_assets or []
+        attributes = attributes or []
         media_responses = []
         image_url = None
 
@@ -80,6 +135,8 @@ class ProductService:
             image_url = ProductService._build_public_image(row.storage_path)
 
         company_id = getattr(row, 'company_id', None)
+        product_shape = getattr(row, 'product_shape', None)
+        product_shape_id = getattr(row, 'product_shape_id', None)
 
         return AdminProductResponse(
             id=row.id,
@@ -88,6 +145,8 @@ class ProductService:
             description=row.description,
             basePrice=float(row.base_price),
             productType=row.product_type,
+            productShape=product_shape,
+            productShapeId=product_shape_id,
             imageUrl=image_url,
             media=media_responses,
             inStock=(row.quantity or 0) > 0,
@@ -97,6 +156,7 @@ class ProductService:
             rating=float(row.avg_rating) if row.avg_rating else 0,
             reviews=row.review_count,
             createdAt=ProductService._now_local_iso(),
+            attributes=attributes,
         )
 
     @staticmethod
@@ -111,11 +171,14 @@ class ProductService:
                 Product.is_active,
                 Product.is_public,
                 ProductType.name.label("product_type"),
+                ProductShape.id.label("product_shape_id"),
+                ProductShape.name.label("product_shape"),
                 Inventory.quantity,
                 func.avg(Review.rating).label("avg_rating"),
                 func.count(Review.id).label("review_count"),
             )
             .join(ProductType, Product.product_type_id == ProductType.id)
+            .outerjoin(ProductShape, Product.product_shape_id == ProductShape.id)
             .outerjoin(Inventory, Product.id == Inventory.product_id)
             .outerjoin(Review, Product.id == Review.product_id)
             .filter(Product.is_active == True)
@@ -124,6 +187,8 @@ class ProductService:
                 Product.id,
                 Product.company_id,
                 ProductType.name,
+                ProductShape.id,
+                ProductShape.name,
                 Inventory.quantity,
             )
             .all()
@@ -149,6 +214,7 @@ class ProductService:
                 rating=admin_resp.rating,
                 reviews=admin_resp.reviews,
                 inStock=admin_resp.inStock,
+                stock=admin_resp.stock,
                 productType=admin_resp.productType,
                 attributes=product_attributes
             ))
@@ -167,11 +233,14 @@ class ProductService:
                 Product.is_active,
                 Product.is_public,
                 ProductType.name.label("product_type"),
+                ProductShape.id.label("product_shape_id"),
+                ProductShape.name.label("product_shape"),
                 Inventory.quantity,
                 func.avg(Review.rating).label("avg_rating"),
                 func.count(Review.id).label("review_count"),
             )
             .join(ProductType, Product.product_type_id == ProductType.id)
+            .outerjoin(ProductShape, Product.product_shape_id == ProductShape.id)
             .outerjoin(Inventory, Product.id == Inventory.product_id)
             .outerjoin(Review, Product.id == Review.product_id)
             .filter(Product.is_active == True)
@@ -184,6 +253,8 @@ class ProductService:
             Product.id,
             Product.company_id,
             ProductType.name,
+            ProductShape.id,
+            ProductShape.name,
             Inventory.quantity,
         ).all()
         
@@ -193,7 +264,14 @@ class ProductService:
         for a in assets:
             assets_map[a.product_id].append(a)
 
-        return [ProductService._serialize_admin_product(row, assets_map.get(row.id, [])) for row in rows]
+        return [
+            ProductService._serialize_admin_product(
+                row,
+                assets_map.get(row.id, []),
+                ProductService.get_product_attributes(db, row.id),
+            )
+            for row in rows
+        ]
 
     @staticmethod
     def get_admin_products_page(db: Session, company_id: int | None = None, page: int = 1, page_size: int = 20, search: str | None = None):
@@ -207,11 +285,14 @@ class ProductService:
                 Product.is_active,
                 Product.is_public,
                 ProductType.name.label("product_type"),
+                ProductShape.id.label("product_shape_id"),
+                ProductShape.name.label("product_shape"),
                 Inventory.quantity,
                 func.avg(Review.rating).label("avg_rating"),
                 func.count(Review.id).label("review_count"),
             )
             .join(ProductType, Product.product_type_id == ProductType.id)
+            .outerjoin(ProductShape, Product.product_shape_id == ProductShape.id)
             .outerjoin(Inventory, Product.id == Inventory.product_id)
             .outerjoin(Review, Product.id == Review.product_id)
         )
@@ -249,6 +330,8 @@ class ProductService:
                 Product.id,
                 Product.company_id,
                 ProductType.name,
+                ProductShape.id,
+                ProductShape.name,
                 Inventory.quantity,
             )
             .offset(offset)
@@ -262,7 +345,14 @@ class ProductService:
         for a in assets:
             assets_map[a.product_id].append(a)
 
-        items = [ProductService._serialize_admin_product(row, assets_map.get(row.id, [])) for row in rows]
+        items = [
+            ProductService._serialize_admin_product(
+                row,
+                assets_map.get(row.id, []),
+                ProductService.get_product_attributes(db, row.id),
+            )
+            for row in rows
+        ]
 
         return {
             "items": items,
@@ -283,9 +373,18 @@ class ProductService:
         if not product_type:
             raise ValueError("Tipo de producto inválido")
 
+        product_shape = None
+        if payload.productShape:
+            product_shape = ProductService._resolve_product_shape(db, payload.productShape)
+            if not product_shape:
+                raise ValueError("Shape de producto inválido")
+        else:
+            raise ValueError("Debes seleccionar un shape de producto")
+
         product = Product(
             company_id=company_id,
             product_type_id=product_type.id,
+            product_shape_id=product_shape.id,
             created_by_user_id=created_by_user_id,
             name=payload.name.strip(),
             description=payload.description.strip(),
@@ -308,6 +407,15 @@ class ProductService:
 
         inventory = Inventory(product_id=product.id, quantity=max(0, payload.stock))
         db.add(inventory)
+
+        shape_attributes = (
+            db.query(ProductAttribute)
+            .filter(ProductAttribute.product_shape_id == product_shape.id)
+            .order_by(ProductAttribute.sort_order.asc(), ProductAttribute.id.asc())
+            .all()
+        )
+        ProductService._upsert_product_attribute_values(db, product.id, shape_attributes, payload.shapeAttributes)
+
         db.commit()
 
         rows = ProductService.get_admin_products(db, company_id=company_id)
@@ -335,6 +443,29 @@ class ProductService:
         product_type = ProductService._resolve_product_type(db, payload.productType)
         if not product_type:
             raise ValueError("Tipo de producto inválido")
+
+        if payload.productShape:
+            product_shape = ProductService._resolve_product_shape(db, payload.productShape)
+            if not product_shape:
+                raise ValueError("Shape de producto inválido")
+            product.product_shape_id = product_shape.id
+        elif not product.product_shape_id:
+            raise ValueError("Debes seleccionar un shape de producto")
+
+        product_shape = None
+        if product.product_shape_id:
+            product_shape = db.query(ProductShape).filter(ProductShape.id == product.product_shape_id).first()
+            if not product_shape:
+                raise ValueError("Shape de producto inválido")
+
+        active_shape_attributes = []
+        if product_shape:
+            active_shape_attributes = (
+                db.query(ProductAttribute)
+                .filter(ProductAttribute.product_shape_id == product_shape.id)
+                .order_by(ProductAttribute.sort_order.asc(), ProductAttribute.id.asc())
+                .all()
+            )
 
         product.name = payload.name.strip()
         product.description = payload.description.strip()
@@ -365,6 +496,8 @@ class ProductService:
             db.add(inventory)
         else:
             inventory.quantity = max(0, payload.stock)
+
+        ProductService._upsert_product_attribute_values(db, product.id, active_shape_attributes, payload.shapeAttributes)
 
         db.commit()
 
@@ -494,61 +627,90 @@ class ProductService:
 
     @staticmethod
     def get_product_attributes(db: Session, product_id: int):
-        from sqlalchemy import text
-        from app.schemas.product_schema import ProductAttributeSchema, ProductAttributeOptionSchema
-        
-        query = text("""
-            SELECT
-              pa.id,
-              pa.code,
-              pa.label,
-              pa.type,
-              pa.required,
-              pa.unit,
-              pa.sort_order,
-              COALESCE(
-                json_agg(
-                  json_build_object(
-                    'id',             pao.id,
-                    'value',          pao.value,
-                    'label',          pao.label,
-                    'price_modifier', pao.price_modifier,
-                    'sort_order',     pao.sort_order
-                  ) ORDER BY pao.sort_order
-                ) FILTER (WHERE pao.id IS NOT NULL),
-                '[]'
-              ) AS options
-            FROM product_attributes pa
-            LEFT JOIN product_attribute_options pao ON pao.attribute_id = pa.id
-            WHERE pa.product_type_id = (
-              SELECT product_type_id FROM products WHERE id = :productId
-            )
-            GROUP BY pa.id
-            ORDER BY pa.sort_order;
-        """)
-        
-        results = db.execute(query, {"productId": product_id}).fetchall()
-        
-        response = []
-        for row in results:
-            opts = []
-            for opt in row.options:
-                opts.append(ProductAttributeOptionSchema(
-                    id=opt["id"],
-                    value=opt["value"],
-                    label=opt["label"],
-                    price_modifier=float(opt["price_modifier"])
-                ))
-            
-            response.append(ProductAttributeSchema(
+        from app.schemas.product_schema import ProductAttributeSchema
+
+        ProductService._ensure_product_attribute_values_table(db)
+
+        product = db.query(Product).filter(Product.id == product_id).first()
+        if not product or not product.product_shape_id:
+            return []
+
+        rows = (
+            db.query(ProductAttribute)
+            .filter(ProductAttribute.product_shape_id == product.product_shape_id)
+            .order_by(ProductAttribute.sort_order.asc(), ProductAttribute.id.asc())
+            .all()
+        )
+
+        value_rows = (
+            db.query(ProductAttributeValue)
+            .filter(ProductAttributeValue.product_id == product_id)
+            .all()
+        )
+        value_map = {
+            row.attribute_code: row.value
+            for row in value_rows
+            if row.attribute_code and row.value is not None
+        }
+
+        return [
+            ProductAttributeSchema(
                 id=row.id,
                 code=row.code,
                 label=row.label,
-                type=row.type,
+                input_type=row.input_type,
                 required=bool(row.required),
-                unit=row.unit,
+                placeholder=row.placeholder,
+                default_value=value_map.get(row.code),
                 sort_order=row.sort_order,
-                options=opts
-            ))
-            
-        return response
+            )
+            for row in rows
+        ]
+
+    @staticmethod
+    def get_product_shapes(db: Session):
+        return [
+            {"id": shape.id, "name": shape.name}
+            for shape in db.query(ProductShape).order_by(ProductShape.id.asc()).all()
+        ]
+
+    @staticmethod
+    def get_shape_attributes(db: Session, shape_id: int):
+        shape = db.query(ProductShape).filter(ProductShape.id == shape_id).first()
+        if not shape:
+            raise ValueError("Shape no encontrado")
+
+        rows = (
+            db.query(ProductAttribute)
+            .filter(ProductAttribute.product_shape_id == shape.id)
+            .order_by(ProductAttribute.sort_order.asc(), ProductAttribute.id.asc())
+            .all()
+        )
+
+        value_rows = (
+            db.query(ProductAttributeValue)
+            .join(Product, Product.id == ProductAttributeValue.product_id)
+            .filter(Product.product_shape_id == shape.id)
+            .all()
+        )
+        value_map = {
+            row.attribute_code: row.value
+            for row in value_rows
+            if row.attribute_code and row.value is not None
+        }
+
+        from app.schemas.product_schema import ProductAttributeSchema
+
+        return [
+            ProductAttributeSchema(
+                id=row.id,
+                code=row.code,
+                label=row.label,
+                input_type=row.input_type,
+                required=bool(row.required),
+                placeholder=row.placeholder,
+                default_value=value_map.get(row.code),
+                sort_order=row.sort_order,
+            )
+            for row in rows
+        ]

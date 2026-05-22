@@ -23,9 +23,24 @@ async function parseError(res: Response): Promise<never> {
   let detail = "No se pudo completar la operación";
   try {
     const data = await res.json();
-    detail = data?.detail || data?.message || detail;
+    
+    // Handle Pydantic validation errors (array of error objects)
+    if (Array.isArray(data?.detail)) {
+      const errors = data.detail
+        .map((err: any) => {
+          const field = Array.isArray(err.loc) ? err.loc.join('.') : 'unknown';
+          const msg = err.msg || 'Invalid field';
+          return `${field}: ${msg}`;
+        })
+        .join('; ');
+      detail = errors || detail;
+    } else if (typeof data?.detail === 'string') {
+      detail = data.detail;
+    } else if (data?.message) {
+      detail = data.message;
+    }
   } catch {
-    // ignore
+    // ignore parse errors
   }
 
   throw new Error(detail);
@@ -34,6 +49,7 @@ async function parseError(res: Response): Promise<never> {
 export type CreateCustomOrderPayload = {
   product_type: string;
   image_url: string | null;
+  quantity: number;
   attributes: Record<string, { label: string; value: string }>;
 };
 

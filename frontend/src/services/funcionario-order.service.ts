@@ -90,11 +90,13 @@ function canonicalStatus(status: string): OrderStatus {
   return 'Entregado';
 }
 
-function normalizeProductType(value?: string | null): 'bordado' | 'neon-flex' | 'acrilico' {
+function normalizeProductType(value?: string | null): 'bordado' | 'neon-flex' | 'acrilico' | 'vinilo' | 'sublimacion' {
   const normalized = (value || '').trim().toLowerCase().replace('_', '-');
 
   if (normalized.includes('neon')) return 'neon-flex';
   if (normalized.includes('acril')) return 'acrilico';
+  if (normalized.includes('vinilo')) return 'vinilo';
+  if (normalized.includes('sublim')) return 'sublimacion';
   return 'bordado';
 }
 
@@ -113,7 +115,7 @@ function toAdminOrder(order: DashboardOrder): AdminOrder {
     companyName: order.companyName || null,
     productType: normalizeProductType(order.productType),
     quantity: order.quantity ?? 1,
-    attributes: order.attributes || null,
+    attributes: order.attributes ?? undefined,
   };
 }
 

@@ -8,7 +8,7 @@ interface Props {
 }
 
 export function AttributeInput({ attribute, value, onChange, disabled }: Props) {
-  const { code, label, type, required, unit, options } = attribute;
+  const { code, label, input_type, required, placeholder } = attribute;
 
   const baseClass = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-accent focus:border-transparent transition-shadow disabled:opacity-50";
 
@@ -17,41 +17,22 @@ export function AttributeInput({ attribute, value, onChange, disabled }: Props) 
       <label className="text-sm font-medium text-gray-700">
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
-        {unit && <span className="text-gray-400 ml-1 font-normal">({unit})</span>}
       </label>
 
-      {type === 'number' && (
+      {input_type === 'number' && (
         <input
           type="number"
           min={0}
           value={value}
           onChange={e => onChange(code, e.target.value)}
-          placeholder={unit ? `Ej: 10` : 'Ingresa un valor'}
+          placeholder={placeholder || ''}
           required={required}
           className={baseClass}
           disabled={disabled}
         />
       )}
 
-      {type === 'select' && (
-        <select
-          value={value}
-          onChange={e => onChange(code, e.target.value)}
-          required={required}
-          className={`${baseClass} bg-white`}
-          disabled={disabled}
-        >
-          <option value="">Selecciona una opción</option>
-          {options.map(opt => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-              {opt.price_modifier > 0 && ` (+$${opt.price_modifier.toLocaleString('es-CO')})`}
-            </option>
-          ))}
-        </select>
-      )}
-
-      {type === 'color' && (
+      {input_type === 'color' && (
         <div className="flex items-center gap-3">
           <input
             type="color"
@@ -65,12 +46,12 @@ export function AttributeInput({ attribute, value, onChange, disabled }: Props) 
         </div>
       )}
 
-      {type === 'text' && (
+      {(input_type === 'text' || input_type === 'select') && (
         <input
           type="text"
           value={value}
           onChange={e => onChange(code, e.target.value)}
-          placeholder="Ingresa un valor"
+          placeholder={placeholder || ''}
           required={required}
           className={baseClass}
           disabled={disabled}

@@ -17,7 +17,7 @@ interface Props {
 
 export const ProductDetailView = ({ initialProduct }: Props) => {
   const router = useRouter();
-  const { attrValues, errors, loading, initAttributes, setField, createOrder, resetForm, validateForm } = useMarketplaceBuy();
+  const { attrValues, errors, loading, quantity, setQuantity, initAttributes, setField, createOrder, resetForm, validateForm } = useMarketplaceBuy();
 
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -31,18 +31,20 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
       router.push('/login');
       return;
     }
+    resetForm();
+    setQuantity(1);
     setShowBuyModal(true);
   };
 
   const handleBuyConfirm = () => {
-    const isValid = validateForm(initialProduct.attributes);
+    const isValid = validateForm(initialProduct.attributes, initialProduct.stock);
     if (!isValid) return;
     setShowBuyModal(false);
     setShowConfirmModal(true);
   };
 
   const handleFinalConfirm = async () => {
-    const success = await createOrder(initialProduct.id, initialProduct.title, initialProduct.attributes);
+    const success = await createOrder(initialProduct.id, initialProduct.title, initialProduct.attributes, initialProduct.stock);
     if (success) {
       setShowConfirmModal(false);
       resetForm();
@@ -195,12 +197,16 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
         attrValues={attrValues}
         errors={errors}
         loading={loading}
+        quantity={quantity}
+        onQuantityChange={setQuantity}
         onFieldChange={setField}
         onConfirm={handleBuyConfirm}
         initAttributes={initAttributes}
       />
       <ConfirmBuyModal
         productTitle={initialProduct.title}
+        quantity={quantity}
+        totalAmount={(Number(initialProduct.price || 0) * quantity) + Math.round(Number(initialProduct.price || 0) * quantity * 0.19 * 100) / 100}
         isOpen={showConfirmModal}
         onConfirm={handleFinalConfirm}
         onCancel={() => {

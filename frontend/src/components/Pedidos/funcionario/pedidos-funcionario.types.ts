@@ -1,5 +1,5 @@
 import { OrderStatus } from '@/types/order';
-export type ProductType = 'bordado' | 'neon-flex' | 'acrilico';
+export type ProductType = 'bordado' | 'neon-flex' | 'acrilico' | 'vinilo' | 'sublimacion';
 export type FilterStatus = OrderStatus | 'all';
 export const PAGE_SIZE = 10;
 export const DEBOUNCE_MS = 250;
@@ -30,6 +30,8 @@ export function getProductTypeLabel(type: ProductType): string {
         bordado: 'Bordado',
         'neon-flex': 'Neon Flex',
         acrilico: 'Acrílico',
+        vinilo: 'Vinilo',
+        sublimacion: 'Sublimación',
     };
     return map[type] ?? type;
 }

@@ -12,14 +12,7 @@ export function useProductAttributes(product: Product & { attributes?: ProductAt
 
   // Calcula el precio final sumando los modificadores de las opciones seleccionadas
   const totalPrice = useMemo(() => {
-    let price = product.price;
-    for (const attribute of attributes) {
-      const selected = values[attribute.code];
-      if (!selected || attribute.type !== "select") continue;
-      const option = attribute.options?.find((o) => o.value === selected);
-      if (option) price += option.priceModifier;
-    }
-    return price;
+    return product.price;
   }, [product, values, attributes]);
 
   // Validación: devuelve los campos requeridos sin valor

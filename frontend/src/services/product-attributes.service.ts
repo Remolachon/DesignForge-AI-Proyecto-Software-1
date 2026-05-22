@@ -12,22 +12,14 @@ export const productAttributesService = {
 
     const data = await res.json();
     
-    // Convert to our frontend interface (camelCase vs snake_case if needed, 
-    // although our schema is using snake_case for some fields we should map them)
     return data.map((attr: any) => ({
       id: attr.id,
       code: attr.code,
       label: attr.label,
-      type: attr.type,
+      input_type: attr.input_type,
       required: attr.required,
-      unit: attr.unit,
-      sortOrder: attr.sort_order,
-      options: attr.options?.map((opt: any) => ({
-        id: opt.id,
-        value: opt.value,
-        label: opt.label,
-        priceModifier: opt.price_modifier
-      })) || []
+      placeholder: attr.placeholder,
+      sort_order: attr.sort_order,
     }));
   }
 };

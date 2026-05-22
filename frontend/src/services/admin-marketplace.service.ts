@@ -9,10 +9,14 @@ export type MarketplaceSavePayload = {
   description: string;
   basePrice: number;
   productType: ProductType;
+  productShape: string;
   stock: number;
+  shapeAttributes?: Record<string, string>;
 };
 
 type AdminProductResponse = {
+  productShape?: string | null;
+  productShapeId?: number | null;
   id: number;
   companyId?: number;
   name: string;
@@ -28,6 +32,7 @@ type AdminProductResponse = {
   rating: number;
   reviews: number;
   createdAt: string;
+  attributes?: any[];
 };
 
 function toMarketplaceProduct(product: AdminProductResponse): MarketplaceProduct {
@@ -40,6 +45,8 @@ function toMarketplaceProduct(product: AdminProductResponse): MarketplaceProduct
     description: product.description,
     basePrice: product.basePrice,
     productType,
+    productShape: product.productShape || null,
+    productShapeId: product.productShapeId ?? null,
     imageUrl: getCatalogImageByType(product.productType, product.imageUrl),
     media: product.media || [],
     inStock: product.inStock,
@@ -49,6 +56,7 @@ function toMarketplaceProduct(product: AdminProductResponse): MarketplaceProduct
     rating: product.rating,
     reviews: product.reviews,
     createdAt: product.createdAt,
+    attributes: product.attributes || [],
   };
 }
 
@@ -61,21 +69,38 @@ function getToken() {
 }
 
 export const adminMarketplaceService = {
-  async getProducts(page = 1, pageSize = 20, search: string | null = null): Promise<MarketplaceProduct[]> {
+  async getProducts(search: string | null = null): Promise<MarketplaceProduct[]> {
     const token = getToken();
-    const params = new URLSearchParams();
-    params.set('page', String(page));
-    params.set('page_size', String(pageSize));
-    if (search) params.set('search', search);
+    const pageSize = 100;
+    let page = 1;
+    let totalPages = 1;
+    const allItems: MarketplaceProduct[] = [];
 
-    const res = await fetch(`${API_URL}/products/admin/page?${params.toString()}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) throw new Error('Error cargando productos de administrador');
-    const data = await res.json();
-    // data.items expected
-    const items: AdminProductResponse[] = Array.isArray(data.items) ? data.items : data;
-    return items.map(toMarketplaceProduct);
+    while (page <= totalPages) {
+      const params = new URLSearchParams();
+      params.set('page', String(page));
+      params.set('page_size', String(pageSize));
+      if (search) params.set('search', search);
+
+      const res = await fetch(`${API_URL}/products/admin/page?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error('Error cargando productos de administrador');
+
+      const data = await res.json();
+      const items: AdminProductResponse[] = Array.isArray(data.items) ? data.items : [];
+      totalPages = Number(data.totalPages || 1);
+      allItems.push(...items.map(toMarketplaceProduct));
+
+      if (items.length === 0) {
+        break;
+      }
+
+      page += 1;
+    }
+
+    return allItems;
   },
 
   async createProduct(payload: MarketplaceSavePayload): Promise<MarketplaceProduct> {

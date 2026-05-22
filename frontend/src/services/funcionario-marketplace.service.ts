@@ -11,6 +11,8 @@ type AdminProductResponse = {
   description: string;
   basePrice: number;
   productType: string;
+  productShape?: string | null;
+  productShapeId?: number | null;
   imageUrl?: string | null;
   media?: any[];
   inStock: boolean;
@@ -20,6 +22,7 @@ type AdminProductResponse = {
   rating: number;
   reviews: number;
   createdAt: string;
+  attributes?: any[];
 };
 
 export type MarketplaceSavePayload = {
@@ -27,7 +30,9 @@ export type MarketplaceSavePayload = {
   description: string;
   basePrice: number;
   productType: ProductType;
+  productShape: string;
   stock: number;
+  shapeAttributes?: Record<string, string>;
 };
 
 function toMarketplaceProduct(product: AdminProductResponse): MarketplaceProduct {
@@ -40,6 +45,8 @@ function toMarketplaceProduct(product: AdminProductResponse): MarketplaceProduct
     description: product.description,
     basePrice: product.basePrice,
     productType,
+    productShape: product.productShape || null,
+    productShapeId: product.productShapeId ?? null,
     imageUrl: product.imageUrl || undefined,
     media: product.media || [],
     inStock: product.inStock,
@@ -49,6 +56,7 @@ function toMarketplaceProduct(product: AdminProductResponse): MarketplaceProduct
     rating: product.rating,
     reviews: product.reviews,
     createdAt: product.createdAt,
+    attributes: product.attributes || [],
   };
 }
 

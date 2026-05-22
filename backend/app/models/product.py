@@ -8,6 +8,7 @@ class Product(Base):
     id = Column(Integer, primary_key=True, index=True)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     product_type_id = Column(Integer, ForeignKey("product_types.id"))
+    product_shape_id = Column(Integer, ForeignKey("product_shapes.id"))
     created_by_user_id = Column(Integer, ForeignKey("users.id"))
     name = Column(String, nullable=False)
     description = Column(Text)
@@ -16,4 +17,5 @@ class Product(Base):
     is_active = Column(Boolean, default=True)
 
     company = relationship("Company")
+    product_shape = relationship("ProductShape", back_populates="products")
     file_assets = relationship("FileAsset", back_populates="product", cascade="all, delete-orphan")

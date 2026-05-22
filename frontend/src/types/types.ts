@@ -1,6 +1,6 @@
 export type WizardStep = 1 | 2 | 3 | 4 | 5;
 
-export type ProductType = 'bordado' | 'neon-flex' | 'acrilico';
+export type ProductType = 'bordado' | 'neon-flex' | 'acrilico' | 'vinilo' | 'sublimacion';
 
 export interface DesignSettings {
   color: string;

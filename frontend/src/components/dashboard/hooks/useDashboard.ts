@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { dashboardService } from '@/components/dashboard/services/dashboard.service';
 import { BaseOrder, AdminOrder } from '@/types/order';
+import { dashboardService } from '@/components/dashboard/services/dashboard.service';
 
 type Role = 'cliente' | 'funcionario';
 
@@ -35,7 +35,7 @@ export function useDashboard(role: Role) {
       }
 
       try {
-        const data = await dashboardService.getDashboardData();
+        const data = await dashboardService.getDashboardData(role);
         if (cancelled) return;
         setOrders(data.orders);
         setStats(data.stats);

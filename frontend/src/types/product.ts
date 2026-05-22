@@ -1,5 +1,10 @@
 // /types/product.ts
-export type ProductType = 'bordado' | 'neon-flex' | 'acrilico';
+export type ProductType = 'bordado' | 'neon-flex' | 'acrilico' | 'vinilo' | 'sublimacion';
+
+export interface ProductShape {
+  id: number;
+  name: string;
+}
 
 export interface FileAsset {
   id?: number;
@@ -31,7 +36,10 @@ export interface Product {
   rating: number;
   reviews: number;
   inStock: boolean;
+  stock: number;
   productType: ProductType;
+  productShape?: string | null;
+  productShapeId?: number | null;
   attributes: ProductAttribute[];
 }
 
@@ -43,27 +51,24 @@ export const getProductTypeLabel = (type: ProductType) => {
       return 'Neon Flex';
     case 'acrilico':
       return 'Acrílico';
+    case 'vinilo':
+      return 'Vinilo';
+    case 'sublimacion':
+      return 'Sublimación';
   }
 };
 
-export type AttributeType = "select" | "number" | "color" | "text";
-
-export interface AttributeOption {
-  value: string;
-  label: string;
-  price_modifier: number;
-  sort_order: number;
-}
+export type AttributeType = 'text' | 'number' | 'color' | 'select';
 
 export interface ProductAttribute {
   id: number;
   code: string;
   label: string;
-  type: 'number' | 'select' | 'color' | 'text';
+  input_type: AttributeType;
   required: boolean;
-  unit: string | null;
+  placeholder: string | null;
+  default_value?: string | null;
   sort_order: number;
-  options: AttributeOption[];
 }
 
 export type AttributeValues = Record<string, string>;

@@ -55,14 +55,7 @@ export default function Header() {
     if (!pathname || !role) return;
 
     if (targetIsRole) {
-      // Switched to Admin/Funcionario mode
-      if (pathname.startsWith("/cliente")) {
-        router.push(pathname.replace("/cliente", `/${role}`));
-      } else if (pathname.startsWith("/marketplace")) {
-        router.push(`/${role}${pathname}`);
-      } else {
-        router.push(`/${role}/dashboard`);
-      }
+      router.push(`/${role}/dashboard`);
     } else {
       // Switched to Cliente mode
       if (pathname.startsWith(`/${role}`)) {
@@ -97,7 +90,9 @@ export default function Header() {
           {!fullName ? (
             <div className="flex items-center gap-4">
               <Link href={loginHref}>
-                <Button variant="tertiary">Iniciar Sesión</Button>
+                <Button variant="tertiary" className="rounded-full px-5 py-2 transition-all duration-200 hover:bg-accent/15 hover:text-accent hover:shadow-md hover:-translate-y-0.5">
+                  Iniciar Sesión
+                </Button>
               </Link>
               <Link href="/register">
                 <Button>Registrarse</Button>
@@ -108,7 +103,7 @@ export default function Header() {
 
               {/* SWITCH DE MODO ELEGANTE */}
               {(role === "administrador" || role === "funcionario") && (
-                <div className="flex items-center mr-2 sm:mr-4 bg-secondary/30 backdrop-blur-md border border-border/40 rounded-full p-1 shadow-sm">
+                <div className="inline-flex items-center mr-2 sm:mr-4 bg-secondary/30 backdrop-blur-md border border-border/40 rounded-full p-1 shadow-sm">
                   <button
                     onClick={() => handleModeToggle(false)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${!isRoleMode
@@ -127,8 +122,8 @@ export default function Header() {
                       }`}
                   >
                     <Shield className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline-block">
-                      {role === "administrador" ? "Admin" : "Func."}
+                    <span className="hidden sm:inline-block whitespace-nowrap">
+                      {role === "administrador" ? "Administrador" : "Funcionario"}
                     </span>
                   </button>
                 </div>

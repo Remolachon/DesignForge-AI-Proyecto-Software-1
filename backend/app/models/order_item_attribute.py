@@ -7,10 +7,8 @@ class OrderItemAttribute(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     order_item_id = Column(Integer, ForeignKey("order_items.id", ondelete="CASCADE"), nullable=False)
-    attribute_id = Column(Integer, ForeignKey("product_attributes.id"), nullable=True)
-    attribute_code = Column(String(50), nullable=True)
+    attribute_code = Column(String(50), nullable=False)
+    attribute_label = Column(String(100), nullable=False)
     value = Column(Text, nullable=False)
-    custom_label = Column(String(100), nullable=True)
 
     order_item = relationship("OrderItem", back_populates="attributes")
-    attribute = relationship("ProductAttribute")

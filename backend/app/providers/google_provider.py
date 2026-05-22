@@ -54,17 +54,44 @@ class GoogleOAuthProvider:
         """
         user_metadata = token_payload.get("user_metadata", {})
 
-        # Google devuelve solo 'full_name', no 'first_name' y 'last_name'
-        # Separamos el full_name en first_name y last_name
-        full_name = user_metadata.get("full_name") or user_metadata.get("name", "")
-        name_parts = full_name.split() if full_name else []
 
-        first_name = name_parts[0] if name_parts else ""
-        last_name = " ".join(name_parts[1:]) if len(name_parts) > 1 else ""
+        first_name = (
+            user_metadata.get("first_name")
+            or user_metadata.get("given_name")
+            or user_metadata.get("givenName")
+            or ""
+        ).strip()
+        last_name = (
+            user_metadata.get("last_name")
+            or user_metadata.get("family_name")
+            or user_metadata.get("familyName")
+            or ""
+        ).strip()
+
+        if not first_name or not last_name:
+            full_name = (
+                user_metadata.get("full_name")
+                or user_metadata.get("name")
+                or token_payload.get("name")
+                or ""
+            )
+            name_parts = [part for part in full_name.split() if part]
+
+            if not first_name and name_parts:
+                first_name = name_parts[0]
+
+            if not last_name and len(name_parts) > 1:
+                last_name = " ".join(name_parts[1:])
+
+        if not first_name:
+            first_name = token_payload.get("given_name") or ""
+
+        if not last_name:
+            last_name = token_payload.get("family_name") or ""
         
         return {
             "supabase_id": token_payload.get("sub"),
-            "email": token_payload.get("email"),
+            "email": (token_payload.get("email") or user_metadata.get("email") or "").strip().lower(),
             "first_name": first_name,
             "last_name": last_name,
             "phone": user_metadata.get("phone"),

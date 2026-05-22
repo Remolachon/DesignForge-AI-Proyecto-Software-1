@@ -9,7 +9,7 @@ interface Props {
 }
 
 function AttributeInput({ attribute, value, onChange }: Props) {
-  switch (attribute.type) {
+  switch (attribute.input_type) {
     case "select":
       return (
         <div className="mb-4">
@@ -17,20 +17,13 @@ function AttributeInput({ attribute, value, onChange }: Props) {
             {attribute.label}
             {attribute.required && <span className="text-red-500 ml-1">*</span>}
           </label>
-          <select
+          <input
+            type="text"
             className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={value}
             onChange={(e) => onChange(e.target.value)}
-          >
-            <option value="">Selecciona una opción</option>
-            {attribute.options?.map((option) => (
-              <option key={option.id} value={option.value}>
-                {option.label}
-                {option.priceModifier !== 0 &&
-                  ` (${option.priceModifier > 0 ? "+" : ""}${option.priceModifier.toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 })})`}
-              </option>
-            ))}
-          </select>
+            placeholder={attribute.placeholder || `Ingresa ${attribute.label.toLowerCase()}`}
+          />
         </div>
       );
 
@@ -39,9 +32,6 @@ function AttributeInput({ attribute, value, onChange }: Props) {
         <div className="mb-4">
           <label className="block mb-1 text-sm font-medium text-gray-700">
             {attribute.label}
-            {attribute.unit && (
-              <span className="text-gray-400 font-normal ml-1">({attribute.unit})</span>
-            )}
             {attribute.required && <span className="text-red-500 ml-1">*</span>}
           </label>
           <input
@@ -49,7 +39,7 @@ function AttributeInput({ attribute, value, onChange }: Props) {
             className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            placeholder={`Ingresa en ${attribute.unit ?? "unidades"}`}
+            placeholder={attribute.placeholder || `Ingresa ${attribute.label.toLowerCase()}`}
           />
         </div>
       );
@@ -87,7 +77,7 @@ function AttributeInput({ attribute, value, onChange }: Props) {
             className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            placeholder={`Ingresa ${attribute.label.toLowerCase()}`}
+            placeholder={attribute.placeholder || `Ingresa ${attribute.label.toLowerCase()}`}
           />
         </div>
       );
@@ -106,9 +96,7 @@ export function ProductAttributeForm({ product, onSubmit }: ProductFormProps) {
   const attributes = product.attributes || [];
 
   // Ordenar atributos por sort_order
-  const sortedAttributes = [...attributes].sort(
-    (a, b) => a.sortOrder - b.sortOrder
-  );
+  const sortedAttributes = [...attributes].sort((a, b) => a.sort_order - b.sort_order);
 
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-xl shadow-sm border">
