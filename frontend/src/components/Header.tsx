@@ -38,11 +38,11 @@ export default function Header() {
     role === "administrador"
       ? "/administrador/dashboard"
       :
-    role === "funcionario"
-      ? "/funcionario/dashboard"
-      : role === "cliente"
-      ? "/cliente/dashboard"
-      : "/";
+      role === "funcionario"
+        ? "/funcionario/dashboard"
+        : role === "cliente"
+          ? "/cliente/dashboard"
+          : "/";
 
   const loginHref = pathname?.startsWith("/cliente/crear-pedido")
     ? `/login?next=${encodeURIComponent("/cliente/crear-pedido?resume=1")}`
@@ -67,7 +67,7 @@ export default function Header() {
       // Switched to Cliente mode
       if (pathname.startsWith(`/${role}`)) {
         const strippedPath = pathname.replace(`/${role}`, "");
-        
+
         if (strippedPath.startsWith("/marketplace")) {
           router.push(strippedPath);
         } else if (strippedPath === "" || strippedPath === "/") {
@@ -105,28 +105,26 @@ export default function Header() {
             </div>
           ) : (
             <div className="relative z-50 flex items-center gap-3">
-              
+
               {/* SWITCH DE MODO ELEGANTE */}
               {(role === "administrador" || role === "funcionario") && (
                 <div className="flex items-center mr-2 sm:mr-4 bg-secondary/30 backdrop-blur-md border border-border/40 rounded-full p-1 shadow-sm">
                   <button
                     onClick={() => handleModeToggle(false)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
-                      !isRoleMode
-                        ? "bg-background text-primary shadow-sm ring-1 ring-border/50"
-                        : "text-muted-foreground hover:text-primary hover:bg-secondary/50"
-                    }`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${!isRoleMode
+                      ? "bg-green-100 text-green-700 shadow-sm ring-1 ring-green-300"
+                      : "text-muted-foreground hover:text-green-700 hover:bg-green-50"
+                      }`}
                   >
                     <User className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline-block">Cliente</span>
                   </button>
                   <button
                     onClick={() => handleModeToggle(true)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
-                      isRoleMode
-                        ? "bg-gradient-to-r from-accent to-accent-magenta text-white shadow-md ring-1 ring-accent/50"
-                        : "text-muted-foreground hover:text-primary hover:bg-secondary/50"
-                    }`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${isRoleMode
+                      ? "bg-gradient-to-r from-accent to-accent-magenta text-white shadow-md ring-1 ring-accent/50"
+                      : "text-muted-foreground hover:text-primary hover:bg-secondary/50"
+                      }`}
                   >
                     <Shield className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline-block">
