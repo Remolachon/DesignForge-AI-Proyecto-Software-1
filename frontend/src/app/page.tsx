@@ -10,7 +10,7 @@ import { Tilt } from "@/components/core/tilt";
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background text-foreground">
       <Header />
 
       {/* Hero Section */}
@@ -99,7 +99,7 @@ function ProductCard({
 
   return (
     <Tilt rotationFactor={8} isRevese>
-      <div className="group relative overflow-hidden rounded-xl bg-white border border-border hover:shadow-lg transition-all duration-300 h-full flex flex-col">
+      <div className="group relative overflow-hidden rounded-xl bg-background border border-border hover:shadow-lg transition-all duration-300 h-full flex flex-col">
         <div className="relative aspect-[4/3] overflow-hidden">
           <Image
             src={imageUrl}

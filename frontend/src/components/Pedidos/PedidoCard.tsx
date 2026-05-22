@@ -16,17 +16,17 @@ interface Props {
 function getStatusStyles(status: string) {
   switch (status) {
     case 'Pendiente de pago':
-      return 'bg-amber-100 text-amber-700';
+      return 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400';
     case 'En diseño':
-      return 'bg-blue-100 text-blue-700';
+      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400';
     case 'En producción':
-      return 'bg-yellow-100 text-yellow-700';
+      return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400';
     case 'Listo para entregar':
-      return 'bg-green-100 text-green-700';
+      return 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400';
     case 'Entregado':
-      return 'bg-emerald-600 text-white';
+      return 'bg-emerald-600 text-white dark:bg-emerald-600/80';
     default:
-      return 'bg-gray-100 text-gray-600';
+      return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
   }
 }
 
@@ -75,7 +75,7 @@ export function PedidoCard({ pedido }: Props) {
 
   return (
     <>
-      <Card className="p-5 rounded-2xl border border-border bg-white shadow-sm hover:shadow-md transition-all min-h-[180px] flex">
+      <Card className="p-5 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all min-h-[180px] flex">
         <div className="flex gap-5 w-full">
           <div className="shrink-0">
             {pedido.imageUrl ? (
@@ -88,7 +88,7 @@ export function PedidoCard({ pedido }: Props) {
                 className="object-cover rounded-xl w-[180px] h-[140px]"
               />
             ) : (
-              <div className="w-[180px] h-[140px] rounded-xl bg-gray-100" />
+              <div className="w-[180px] h-[140px] rounded-xl bg-muted/50" />
             )}
           </div>
 
@@ -119,7 +119,7 @@ export function PedidoCard({ pedido }: Props) {
               </div>
 
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <div className="w-2.5 h-2.5 rounded-full bg-gray-300" />
+                <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/50" />
                 <span>Entrega: {new Date(pedido.deliveryDate).toLocaleDateString()}</span>
               </div>
             </div>

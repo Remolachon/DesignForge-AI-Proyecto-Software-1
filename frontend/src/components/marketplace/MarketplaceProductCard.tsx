@@ -108,7 +108,7 @@ export function MarketplaceProductCard({
                     <button
                         onClick={() => onViewReviews?.(product)}
                         title="Ver comentarios"
-                        className="px-3 py-1.5 rounded-lg border border-border bg-white hover:bg-muted text-xs font-medium transition-colors flex items-center gap-1"
+                        className="px-3 py-1.5 rounded-lg border border-border bg-background hover:bg-muted text-xs font-medium transition-colors flex items-center gap-1"
                     >
                         <MessageSquareText className="w-3.5 h-3.5" />
                         Comentarios
@@ -121,8 +121,8 @@ export function MarketplaceProductCard({
               flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium
               border transition-colors
               ${product.isPublic
-                                ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
-                                : 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100'}
+                                ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-900/40 dark:bg-amber-900/40 dark:text-amber-400 dark:hover:bg-amber-900/60'
+                                : 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100 dark:border-green-900/40 dark:bg-green-900/40 dark:text-green-400 dark:hover:bg-green-900/60'}
             `}
                     >
                         {product.isPublic ? (
@@ -141,7 +141,7 @@ export function MarketplaceProductCard({
                         <button
                             onClick={() => onEdit(product)}
                             title="Editar producto"
-                            className="px-3 py-1.5 rounded-lg border border-border bg-white hover:bg-muted
+                            className="px-3 py-1.5 rounded-lg border border-border bg-background hover:bg-muted
                        text-xs font-medium transition-colors flex items-center gap-1"
                         >
                             <Pencil className="w-3.5 h-3.5" />
@@ -153,7 +153,7 @@ export function MarketplaceProductCard({
                         onClick={() => onDelete(product)}
                         title="Eliminar producto"
                         className="p-1.5 rounded-lg border border-red-100 bg-red-50 text-red-500
-                       hover:bg-red-100 transition-colors"
+                       hover:bg-red-100 transition-colors dark:border-red-900/40 dark:bg-red-900/40 dark:text-red-400 dark:hover:bg-red-900/60"
                     >
                         <Trash2 className="w-3.5 h-3.5" />
                     </button>

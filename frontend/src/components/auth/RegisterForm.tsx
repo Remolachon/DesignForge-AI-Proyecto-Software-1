@@ -175,7 +175,7 @@ export default function RegisterForm() {
               }}
               placeholder="Juan"
               disabled={loading || googleLoading}
-              className="h-11 rounded-xl border-border/70 bg-background/80"
+              className="h-11 rounded-xl"
             />
             {errors.firstName && <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>}
           </div>
@@ -190,7 +190,7 @@ export default function RegisterForm() {
               }}
               placeholder="Pérez"
               disabled={loading || googleLoading}
-              className="h-11 rounded-xl border-border/70 bg-background/80"
+              className="h-11 rounded-xl"
             />
             {errors.lastName && <p className="mt-1 text-sm text-red-500">{errors.lastName}</p>}
           </div>
@@ -206,7 +206,7 @@ export default function RegisterForm() {
             }}
             placeholder="3001234567"
             disabled={loading || googleLoading}
-            className="h-11 rounded-xl border-border/70 bg-background/80"
+            className="h-11 rounded-xl"
           />
           {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
         </div>
@@ -221,7 +221,7 @@ export default function RegisterForm() {
             }}
             placeholder="tu@email.com"
             disabled={loading || googleLoading}
-            className="h-11 rounded-xl border-border/70 bg-background/80"
+            className="h-11 rounded-xl"
           />
           {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
         </div>
@@ -238,7 +238,7 @@ export default function RegisterForm() {
               }}
               placeholder="••••••••"
               disabled={loading || googleLoading}
-              className="h-11 rounded-xl border-border/70 bg-background/80"
+              className="h-11 rounded-xl"
             />
             {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
           </div>
@@ -254,7 +254,7 @@ export default function RegisterForm() {
               }}
               placeholder="••••••••"
               disabled={loading || googleLoading}
-              className="h-11 rounded-xl border-border/70 bg-background/80"
+              className="h-11 rounded-xl"
             />
             {errors.confirmPassword && <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>}
           </div>

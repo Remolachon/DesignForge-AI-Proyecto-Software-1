@@ -223,7 +223,7 @@ export function CompanyCreateForm() {
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
                   <Input
-                    label="NIT"
+                    label="NIT o Cedula"
                     value={nit}
                     onChange={(e) => {
                       setNit(e.target.value);

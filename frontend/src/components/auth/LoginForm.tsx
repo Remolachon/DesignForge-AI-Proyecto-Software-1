@@ -129,7 +129,7 @@ export default function LoginForm() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="tu@email.com"
             disabled={loading || googleLoading}
-            className="h-11 rounded-xl border-border/70 bg-background/80"
+            className="h-11 rounded-xl"
           />
         </div>
 
@@ -141,7 +141,7 @@ export default function LoginForm() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Introduce tu contraseña"
             disabled={loading || googleLoading}
-            className="h-11 rounded-xl border-border/70 bg-background/80"
+            className="h-11 rounded-xl"
           />
         </div>
 

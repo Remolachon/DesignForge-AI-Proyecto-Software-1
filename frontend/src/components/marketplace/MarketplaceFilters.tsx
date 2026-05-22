@@ -36,8 +36,8 @@ export function MarketplaceFilters({
                                 className={`
                   px-3 py-1.5 text-sm rounded-lg transition-all whitespace-nowrap
                   ${filterType === value
-                                        ? 'bg-white shadow-sm text-black font-medium'
-                                        : 'text-muted-foreground hover:text-black'}
+                                        ? 'bg-background shadow-sm text-foreground font-medium'
+                                        : 'text-muted-foreground hover:text-foreground'}
                 `}
                             >
                                 {label}

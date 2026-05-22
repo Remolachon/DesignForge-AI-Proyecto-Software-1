@@ -1,6 +1,7 @@
 "use client";
 
 import { Mail, Phone, MapPin, Github, Linkedin, Instagram } from "lucide-react";
+import Link from "next/link";
 
 const inactiveLinkClassName =
   "cursor-default text-muted-foreground transition-colors hover:text-accent";
@@ -86,9 +87,9 @@ export default function Footer() {
           </h3>
           <ul className="space-y-3 text-sm text-muted-foreground">
             <li>
-              <InactiveFooterLink>
+              <Link href="/sobre-nosotros" className={inactiveLinkClassName}>
                 Sobre nosotros
-              </InactiveFooterLink>
+              </Link>
             </li>
             <li>
               <InactiveFooterLink>
@@ -96,14 +97,14 @@ export default function Footer() {
               </InactiveFooterLink>
             </li>
             <li>
-              <InactiveFooterLink>
+              <Link href="/contacto" className={inactiveLinkClassName}>
                 Contacto
-              </InactiveFooterLink>
+              </Link>
             </li>
             <li>
-              <InactiveFooterLink>
+              <Link href="/terminos-y-condiciones" className={inactiveLinkClassName}>
                 Términos y condiciones
-              </InactiveFooterLink>
+              </Link>
             </li>
           </ul>
         </div>

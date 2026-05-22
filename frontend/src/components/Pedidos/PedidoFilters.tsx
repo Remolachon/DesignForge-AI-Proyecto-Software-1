@@ -39,7 +39,7 @@ export function PedidoFilters({
           />
         </div>
 
-        <div className="flex items-center bg-gray-100 rounded-xl p-1 gap-1">
+        <div className="flex items-center bg-muted/50 rounded-xl p-1 gap-1 overflow-x-auto scrollbar-hide">
           {statuses.map((status) => {
             const isActive = filterStatus === status;
 
@@ -48,10 +48,10 @@ export function PedidoFilters({
                 key={status}
                 onClick={() => setFilterStatus(status)}
                 className={`
-                  px-4 py-2 text-sm rounded-lg transition-all
+                  px-4 py-2 text-sm rounded-lg transition-all whitespace-nowrap
                   ${isActive 
-                    ? 'bg-white shadow-sm text-black font-medium' 
-                    : 'text-muted-foreground hover:text-black'}
+                    ? 'bg-background shadow-sm text-foreground font-medium' 
+                    : 'text-muted-foreground hover:text-foreground'}
                 `}
               >
                 {status === 'all' ? 'Todos' : status}

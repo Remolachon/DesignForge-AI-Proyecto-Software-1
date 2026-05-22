@@ -49,19 +49,36 @@
    DARK MODE
 ========================= */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
+  --background: #0B1120;
+  --foreground: #F8FAFC;
 
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: #38BDF8;
+  --primary-foreground: #020617;
 
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
+  --secondary: #1E293B;
+  --secondary-foreground: #F8FAFC;
 
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --accent: #00E5C2;
+  --accent-foreground: #0B213F;
+  --accent-magenta: #FF2D95;
 
-  --border: oklch(0.269 0 0);
+  --muted: #1E293B;
+  --muted-foreground: #94A3B8;
+
+  --destructive: #EF4444;
+  --destructive-foreground: #FAFAFA;
+
+  --border: rgba(255, 255, 255, 0.1);
+  --input: transparent;
+  --input-background: #1E293B;
+
+  --ring: #00E5C2;
+
+  /* extras */
+  --gray-900: #F3F4F6;
+  --gray-700: #D1D5DB;
+  --gray-400: #9CA3AF;
+  --gray-100: #1F2937;
 }
 
 /* =========================
