@@ -82,7 +82,7 @@ export function DashboardView({ role }: { role: Role }) {
         <section>
         <h2 className="text-xl font-semibold mb-4">Accesos Rápidos</h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {isCliente ? (
             <>
                 <QuickActionCard
@@ -129,10 +129,18 @@ export function DashboardView({ role }: { role: Role }) {
 
                 <QuickActionCard
                 href="/funcionario/marketplace"
-                icon={<TrendingUp className="w-5 h-5 text-primary" />}
+                icon={<ShoppingBag className="w-5 h-5 text-primary" />}
                 iconBg="bg-primary/10"
-                title="Gestionar Marketplace"
+                title="Marketplace"
                 description="Administrar productos"
+                />
+
+                <QuickActionCard
+                href="/funcionario/ventas"
+                icon={<TrendingUp className="w-5 h-5 text-white" />}
+                iconBg="bg-gradient-to-br from-blue-500 to-indigo-600"
+                title="Ventas y Finanzas"
+                description="Métricas de tu empresa"
                 />
             </>
             )}
