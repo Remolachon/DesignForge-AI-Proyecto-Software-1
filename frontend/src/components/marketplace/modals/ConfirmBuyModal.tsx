@@ -5,6 +5,8 @@ import { CheckCircle } from 'lucide-react';
 
 interface ConfirmBuyModalProps {
   productTitle: string;
+  quantity: number;
+  totalAmount: number;
   isOpen: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -13,12 +15,16 @@ interface ConfirmBuyModalProps {
 
 export function ConfirmBuyModal({
   productTitle,
+  quantity,
+  totalAmount,
   isOpen,
   onConfirm,
   onCancel,
   loading,
 }: ConfirmBuyModalProps) {
   if (!isOpen) return null;
+
+  const safeTotalAmount = Number.isFinite(totalAmount) ? totalAmount : 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -29,8 +35,7 @@ export function ConfirmBuyModal({
         <h3 className="text-lg font-semibold mb-2">Confirmar Pedido</h3>
         <p className="text-sm text-muted-foreground mb-6">
           ¿Estás seguro de que deseas comprar{' '}
-          <span className="font-medium text-foreground">"{productTitle}"</span> con los
-          parámetros especificados?
+          <span className="font-medium text-foreground">"{productTitle}"</span> con cantidad <span className="font-medium text-foreground">{quantity}</span> por un total de <span className="font-medium text-foreground">${safeTotalAmount.toLocaleString('es-CO')}</span>?
         </p>
         <div className="flex gap-3">
           <Button

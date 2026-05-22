@@ -9,6 +9,7 @@ type WizardStep = 1 | 2 | 3 | 4;
 interface State {
   currentStep: WizardStep;
   productType: ProductType | null;
+  quantity: number;
   uploadedImage: string | null; // 🔥 ahora será URL (no base64)
   generatedImages: string[]; // URLs de imágenes generadas con IA
   selectedGeneratedImage: string | null; // Imagen seleccionada
@@ -21,6 +22,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const initialState: State = {
   currentStep: 1,
   productType: null,
+  quantity: 1,
   uploadedImage: null,
   generatedImages: [],
   selectedGeneratedImage: null,
@@ -44,6 +46,7 @@ export function useCrearPedido({
       return {
         ...initialState,
         ...parsed,
+        quantity: parsed.quantity ?? 1,
       };
     } catch {
       return initialState;
@@ -68,10 +71,18 @@ export function useCrearPedido({
     setState((prev) => ({
       ...prev,
       productType: type,
+      quantity: 1,
       uploadedImage: null,
       generatedImages: [],
       selectedGeneratedImage: null,
       attributeValues: {},
+    }));
+  };
+
+  const setQuantity = (quantity: number) => {
+    setState((prev) => ({
+      ...prev,
+      quantity: Math.min(10, Math.max(1, quantity)),
     }));
   };
 
@@ -276,6 +287,7 @@ export function useCrearPedido({
     ...state,
     loading,
     setProductType,
+    setQuantity,
     handleFileUpload,
     nextStep,
     prevStep,

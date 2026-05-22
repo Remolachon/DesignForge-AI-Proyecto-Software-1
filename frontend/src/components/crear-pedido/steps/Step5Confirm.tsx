@@ -6,6 +6,8 @@ import { customOrderAttributes } from "@/config/customOrderAttributes";
 
 type Props = {
   productType: ProductType | null;
+  quantity: number;
+  setQuantity: (quantity: number) => void;
   image: string | null;
   attributeValues: Record<string, string>;
   setAttributeValues: (values: Record<string, string>) => void;
@@ -14,6 +16,8 @@ type Props = {
 
 export default function Step5Confirm({
   productType,
+  quantity,
+  setQuantity,
   image,
   attributeValues,
   setAttributeValues,
@@ -32,6 +36,9 @@ export default function Step5Confirm({
   };
 
   const estimatedPrice = getEstimatedBasePrice(productType);
+  const subtotal = estimatedPrice * quantity;
+  const tax = Math.round(subtotal * 0.19 * 100) / 100;
+  const total = subtotal + tax;
   const attributes = productType ? customOrderAttributes[productType] || [] : [];
 
   const isValid = useMemo(() => {
@@ -82,6 +89,18 @@ export default function Step5Confirm({
             <span className="font-semibold capitalize">
               {productType || "No especificado"}
             </span>
+          </div>
+
+          <div className="flex items-center justify-between gap-4 py-3 border-b border-border">
+            <span className="text-muted-foreground">Cantidad</span>
+            <input
+              type="number"
+              min={1}
+              max={10}
+              value={quantity}
+              onChange={(event) => setQuantity(Number(event.target.value) || 1)}
+              className="w-24 p-2 border rounded-md bg-transparent text-right"
+            />
           </div>
 
           {attributes.map(attr => (
@@ -142,8 +161,19 @@ export default function Step5Confirm({
           <div className="flex justify-between py-4 text-lg">
             <span className="font-semibold">Precio base estimado</span>
             <span className="font-bold text-accent text-2xl">
-              ${estimatedPrice.toLocaleString()}
+              ${subtotal.toLocaleString()}
             </span>
+          </div>
+
+          <div className="rounded-lg border border-border bg-muted/20 p-4 text-sm space-y-1">
+            <div className="flex items-center justify-between">
+              <span>IVA</span>
+              <span>${tax.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center justify-between font-semibold text-foreground">
+              <span>Total</span>
+              <span>${total.toLocaleString()}</span>
+            </div>
           </div>
 
           <div className="p-4 bg-blue-50 rounded-lg">

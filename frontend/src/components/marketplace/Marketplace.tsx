@@ -16,7 +16,7 @@ export const Marketplace = () => {
   const { products } = useProducts();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { attrValues, errors, loading, initAttributes, setField, createOrder, resetForm, validateForm } =
+  const { attrValues, errors, loading, quantity, setQuantity, initAttributes, setField, createOrder, resetForm, validateForm } =
     useMarketplaceBuy();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -58,7 +58,9 @@ export const Marketplace = () => {
       return;
     }
 
+    resetForm();
     setSelectedProduct(product);
+    setQuantity(1);
     setShowBuyModal(true);
   };
 
@@ -68,7 +70,7 @@ export const Marketplace = () => {
 
   const handleBuyConfirm = () => {
     if (!selectedProduct) return;
-    const isValid = validateForm(selectedProduct.attributes);
+    const isValid = validateForm(selectedProduct.attributes, selectedProduct.stock);
     if (!isValid) return;
 
     setShowBuyModal(false);
@@ -82,7 +84,8 @@ export const Marketplace = () => {
     const success = await createOrder(
       selectedProduct.id,
       selectedProduct.title,
-      selectedProduct.attributes
+      selectedProduct.attributes,
+      selectedProduct.stock
     );
 
     if (success) {
@@ -138,6 +141,8 @@ export const Marketplace = () => {
           attrValues={attrValues}
           errors={errors}
           loading={loading}
+          quantity={quantity}
+          onQuantityChange={setQuantity}
           onFieldChange={setField}
           onConfirm={handleBuyConfirm}
           initAttributes={initAttributes}
@@ -148,6 +153,8 @@ export const Marketplace = () => {
       {selectedProduct && (
         <ConfirmBuyModal
           productTitle={selectedProduct.title}
+          quantity={quantity}
+          totalAmount={(Number(selectedProduct.price || 0) * quantity) + Math.round(Number(selectedProduct.price || 0) * quantity * 0.19)}
           isOpen={showConfirmModal}
           onConfirm={handleFinalConfirm}
           onCancel={handleCloseConfirmModal}

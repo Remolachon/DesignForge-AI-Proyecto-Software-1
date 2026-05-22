@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
     adminMarketplaceService,
@@ -86,7 +86,9 @@ export function useAdminMarketplace() {
             description: pendingSave.description.trim(),
             basePrice: price,
             productType: pendingSave.productType,
+            productShape: pendingSave.productShape.trim(),
             stock,
+            shapeAttributes: pendingSave.shapeAttributes,
         };
 
         try {
@@ -172,15 +174,54 @@ export function useAdminMarketplace() {
     };
 
     // Forma tipada para el modal de edición
-    const editInitialData: ProductFormData | undefined = editingProduct
-        ? {
-            name: editingProduct.name,
-            description: editingProduct.description,
-            basePrice: String(editingProduct.basePrice),
-            productType: editingProduct.productType,
-            stock: String(editingProduct.stock),
-        }
-        : undefined;
+    const editInitialData: ProductFormData | undefined = useMemo(
+        () => editingProduct
+            ? {
+                name: editingProduct.name,
+                description: editingProduct.description,
+                basePrice: String(editingProduct.basePrice),
+                productType: editingProduct.productType,
+                productShape: editingProduct.productShape || '',
+                stock: String(editingProduct.stock),
+            }
+            : undefined,
+        [editingProduct]
+    );
+
+    const editInitialMediaItems = useMemo(
+        () => {
+            if (!editingProduct) return [];
+
+            return (
+                editingProduct.media?.map((m: any) => ({
+                    id: m.id?.toString() || crypto.randomUUID(),
+                    previewUrl: m.storage_path,
+                    media_kind: m.media_kind,
+                    media_role: m.media_role,
+                })) || (editingProduct.imageUrl ? [{
+                    id: crypto.randomUUID(),
+                    previewUrl: editingProduct.imageUrl,
+                    media_kind: 'image' as const,
+                    media_role: 'main' as const,
+                }] : [])
+            );
+        },
+        [editingProduct]
+    );
+
+    const editInitialShapeAttributes = useMemo(
+        () => {
+            if (!editingProduct?.attributes?.length) return undefined;
+
+            return editingProduct.attributes.reduce<Record<string, string>>((accumulator, attribute: any) => {
+                if (attribute?.code) {
+                    accumulator[attribute.code] = attribute.default_value ?? '';
+                }
+                return accumulator;
+            }, {});
+        },
+        [editingProduct]
+    );
 
     return {
         // Estado
@@ -205,6 +246,8 @@ export function useAdminMarketplace() {
         modalMode,
         editingProduct,
         editInitialData,
+        editInitialMediaItems,
+        editInitialShapeAttributes,
         openCreate,
         openEdit,
         handleSave,

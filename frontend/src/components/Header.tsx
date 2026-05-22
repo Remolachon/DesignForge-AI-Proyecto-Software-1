@@ -55,29 +55,9 @@ export default function Header() {
     if (!pathname || !role) return;
 
     if (targetIsRole) {
-      // Switched to Admin/Funcionario mode
-      if (pathname.startsWith("/cliente")) {
-        router.push(pathname.replace("/cliente", `/${role}`));
-      } else if (pathname.startsWith("/marketplace")) {
-        router.push(`/${role}${pathname}`);
-      } else {
-        router.push(`/${role}/dashboard`);
-      }
+      router.push(`/${role}/dashboard`);
     } else {
-      // Switched to Cliente mode
-      if (pathname.startsWith(`/${role}`)) {
-        const strippedPath = pathname.replace(`/${role}`, "");
-        
-        if (strippedPath.startsWith("/marketplace")) {
-          router.push(strippedPath);
-        } else if (strippedPath === "" || strippedPath === "/") {
-          router.push("/cliente/dashboard");
-        } else {
-          router.push(`/cliente${strippedPath}`);
-        }
-      } else {
-        router.push("/cliente/dashboard");
-      }
+      router.push("/cliente/dashboard");
     }
   };
 
@@ -97,7 +77,9 @@ export default function Header() {
           {!fullName ? (
             <div className="flex items-center gap-4">
               <Link href={loginHref}>
-                <Button variant="tertiary">Iniciar Sesión</Button>
+                <Button variant="tertiary" className="rounded-full px-5 py-2 transition-all duration-200 hover:bg-primary/10 hover:text-primary hover:shadow-sm hover:-translate-y-0.5">
+                  Iniciar Sesión
+                </Button>
               </Link>
               <Link href="/register">
                 <Button>Registrarse</Button>

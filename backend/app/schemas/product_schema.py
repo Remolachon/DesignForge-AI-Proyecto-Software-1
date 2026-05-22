@@ -1,5 +1,11 @@
 from pydantic import BaseModel
 
+
+class ProductShapeResponse(BaseModel):
+    id: int
+    name: str
+
+
 class FileAssetResponse(BaseModel):
     id: int
     storage_path: str
@@ -15,22 +21,15 @@ class FileAssetResponse(BaseModel):
     extension: str | None = None
 
 
-class ProductAttributeOptionSchema(BaseModel):
-    id: int
-    value: str
-    label: str
-    price_modifier: float
-
-
 class ProductAttributeSchema(BaseModel):
     id: int
     code: str
     label: str
-    type: str
+    input_type: str
     required: bool
-    unit: str | None = None
+    placeholder: str | None = None
+    default_value: str | None = None
     sort_order: int
-    options: list[ProductAttributeOptionSchema] = []
 
 class ProductResponse(BaseModel):
     id: int
@@ -42,6 +41,7 @@ class ProductResponse(BaseModel):
     rating: float
     reviews: int
     inStock: bool
+    stock: int
     productType: str
     attributes: list[ProductAttributeSchema] = []
 
@@ -53,6 +53,8 @@ class AdminProductResponse(BaseModel):
     description: str
     basePrice: float
     productType: str
+    productShape: str | None = None
+    productShapeId: int | None = None
     imageUrl: str | None
     media: list[FileAssetResponse] = []
     inStock: bool
@@ -70,7 +72,9 @@ class AdminProductUpsertRequest(BaseModel):
     description: str
     basePrice: float
     productType: str
+    productShape: str | None = None
     stock: int
+    shapeAttributes: dict[str, str] = {}
     imageStoragePath: str | None = None
 
 

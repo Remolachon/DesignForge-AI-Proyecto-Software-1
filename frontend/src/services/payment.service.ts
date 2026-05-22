@@ -49,6 +49,7 @@ async function parseError(res: Response): Promise<never> {
 export type CreateCustomOrderPayload = {
   product_type: string;
   image_url: string | null;
+  quantity: number;
   attributes: Record<string, { label: string; value: string }>;
 };
 

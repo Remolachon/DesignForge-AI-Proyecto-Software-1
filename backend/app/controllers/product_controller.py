@@ -15,6 +15,8 @@ from app.schemas.product_schema import (
     AdminProductUpsertRequest,
     AdminProductVisibilityRequest,
     FileAssetResponse,
+    ProductShapeResponse,
+    ProductAttributeSchema,
 )
 
 logger = logging.getLogger(__name__)
@@ -287,6 +289,37 @@ def get_product_attributes(
         return ProductService.get_product_attributes(db, product_id)
     except OperationalError as e:
         logger.error(f"Error de BD al obtener atributos de producto: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Servicio de base de datos temporalmente no disponible"
+        )
+
+
+@router.get("/shapes", response_model=list[ProductShapeResponse])
+def get_product_shapes(
+    db: Session = Depends(get_db),
+):
+    try:
+        return ProductService.get_product_shapes(db)
+    except OperationalError as e:
+        logger.error(f"Error de BD al obtener shapes de producto: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Servicio de base de datos temporalmente no disponible"
+        )
+
+
+@router.get("/shapes/{shape_id}/attributes", response_model=list[ProductAttributeSchema])
+def get_shape_attributes(
+    shape_id: int,
+    db: Session = Depends(get_db),
+):
+    try:
+        return ProductService.get_shape_attributes(db, shape_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    except OperationalError as e:
+        logger.error(f"Error de BD al obtener atributos del shape: {e}")
         raise HTTPException(
             status_code=503,
             detail="Servicio de base de datos temporalmente no disponible"

@@ -2,6 +2,8 @@ import { BaseOrder, AdminOrder } from '@/types/order';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+type DashboardRole = 'cliente' | 'funcionario';
+
 type DashboardStats = {
   total: number;
   pending_payment: number;
@@ -17,7 +19,7 @@ type DashboardResponse = {
 };
 
 export const dashboardService = {
-  async getDashboardData(): Promise<DashboardResponse> {
+  async getDashboardData(role: DashboardRole): Promise<DashboardResponse> {
     const token = localStorage.getItem('token');
 
     if (!token) {
@@ -30,6 +32,7 @@ export const dashboardService = {
     const res = await fetch(`${API_URL}/orders/dashboard`, {
       headers: {
         Authorization: `Bearer ${token}`,
+        'X-Dashboard-Role': role,
       },
     });
 

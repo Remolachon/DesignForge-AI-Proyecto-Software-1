@@ -1,4 +1,4 @@
-import { ProductType, FileAsset } from '@/types/product';
+import { ProductType, FileAsset, ProductAttribute } from '@/types/product';
 
 export interface MarketplaceProduct {
   id: string;
@@ -7,6 +7,8 @@ export interface MarketplaceProduct {
   description: string;
   basePrice: number;
   productType: ProductType;
+  productShape?: string | null;
+  productShapeId?: number | null;
   imageUrl?: string;
   media?: FileAsset[];
   inStock: boolean;
@@ -16,4 +18,5 @@ export interface MarketplaceProduct {
   rating: number;
   reviews: number;
   createdAt: string;
+  attributes?: ProductAttribute[];
 }

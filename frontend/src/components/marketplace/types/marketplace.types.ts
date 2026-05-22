@@ -6,6 +6,7 @@ export type ProductFormData = {
     description: string;
     basePrice: string;
     productType: ProductType;
+    productShape: string;
     stock: string;
 };
 export interface MediaUploadItem {
@@ -18,6 +19,7 @@ export interface MediaUploadItem {
 
 export type ProductFormSubmit = ProductFormData & {
     mediaItems: MediaUploadItem[];
+    shapeAttributes: Record<string, string>;
 };
 // ─── Constantes ───────────────────────────────────────────────────────────────
 export const EMPTY_FORM: ProductFormData = {
@@ -25,6 +27,7 @@ export const EMPTY_FORM: ProductFormData = {
     description: '',
     basePrice: '',
     productType: 'bordado',
+    productShape: '',
     stock: '',
 };
 export const PRODUCT_TYPES: ProductType[] = ['bordado', 'neon-flex', 'acrilico'];

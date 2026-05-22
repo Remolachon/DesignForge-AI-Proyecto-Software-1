@@ -9,10 +9,14 @@ export type MarketplaceSavePayload = {
   description: string;
   basePrice: number;
   productType: ProductType;
+  productShape: string;
   stock: number;
+  shapeAttributes?: Record<string, string>;
 };
 
 type AdminProductResponse = {
+  productShape?: string | null;
+  productShapeId?: number | null;
   id: number;
   companyId?: number;
   name: string;
@@ -28,6 +32,7 @@ type AdminProductResponse = {
   rating: number;
   reviews: number;
   createdAt: string;
+  attributes?: any[];
 };
 
 function toMarketplaceProduct(product: AdminProductResponse): MarketplaceProduct {
@@ -40,6 +45,8 @@ function toMarketplaceProduct(product: AdminProductResponse): MarketplaceProduct
     description: product.description,
     basePrice: product.basePrice,
     productType,
+    productShape: product.productShape || null,
+    productShapeId: product.productShapeId ?? null,
     imageUrl: getCatalogImageByType(product.productType, product.imageUrl),
     media: product.media || [],
     inStock: product.inStock,
@@ -49,6 +56,7 @@ function toMarketplaceProduct(product: AdminProductResponse): MarketplaceProduct
     rating: product.rating,
     reviews: product.reviews,
     createdAt: product.createdAt,
+    attributes: product.attributes || [],
   };
 }
 

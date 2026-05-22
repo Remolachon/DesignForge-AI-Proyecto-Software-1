@@ -9,8 +9,8 @@ from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.order_item_attribute import OrderItemAttribute
 from app.models.product_attribute import ProductAttribute
-from app.models.product_attribute_option import ProductAttributeOption
-from app.models.parameters import Parameters
+from app.models.product_attribute_value import ProductAttributeValue
+from app.models.inventory import Inventory
 from app.models.product import Product
 from app.models.product_type import ProductType
 from app.models.productionStage import ProductionStage
@@ -27,6 +27,28 @@ logger = logging.getLogger(__name__)
 
 class OrderService:
     VAT_RATE_CO = 0.19
+
+    @staticmethod
+    def _serialize_order_attributes(item: OrderItem | None) -> list[dict[str, str]]:
+        serialized_attributes: list[dict[str, str]] = []
+
+        for attr in (item.attributes if item else []):
+            attribute_code = (attr.attribute_code or "").strip()
+            attribute_label = (attr.attribute_label or "").strip()
+            attribute_value = (attr.value or "").strip()
+
+            if not attribute_code and not attribute_label:
+                continue
+
+            serialized_attributes.append(
+                {
+                    "code": attribute_code or attribute_label,
+                    "label": attribute_label or attribute_code,
+                    "value": attribute_value,
+                }
+            )
+
+        return serialized_attributes
 
     @staticmethod
     def _now_local() -> datetime:
@@ -117,6 +139,32 @@ class OrderService:
         db.add(stage)
         db.flush()
         return stage
+
+    @staticmethod
+    def _get_inventory(db: Session, product_id: int) -> Inventory | None:
+        return (
+            db.query(Inventory)
+            .filter(Inventory.product_id == product_id)
+            .with_for_update()
+            .first()
+        )
+
+    @staticmethod
+    def _reserve_inventory(db: Session, product_id: int, quantity: int) -> None:
+        inventory = OrderService._get_inventory(db, product_id)
+        if not inventory or int(inventory.quantity or 0) < quantity:
+            raise ValueError("No hay stock suficiente para completar la compra")
+
+        inventory.quantity = int(inventory.quantity or 0) - quantity
+
+    @staticmethod
+    def _restore_inventory(db: Session, product_id: int, quantity: int) -> None:
+        inventory = db.query(Inventory).filter(Inventory.product_id == product_id).first()
+        if not inventory:
+            inventory = Inventory(product_id=product_id, quantity=0)
+            db.add(inventory)
+
+        inventory.quantity = max(0, int(inventory.quantity or 0) + quantity)
 
     @staticmethod
     def _order_query_options():
@@ -351,14 +399,7 @@ class OrderService:
             "productId": item.product_id if item else None,
             "productType": product_type,
             "quantity": item.quantity if item else 1,
-            "attributes": [
-                {
-                    "code": attr.attribute_code or (attr.attribute.code if attr.attribute else ""),
-                    "label": attr.custom_label or (attr.attribute.label if attr.attribute else ""),
-                    "value": attr.value,
-                }
-                for attr in (item.attributes if item else [])
-            ],
+            "attributes": OrderService._serialize_order_attributes(item),
         }
 
         if include_client:
@@ -733,7 +774,7 @@ class OrderService:
         item = OrderItem(
             order_id=order.id,
             product_id=None,
-            quantity=1,
+            quantity=data.quantity,
             order_date=OrderService._now_local(),
             current_stage_id=pending_stage.id,
             product_type_id=product_type_obj.id,
@@ -770,10 +811,9 @@ class OrderService:
             db.add(
                 OrderItemAttribute(
                     order_item_id=item.id,
-                    attribute_id=None,
                     attribute_code=code,
+                    attribute_label=attr["label"],
                     value=attr["value"],
-                    custom_label=attr["label"],
                 )
             )
 
@@ -784,8 +824,10 @@ class OrderService:
             "vinilo": 20000,
             "sublimacion": 25000,
         }
-        subtotal = base_prices.get(data.product_type, 10000)
+        subtotal = base_prices.get(data.product_type, 10000) * data.quantity
         _, _, total_amount = OrderService._calculate_amounts_with_vat(subtotal)
+        item.unit_price = round(subtotal / max(1, data.quantity), 2)
+        item.total_price = subtotal
         order.total_amount = total_amount
         db.commit()
         db.refresh(order)
@@ -838,6 +880,40 @@ class OrderService:
         if not product_assets:
             raise ValueError("El producto no tiene una imagen principal configurada")
 
+        shape_attributes = []
+        if product.product_shape_id:
+            shape_attributes = (
+                db.query(ProductAttribute)
+                .filter(ProductAttribute.product_shape_id == product.product_shape_id)
+                .order_by(ProductAttribute.sort_order.asc(), ProductAttribute.id.asc())
+                .all()
+            )
+
+        shape_attribute_map = {attr.code: attr for attr in shape_attributes}
+        default_value_rows = (
+            db.query(ProductAttributeValue)
+            .filter(ProductAttributeValue.product_id == product.id)
+            .all()
+        )
+        merged_attributes = {
+            row.attribute_code: row.value
+            for row in default_value_rows
+            if row.attribute_code and row.value is not None
+        }
+        for code, value in data.attributes.items():
+            safe_value = str(value).strip()
+            if safe_value:
+                merged_attributes[code] = safe_value
+
+        if shape_attributes:
+            missing_required = [
+                attr.label
+                for attr in shape_attributes
+                if attr.required and not str(merged_attributes.get(attr.code, "")).strip()
+            ]
+            if missing_required:
+                raise ValueError(f"Faltan atributos obligatorios: {', '.join(missing_required)}")
+
         order = Order(
             user_id=user_id,
             created_at=OrderService._now_local(),
@@ -864,6 +940,8 @@ class OrderService:
                 changed_at=OrderService._now_local(),
             )
         )
+
+        OrderService._reserve_inventory(db, product.id, data.quantity)
 
         order_bucket = "order-references"
         copied_assets = 0
@@ -937,40 +1015,23 @@ class OrderService:
         if copied_assets == 0:
             raise ValueError("No se pudo copiar la media del producto")
 
-        from app.models.product_attribute import ProductAttribute
-        from app.models.product_attribute_option import ProductAttributeOption
-        from app.models.order_item_attribute import OrderItemAttribute
-        
-        base_price = float(product.base_price)
-        price_modifier_sum = 0
-        
-        for code, value in data.attributes.items():
-            attr = db.query(ProductAttribute).filter(
-                ProductAttribute.product_type_id == product.product_type_id,
-                ProductAttribute.code == code
-            ).first()
-            
+        for code, value in merged_attributes.items():
+            attr = shape_attribute_map.get(code)
             if attr:
                 db.add(
                     OrderItemAttribute(
                         order_item_id=item.id,
-                        attribute_id=attr.id,
-                        value=str(value)
+                        attribute_code=attr.code,
+                        attribute_label=attr.label,
+                        value=str(value),
                     )
                 )
-                
-                if attr.type == 'select':
-                    opt = db.query(ProductAttributeOption).filter(
-                        ProductAttributeOption.attribute_id == attr.id,
-                        ProductAttributeOption.value == str(value)
-                    ).first()
-                    if opt:
-                        price_modifier_sum += float(opt.price_modifier)
 
-        subtotal = (base_price + price_modifier_sum) * data.quantity
+        base_price = float(product.base_price)
+        subtotal = base_price * data.quantity
         _, _, total_amount = OrderService._calculate_amounts_with_vat(subtotal)
         
-        item.unit_price = base_price + price_modifier_sum
+        item.unit_price = base_price
         item.total_price = subtotal
         
         order.total_amount = total_amount
@@ -997,7 +1058,6 @@ class OrderService:
                 joinedload(Order.user).joinedload(User.company),
                 joinedload(Order.items).joinedload(OrderItem.current_stage),
                 joinedload(Order.items).joinedload(OrderItem.product_type),
-                joinedload(Order.items).joinedload(OrderItem.parameters),
                 joinedload(Order.items).joinedload(OrderItem.assets),
                 joinedload(Order.items).joinedload(OrderItem.product).joinedload(Product.company),
             )
@@ -1021,7 +1081,6 @@ class OrderService:
 
         item = order.items[0]
         asset = OrderService._resolve_order_asset(db, item)
-        params = item.parameters
         product = item.product if item.product else None
 
         stage_name = item.current_stage.name if item.current_stage and item.current_stage.name else "En diseño"
@@ -1052,12 +1111,7 @@ class OrderService:
             "productId": item.product_id if item else None,
             "productType": product_type,
             "quantity": item.quantity,
-            "parameters": {
-                "length": params.length if params else 0,
-                "height": params.height if params else 0,
-                "width": params.width if params else 0,
-                "material": params.material if params else "",
-            } if params else None,
+            "attributes": OrderService._serialize_order_attributes(item),
             "companyName": OrderService._resolve_company_name(item),
         }
 
@@ -1205,7 +1259,8 @@ class OrderService:
                 }
 
             payment_status = payu_provider.get_payment_status(state_pol)
-            internal_payment_status = "pending"
+            internal_payment_status = payment_status if payment_status in {"pending", "declined", "expired", "cancelled", "refunded"} else "declined"
+            previous_payment_status = OrderService._get_transaction_payment_status(db, int(order_id))
 
             # Actualizar transacción
             OrderService._update_transaction_status(
@@ -1232,10 +1287,18 @@ class OrderService:
                         )
                     )
 
+                if (
+                    internal_payment_status in {"declined", "expired", "cancelled", "refunded"}
+                    and previous_payment_status not in {"declined", "expired", "cancelled", "refunded"}
+                    and item
+                    and item.product_id
+                ):
+                    OrderService._restore_inventory(db, item.product_id, item.quantity or 1)
+
             db.commit()
             return {
                 "status": "payment_pending",
-                "message": "Pago no aprobado. La orden permanece en Pendiente de pago.",
+                    "message": "Pago no aprobado. La orden permanece en pendiente o fue liberada si la transacción ya fue rechazada.",
                 "payment_status": internal_payment_status,
                 "order_id": order_id,
             }
