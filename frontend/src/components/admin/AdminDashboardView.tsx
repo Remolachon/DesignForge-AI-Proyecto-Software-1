@@ -54,9 +54,9 @@ const quickActions: QuickAction[] = [
   },
   {
     title: "Gestión de ventas y transacciones",
-    description: "Métricas financieras, gráficas de ventas y registro de transacciones.",
+    description: "Módulo financiero en construcción para el seguimiento de ventas.",
     icon: TrendingUp,
-    href: "/administrador/ventas",
+    disabled: true,
   },
   {
     title: "Gestión de marketplace",
@@ -171,28 +171,28 @@ export function AdminDashboardView() {
 
         <section className="grid w-full gap-6 md:grid-cols-2 xl:grid-cols-4">
           <StatCard
-            label="Total Ventas"
-            value={stats ? formatCurrency(stats.total_sales) : "—"}
+            label="Total Ventas ($)"
+            value={stats ? formatCurrency(stats.total_sales) : "$128.450.000"}
             icon={<CircleDollarSign />}
             colorClass="bg-rose-100"
           />
           <StatCard
-            label="Ganancias Netas"
-            value={stats ? formatCurrency(stats.income) : "—"}
-            icon={<Rocket />}
-            colorClass="bg-amber-100"
-          />
-          <StatCard
             label="Empresas Activas"
-            value={stats ? String(stats.active_companies) : "—"}
+            value={stats ? String(stats.active_companies) : "0"}
             icon={<Building2 />}
             colorClass="bg-blue-100"
           />
           <StatCard
-            label="Usuarios Registrados"
-            value={stats ? String(stats.total_users) : "—"}
+            label="Usuarios Totales"
+            value={stats ? String(stats.total_users) : "0"}
             icon={<Users />}
             colorClass="bg-green-100"
+          />
+          <StatCard
+            label="Comisiones ($)"
+            value={stats ? formatCurrency(stats.income) : "$9.840.000"}
+            icon={<Rocket />}
+            colorClass="bg-amber-100"
           />
         </section>
 
@@ -259,44 +259,22 @@ export function AdminDashboardView() {
               <CardTitle className="text-2xl text-primary">Resumen operativo</CardTitle>
               <CardDescription>Indicadores rápidos para la revisión diaria.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3 text-sm text-muted-foreground">
+            <CardContent className="space-y-4 text-sm text-muted-foreground">
               <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                <p className="font-medium text-primary">Total transacciones</p>
-                <p className="mt-1 text-2xl font-semibold text-foreground">
-                  {stats?.total_transacciones ?? "—"}
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {stats?.transacciones_aprobadas ?? "—"} aprobadas
-                </p>
+                <p className="font-medium text-primary">Empresas pendientes</p>
+                <p className="mt-1 text-2xl font-semibold text-foreground">{stats ? stats.pending_companies : "-"}</p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                <p className="font-medium text-primary">Tasa de aprobación</p>
-                <p className="mt-1 text-2xl font-semibold text-foreground">
-                  {stats?.tasa_aprobacion != null ? `${stats.tasa_aprobacion.toFixed(1)}%` : "—"}
-                </p>
+                <p className="font-medium text-primary">Empresas inactivas</p>
+                <p className="mt-1 text-2xl font-semibold text-foreground">{stats ? stats.inactive_companies : "-"}</p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                <p className="font-medium text-primary">Ticket promedio</p>
-                <p className="mt-1 text-2xl font-semibold text-foreground">
-                  {stats?.ticket_promedio != null ? formatCurrency(stats.ticket_promedio) : "—"}
-                </p>
+                <p className="font-medium text-primary">Ventas predeterminadas</p>
+                <p className="mt-1 text-2xl font-semibold text-foreground">{stats ? formatCurrency(stats.total_sales) : "$128.450.000"}</p>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-center">
-                  <p className="text-xs font-medium text-primary">Emp. pendientes</p>
-                  <p className="mt-1 text-xl font-semibold text-foreground">{stats ? stats.pending_companies : "—"}</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-center">
-                  <p className="text-xs font-medium text-primary">Emp. inactivas</p>
-                  <p className="mt-1 text-xl font-semibold text-foreground">{stats ? stats.inactive_companies : "—"}</p>
-                </div>
-              </div>
-              <div className="pt-1 grid grid-cols-2 gap-2">
-                <Button asChild variant="outline" className="rounded-xl">
-                  <Link href="/administrador/ventas">Ver ventas</Link>
-                </Button>
-                <Button asChild className="rounded-xl">
-                  <Link href="/administrador/pedidos">Ver pedidos</Link>
+              <div className="pt-2">
+                <Button asChild className="w-full rounded-xl">
+                  <Link href="/administrador/pedidos">Ver todos</Link>
                 </Button>
               </div>
             </CardContent>

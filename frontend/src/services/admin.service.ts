@@ -12,19 +12,12 @@ function getAuthHeaders() {
 }
 
 export interface AdminDashboardStats {
-  /** SUM de t.amount de todas las transacciones (todas las empresas, todo el tiempo) */
   total_sales: number;
-  /** Ganancia real (unit_price - base_price) * qty para aprobadas; fallback 30% */
-  income: number;
   active_companies: number;
   total_users: number;
+  income: number;
   pending_companies: number;
   inactive_companies: number;
-  /** Campos extendidos del nuevo módulo de ventas */
-  total_transacciones?: number;
-  transacciones_aprobadas?: number;
-  ticket_promedio?: number;
-  tasa_aprobacion?: number;
 }
 
 export interface AdminDashboardResponse {
