@@ -6,6 +6,7 @@ import { CheckCircle2, Loader2, ShieldX } from "lucide-react";
 import { toast } from "sonner";
 
 import { completeGoogleAuth, getDashboardByRole } from "@/services/auth.service";
+import { audioService } from "@/services/audio.service";
 
 export default function GoogleCallbackClient() {
   const router = useRouter();
@@ -53,6 +54,7 @@ export default function GoogleCallbackClient() {
         const authResult = await completeGoogleAuth(code || undefined);
 
         if (!active) return;
+        audioService.playLoginBell();
 
         const redirectPath = localStorage.getItem("redirect_after_login");
         if (redirectPath) {

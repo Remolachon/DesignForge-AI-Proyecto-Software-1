@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { paymentService } from '@/services/payment.service';
 import { ProductAttribute } from '@/types/product';
+import { audioService } from '@/services/audio.service';
 
 export function useMarketplaceBuy() {
   const router = useRouter();
@@ -111,6 +112,7 @@ export function useMarketplaceBuy() {
         );
       }
 
+      audioService.playSuccessOrder();
       toast.success(`Pedido de "${productTitle}" creado. Continúa al checkout seguro.`);
       resetForm();
 

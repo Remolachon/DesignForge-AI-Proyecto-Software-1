@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { getDashboardByRole, login, startGoogleAuth } from "@/services/auth.service";
+import { audioService } from "@/services/audio.service";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
@@ -62,6 +63,7 @@ export default function LoginForm() {
 
     try {
       const res = await login(email, password);
+      audioService.playLoginBell();
       toast.success("¡Bienvenido de vuelta!");
 
       const redirectPath = localStorage.getItem("redirect_after_login");
