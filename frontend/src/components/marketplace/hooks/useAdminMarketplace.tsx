@@ -19,8 +19,6 @@ export function useAdminMarketplace() {
     const [filterType, setFilterType] = useState<FilterType>('all');
     const [loading, setLoading] = useState(true);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [page, setPage] = useState(1);
-    const [pageSize] = useState(20);
     // Modales
     const [showModal, setShowModal] = useState(false);
     const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
@@ -32,7 +30,7 @@ export function useAdminMarketplace() {
     useEffect(() => {
         const loadProducts = async () => {
             try {
-                const data = await adminMarketplaceService.getProducts(page, pageSize, searchTerm || null);
+                const data = await adminMarketplaceService.getProducts(searchTerm || null);
                 setProducts(data);
             } catch (error: any) {
                 toast.error(error?.message || 'No se pudieron cargar los productos');
@@ -41,7 +39,7 @@ export function useAdminMarketplace() {
             }
         };
         loadProducts();
-    }, [page, pageSize, searchTerm]);
+    }, [searchTerm]);
 
     // ── Filtrado ──────────────────────────────────────────────────────────────
     const filtered = products.filter((p) => {
@@ -106,7 +104,7 @@ export function useAdminMarketplace() {
             const mediaToUpload = pendingSave.mediaItems?.filter(m => m.file);
             if (mediaToUpload && mediaToUpload.length > 0 && finalProduct.companyId) {
                 await uploadProductMedia(finalProduct.companyId, Number(finalProduct.id), mediaToUpload);
-                const refreshedProducts = await adminMarketplaceService.getProducts(page, pageSize, searchTerm || null);
+                const refreshedProducts = await adminMarketplaceService.getProducts(searchTerm || null);
                 setProducts(refreshedProducts);
             } else {
                 if (modalMode === 'create') {
@@ -233,9 +231,6 @@ export function useAdminMarketplace() {
         setFilterType,
         loading,
         isProcessing,
-        page,
-        setPage,
-        pageSize,
         // Estadísticas
         totalActive,
         totalInactive,

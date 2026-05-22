@@ -127,6 +127,7 @@ def create_marketplace_order(
 
 @router.get("/dashboard", response_model=DashboardResponse)
 def get_dashboard_data(
+    request: Request,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
@@ -134,11 +135,18 @@ def get_dashboard_data(
 
     try:
         role_name = UserService.get_user_role_name(db, db_user.id)
+        requested_role = (request.headers.get("X-Dashboard-Role") or "").strip().lower()
+        dashboard_role = role_name
+
+        if requested_role == "cliente":
+            dashboard_role = "cliente"
+        elif requested_role == "funcionario" and role_name == "funcionario":
+            dashboard_role = "funcionario"
 
         return OrderService.get_dashboard_data(
             db=db,
             user_id=db_user.id,
-            role_name=role_name,
+            role_name=dashboard_role,
             company_id=db_user.company_id or None,
         )
     except OperationalError as e:
