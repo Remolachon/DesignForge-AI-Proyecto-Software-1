@@ -22,8 +22,11 @@ export default function Header() {
     const name = localStorage.getItem("user_name");
     const userRole = localStorage.getItem("role");
 
-    setStoredName(name);
-    setRole(userRole);
+    // Deferimos el setState para evitar cascadas
+    setTimeout(() => {
+      setStoredName(name);
+      setRole(userRole);
+    }, 0);
   }, []);
 
   // Nombre del usuario
