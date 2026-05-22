@@ -31,13 +31,13 @@ function formatAxisCOP(value: number): string {
 
 // ─── Custom Tooltip ───────────────────────────────────────────────────────────
 
-function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
+function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload || payload.length === 0) return null;
 
   return (
     <div className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-lg text-sm">
       <p className="mb-2 font-semibold text-gray-700">{label}</p>
-      {payload.map((entry) => (
+      {payload.map((entry: any) => (
         <div key={entry.dataKey} className="flex items-center gap-2">
           <span
             className="inline-block h-2.5 w-2.5 rounded-full"
