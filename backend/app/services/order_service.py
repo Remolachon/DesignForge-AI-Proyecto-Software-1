@@ -20,6 +20,7 @@ from app.models.company import Company
 from app.models.user import User
 from app.providers.payu_provider import payu_provider
 from app.providers.supabase_provider import supabase_admin
+from app.services.email_service import EmailService
 from app.services.interaction_service import InteractionService
 import logging
 
@@ -727,6 +728,29 @@ class OrderService:
                 elif product_item.product_type and product_item.product_type.name:
                     product_name = product_item.product_type.name
 
+                user = order.user if order.user else db.query(User).filter(User.id == order.user_id).first()
+
+                if user and user.email:
+                    result = EmailService.send_order_delivered_email(
+                        recipient_email=user.email,
+                        first_name=user.first_name,
+                        order_id=order.id,
+                        order_name=product_name or "tu pedido",
+                        product_id=product_item.product_id,
+                    )
+                    if result.get("status") == "error":
+                        logger.warning("No se pudo enviar el correo de pedido entregado: %s", result.get("error"))
+            except Exception:
+                logger.exception("Error al enviar correo de entrega")
+
+        if delivered_status == "Entregado" and product_item and product_item.product_id:
+            try:
+                product_name = None
+                if product_item.product and product_item.product.name:
+                    product_name = product_item.product.name
+                elif product_item.product_type and product_item.product_type.name:
+                    product_name = product_item.product_type.name
+
                 InteractionService.create_delivery_review_notification(
                     db=db,
                     user_id=order.user_id,
@@ -1223,6 +1247,7 @@ class OrderService:
             )
             state_pol = webhook_data.get("statePol") or webhook_data.get("state_pol") or webhook_data.get("transactionState") or ""
             item = order.items[0] if order.items else None
+            previous_payment_status = OrderService._get_transaction_payment_status(db, int(order_id))
 
             if payu_provider.is_payment_approved(response_code, state_pol):
                 design_stage = OrderService._ensure_stage(db, "En diseño")
@@ -1251,6 +1276,29 @@ class OrderService:
                     )
 
                 db.commit()
+
+                if previous_payment_status != "approved":
+                    try:
+                        product_name = None
+                        if item and item.product and item.product.name:
+                            product_name = item.product.name
+                        elif item and item.product_type and item.product_type.name:
+                            product_name = item.product_type.name
+
+                        user = order.user if order.user else db.query(User).filter(User.id == order.user_id).first()
+                        if user and user.email:
+                            result = EmailService.send_payment_confirmed_email(
+                                recipient_email=user.email,
+                                first_name=user.first_name,
+                                order_id=order.id,
+                                order_name=product_name or "tu pedido",
+                                total_amount=float(order.total_amount or 0),
+                            )
+                            if result.get("status") == "error":
+                                logger.warning("No se pudo enviar el correo de pago confirmado: %s", result.get("error"))
+                    except Exception:
+                        logger.exception("Error al enviar correo de pago confirmado")
+
                 return {
                     "status": "success",
                     "message": f"Pago aprobado para orden {order_id}",
@@ -1260,7 +1308,6 @@ class OrderService:
 
             payment_status = payu_provider.get_payment_status(state_pol)
             internal_payment_status = payment_status if payment_status in {"pending", "declined", "expired", "cancelled", "refunded"} else "declined"
-            previous_payment_status = OrderService._get_transaction_payment_status(db, int(order_id))
 
             # Actualizar transacción
             OrderService._update_transaction_status(

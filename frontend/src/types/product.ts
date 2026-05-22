@@ -1,5 +1,5 @@
 // /types/product.ts
-export type ProductType = 'bordado' | 'neon-flex' | 'acrilico';
+export type ProductType = 'bordado' | 'neon-flex' | 'acrilico' | 'vinilo' | 'sublimacion';
 
 export interface ProductShape {
   id: number;
@@ -51,6 +51,10 @@ export const getProductTypeLabel = (type: ProductType) => {
       return 'Neon Flex';
     case 'acrilico':
       return 'Acrílico';
+    case 'vinilo':
+      return 'Vinilo';
+    case 'sublimacion':
+      return 'Sublimación';
   }
 };
 

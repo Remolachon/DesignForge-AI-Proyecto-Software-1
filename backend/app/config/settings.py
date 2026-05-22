@@ -1,4 +1,4 @@
-import os
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,7 +17,13 @@ class Settings(BaseSettings):
     JWT_SECRET: str | None = None
     EMAIL_HOST: str | None = None
     EMAIL_USER: str | None = None
-    EMAIL_PASSWORD: str | None = None
+    EMAIL_PASSWORD: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("EMAIL_PASSWORD", "EMAIL_PASS"),
+    )
+    EMAIL_PORT: int = 465
+    EMAIL_FROM_NAME: str = "DesignForge AI"
+    FRONTEND_URL: str | None = None
     HF_TOKEN: str
     HF_SPACE_ID: str = "Dupan21/LukArt"
 

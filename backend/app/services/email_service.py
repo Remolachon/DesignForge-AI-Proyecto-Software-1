@@ -1,0 +1,353 @@
+import logging
+import re
+import smtplib
+from email.message import EmailMessage
+from email.utils import formataddr, parseaddr
+from html import escape
+
+from app.config.settings import settings
+
+
+logger = logging.getLogger(__name__)
+
+
+class EmailService:
+    EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+
+    @staticmethod
+    def _is_enabled() -> bool:
+        password = settings.EMAIL_PASSWORD or getattr(settings, "EMAIL_PASS", None)
+        return bool(settings.EMAIL_HOST and settings.EMAIL_USER and password)
+
+    @staticmethod
+    def _sender_address() -> str:
+        return (settings.EMAIL_USER or "").strip()
+
+    @staticmethod
+    def _smtp_password() -> str:
+        password = settings.EMAIL_PASSWORD or getattr(settings, "EMAIL_PASS", None) or ""
+        return re.sub(r"\s+", "", password)
+
+    @staticmethod
+    def _sender_name() -> str:
+        return settings.EMAIL_FROM_NAME or "DesignForge AI"
+
+    @staticmethod
+    def _brand_name() -> str:
+        return settings.EMAIL_FROM_NAME or "DesignForge AI"
+
+    @staticmethod
+    def _frontend_url() -> str | None:
+        if not settings.FRONTEND_URL:
+            return None
+        return settings.FRONTEND_URL.rstrip("/")
+
+    @classmethod
+    def _normalize_recipient(cls, email_address: str | None) -> str | None:
+        if not email_address:
+            return None
+
+        candidate = parseaddr(str(email_address).strip())[1].strip().lower()
+        if not candidate or not cls.EMAIL_PATTERN.match(candidate):
+            return None
+        return candidate
+
+    @staticmethod
+    def _safe_text(value: object | None, fallback: str = "") -> str:
+        if value is None:
+            return fallback
+        text = str(value).strip()
+        return text or fallback
+
+    @classmethod
+    def _base_subject(cls, subject: str) -> str:
+        return f"{cls._brand_name()} | {subject}"
+
+    @classmethod
+    def _build_email_message(
+        cls,
+        recipient_email: str,
+        subject: str,
+        plain_text: str,
+        html_body: str,
+    ) -> EmailMessage:
+        message = EmailMessage()
+        message["From"] = formataddr((cls._sender_name(), cls._sender_address()))
+        message["To"] = recipient_email
+        message["Subject"] = subject
+        message.set_content(plain_text)
+        message.add_alternative(html_body, subtype="html")
+        return message
+
+    @classmethod
+    def _wrap_html(cls, title: str, heading: str, body_html: str, cta_label: str | None = None, cta_url: str | None = None) -> str:
+        brand = escape(cls._brand_name())
+        safe_title = escape(title)
+        safe_heading = escape(heading)
+        cta_button = ""
+        if cta_label and cta_url:
+            cta_button = f'''
+                <tr>
+                    <td style="padding-top: 28px;">
+                        <a href="{escape(cta_url)}" style="display:inline-block;background:#0f172a;color:#ffffff;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:999px;">{escape(cta_label)}</a>
+                    </td>
+                </tr>
+            '''
+
+        return f"""<!DOCTYPE html>
+<html lang=\"es\">
+  <head>
+    <meta charset=\"utf-8\" />
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />
+    <title>{safe_title}</title>
+  </head>
+  <body style=\"margin:0;padding:0;background:#f5f7fb;font-family:Arial,Helvetica,sans-serif;color:#0f172a;\">
+    <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"background:#f5f7fb;padding:32px 16px;\">
+      <tr>
+        <td align=\"center\">
+          <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"max-width:640px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(15,23,42,0.08);\">
+            <tr>
+              <td style=\"padding:28px 32px;background:linear-gradient(135deg,#0f172a,#1e293b);color:#ffffff;\">
+                <div style=\"font-size:14px;letter-spacing:0.08em;text-transform:uppercase;opacity:0.85;\">{brand}</div>
+                <div style=\"font-size:26px;line-height:1.2;font-weight:700;margin-top:10px;\">{safe_heading}</div>
+              </td>
+            </tr>
+            <tr>
+              <td style=\"padding:32px;\">
+                {body_html}
+                {cta_button}
+                <p style=\"margin:32px 0 0;font-size:14px;line-height:1.6;color:#64748b;\">
+                  Este es un mensaje automático. Si necesitas ayuda, responde a este correo y con gusto te atenderemos.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>"""
+
+    @classmethod
+    def _send_message(cls, recipient_email: str | None, subject: str, plain_text: str, html_body: str) -> dict:
+        normalized_recipient = cls._normalize_recipient(recipient_email)
+        if not normalized_recipient:
+            return {
+                "status": "error",
+                "error": "La dirección de correo del destinatario no es válida.",
+            }
+
+        if not cls._is_enabled():
+            logger.warning("Correo no enviado porque la configuración SMTP no está completa")
+            return {
+                "status": "disabled",
+                "message": "La configuración de correo no está habilitada.",
+            }
+
+        message = cls._build_email_message(
+            recipient_email=normalized_recipient,
+            subject=cls._base_subject(subject),
+            plain_text=plain_text,
+            html_body=html_body,
+        )
+
+        timeout = 20
+        try:
+            port = int(settings.EMAIL_PORT or 465)
+            smtp_host = (settings.EMAIL_HOST or "").strip()
+            smtp_user = cls._sender_address()
+            smtp_password = cls._smtp_password()
+
+            def _send_with_ssl() -> None:
+                with smtplib.SMTP_SSL(smtp_host, port, timeout=timeout) as server:
+                    server.login(smtp_user, smtp_password)
+                    server.send_message(message)
+
+            def _send_with_starttls() -> None:
+                with smtplib.SMTP(smtp_host, port, timeout=timeout) as server:
+                    server.ehlo()
+                    server.starttls()
+                    server.ehlo()
+                    server.login(smtp_user, smtp_password)
+                    server.send_message(message)
+
+            if port == 465:
+                try:
+                    _send_with_ssl()
+                except (smtplib.SMTPException, OSError):
+                    logger.exception("Fallo SMTP_SSL; intentando STARTTLS como respaldo")
+                    fallback_port = 587
+                    with smtplib.SMTP(smtp_host, fallback_port, timeout=timeout) as server:
+                        server.ehlo()
+                        server.starttls()
+                        server.ehlo()
+                        server.login(smtp_user, smtp_password)
+                        server.send_message(message)
+            else:
+                _send_with_starttls()
+
+            return {
+                "status": "sent",
+                "message": "Correo enviado correctamente.",
+            }
+        except smtplib.SMTPRecipientsRefused:
+            logger.warning("El servidor SMTP rechazó el destinatario %s", normalized_recipient)
+            return {
+                "status": "error",
+                "error": "El servidor de correo rechazó la dirección del destinatario.",
+            }
+        except smtplib.SMTPAuthenticationError:
+            logger.exception("Error de autenticación SMTP")
+            return {
+                "status": "error",
+                "error": "Gmail rechazó la autenticación. Verifica que la cuenta tenga verificación en dos pasos y una contraseña de aplicación vigente.",
+            }
+        except smtplib.SMTPException:
+            logger.exception("Fallo SMTP al enviar correo")
+            return {
+                "status": "error",
+                "error": "No fue posible enviar el correo en este momento.",
+            }
+        except OSError:
+            logger.exception("Fallo de red al enviar correo")
+            return {
+                "status": "error",
+                "error": "No fue posible conectar con el servidor de correo.",
+            }
+
+    @classmethod
+    def send_welcome_email(cls, recipient_email: str, first_name: str | None = None) -> dict:
+        safe_name = cls._safe_text(first_name, "cliente")
+        subject = "Bienvenido a nuestra plataforma"
+        plain_text = (
+            f"Hola {safe_name}:\n\n"
+            "Gracias por registrarte en DesignForge AI. Tu cuenta ya está activa y puedes comenzar a explorar nuestros servicios, crear pedidos y revisar el estado de tus compras desde tu panel.\n\n"
+            "Si detectas alguna actividad que no reconozcas, responde a este correo para ayudarte de inmediato.\n\n"
+            f"Equipo de {cls._brand_name()}"
+        )
+        html_body = cls._wrap_html(
+            title=subject,
+            heading="Tu cuenta ha sido creada con éxito",
+            body_html=f"""
+                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Hola {escape(safe_name)},</p>
+                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Gracias por registrarte en DesignForge AI. Tu cuenta ya está activa y puedes comenzar a explorar nuestros servicios, crear pedidos y revisar tus compras desde tu panel.</p>
+                <p style=\"margin:0;font-size:16px;line-height:1.7;\">Si detectas alguna actividad que no reconozcas, responde a este correo y te ayudaremos de inmediato.</p>
+            """,
+            cta_label="Ir a mi cuenta",
+            cta_url=cls._frontend_url(),
+        )
+        return cls._send_message(recipient_email, subject, plain_text, html_body)
+
+    @classmethod
+    def send_order_created_email(
+        cls,
+        recipient_email: str,
+        first_name: str | None,
+        order_id: int,
+        order_name: str,
+        quantity: int,
+        total_amount: float,
+        payment_url: str | None = None,
+    ) -> dict:
+        safe_name = cls._safe_text(first_name, "cliente")
+        safe_order_name = cls._safe_text(order_name, "tu pedido")
+        safe_quantity = max(1, int(quantity or 1))
+        safe_total = f"{float(total_amount or 0):,.2f} COP"
+        subject = f"Hemos recibido tu pedido #{order_id}"
+        plain_text = (
+            f"Hola {safe_name}:\n\n"
+            f"Confirmamos la recepción de tu pedido #{order_id} para {safe_order_name}.\n"
+            f"Cantidad: {safe_quantity}\n"
+            f"Valor total: {safe_total}\n\n"
+            "Tu solicitud ya fue registrada y el proceso de pago está disponible para continuar con la compra.\n\n"
+            f"Equipo de {cls._brand_name()}"
+        )
+        payment_link = payment_url or cls._frontend_url()
+        html_body = cls._wrap_html(
+            title=subject,
+            heading=f"Pedido #{order_id} registrado",
+            body_html=f"""
+                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Hola {escape(safe_name)},</p>
+                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Confirmamos la recepción de tu pedido <strong>#{order_id}</strong> para <strong>{escape(safe_order_name)}</strong>.</p>
+                <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"margin:24px 0;border-collapse:collapse;\">
+                  <tr>
+                    <td style=\"padding:12px 0;border-bottom:1px solid #e2e8f0;color:#64748b;\">Cantidad</td>
+                    <td style=\"padding:12px 0;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:700;\">{safe_quantity}</td>
+                  </tr>
+                  <tr>
+                    <td style=\"padding:12px 0;border-bottom:1px solid #e2e8f0;color:#64748b;\">Valor total</td>
+                    <td style=\"padding:12px 0;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:700;\">{safe_total}</td>
+                  </tr>
+                </table>
+                <p style=\"margin:0;font-size:16px;line-height:1.7;\">Tu solicitud ya fue registrada y el proceso de pago está disponible para continuar con la compra.</p>
+            """,
+            cta_label="Continuar al pago",
+            cta_url=payment_link,
+        )
+        return cls._send_message(recipient_email, subject, plain_text, html_body)
+
+    @classmethod
+    def send_payment_confirmed_email(
+        cls,
+        recipient_email: str,
+        first_name: str | None,
+        order_id: int,
+        order_name: str,
+        total_amount: float,
+    ) -> dict:
+        safe_name = cls._safe_text(first_name, "cliente")
+        safe_order_name = cls._safe_text(order_name, "tu pedido")
+        safe_total = f"{float(total_amount or 0):,.2f} COP"
+        subject = f"Pago confirmado para tu pedido #{order_id}"
+        plain_text = (
+            f"Hola {safe_name}:\n\n"
+            f"Tu pago para el pedido #{order_id} de {safe_order_name} fue confirmado correctamente.\n"
+            f"Valor aprobado: {safe_total}\n\n"
+            "Nuestro equipo continuará con la preparación de tu pedido.\n\n"
+            f"Equipo de {cls._brand_name()}"
+        )
+        html_body = cls._wrap_html(
+            title=subject,
+            heading=f"Pago confirmado de tu pedido #{order_id}",
+            body_html=f"""
+                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Hola {escape(safe_name)},</p>
+                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Tu pago para el pedido <strong>#{order_id}</strong> de <strong>{escape(safe_order_name)}</strong> fue confirmado correctamente.</p>
+                <p style=\"margin:0;font-size:16px;line-height:1.7;\"><strong>Valor aprobado:</strong> {escape(safe_total)}</p>
+            """,
+        )
+        return cls._send_message(recipient_email, subject, plain_text, html_body)
+
+    @classmethod
+    def send_order_delivered_email(
+        cls,
+        recipient_email: str,
+        first_name: str | None,
+        order_id: int,
+        order_name: str,
+        product_id: int | None = None,
+    ) -> dict:
+        safe_name = cls._safe_text(first_name, "cliente")
+        safe_order_name = cls._safe_text(order_name, "tu pedido")
+        subject = f"Tu pedido #{order_id} ha sido entregado"
+        plain_text = (
+            f"Hola {safe_name}:\n\n"
+            f"Tu pedido #{order_id} de {safe_order_name} ya fue entregado.\n"
+            "Si deseas compartir tu experiencia, puedes dejar una valoración desde tu panel.\n\n"
+            f"Equipo de {cls._brand_name()}"
+        )
+        review_url = None
+        if cls._frontend_url() and product_id is not None:
+            review_url = f"{cls._frontend_url()}/marketplace/{product_id}?review=1"
+
+        html_body = cls._wrap_html(
+            title=subject,
+            heading=f"Pedido #{order_id} entregado",
+            body_html=f"""
+                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Hola {escape(safe_name)},</p>
+                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Tu pedido <strong>#{order_id}</strong> de <strong>{escape(safe_order_name)}</strong> ya fue entregado.</p>
+                <p style=\"margin:0;font-size:16px;line-height:1.7;\">Si deseas compartir tu experiencia, puedes dejar una valoración desde tu panel.</p>
+            """,
+            cta_label="Dejar valoración",
+            cta_url=review_url or cls._frontend_url(),
+        )
+        return cls._send_message(recipient_email, subject, plain_text, html_body)

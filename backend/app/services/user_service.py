@@ -10,12 +10,17 @@ from app.models.user_role import UserRole
 class UserService:
 
     @staticmethod
+    def _normalize_email(email: str) -> str:
+        return email.strip().lower()
+
+    @staticmethod
     def get_user_by_supabase_id(db: Session, supabase_id: str) -> User | None:
         return db.query(User).filter(User.supabase_id == supabase_id).first()
 
     @staticmethod
     def get_user_by_email(db: Session, email: str) -> User | None:
-        return db.query(User).filter(User.email == email).first()
+        normalized_email = UserService._normalize_email(email)
+        return db.query(User).filter(User.email.ilike(normalized_email)).first()
 
     @staticmethod
     def create_user(
@@ -29,6 +34,8 @@ class UserService:
 
         if phone is not None and phone.strip() == "":
             phone = None
+
+        email = UserService._normalize_email(email)
 
         user = User(
             email=email,

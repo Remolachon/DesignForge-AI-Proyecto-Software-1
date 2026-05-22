@@ -9,6 +9,7 @@ from app.database.database import get_db
 from app.providers.google_provider import GoogleOAuthProvider
 from app.providers.supabase_provider import supabase
 from app.schemas.user_schema import AuthResponse, GoogleOAuthRequest, LoginRequest, RegisterRequest
+from app.services.email_service import EmailService
 from app.services.user_service import UserService
 
 
@@ -93,6 +94,12 @@ def _build_auth_response(db: Session, db_user, access_token: str) -> AuthRespons
     )
 
 
+def _send_welcome_email(email: str, first_name: str | None) -> None:
+    result = EmailService.send_welcome_email(email, first_name)
+    if result.get("status") == "error":
+        logger.warning("No se pudo enviar el correo de bienvenida: %s", result.get("error"))
+
+
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
 def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     if not payload.first_name.strip() or not payload.last_name.strip():
@@ -145,6 +152,7 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
                 supabase_id=response.user.id,
             )
             UserService.assign_default_role(db, db_user.id)
+            _send_welcome_email(db_user.email, db_user.first_name)
         else:
             _update_user_profile(
                 db,
@@ -206,6 +214,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
                 supabase_id=supabase_user.id,
             )
             UserService.assign_default_role(db, db_user.id)
+            _send_welcome_email(db_user.email, db_user.first_name)
         else:
             _update_user_profile(
                 db,
@@ -239,9 +248,9 @@ def google_oauth(payload: GoogleOAuthRequest, db: Session = Depends(get_db)):
 
         user_info = GoogleOAuthProvider.extract_user_info(token_payload)
         supabase_id = user_info.get("supabase_id")
-        email = user_info.get("email")
-        first_name = user_info.get("first_name", "")
-        last_name = user_info.get("last_name", "")
+        email = (user_info.get("email") or "").strip().lower()
+        first_name = (user_info.get("first_name") or "").strip()
+        last_name = (user_info.get("last_name") or "").strip()
         phone = user_info.get("phone")
 
         if not supabase_id or not email:
@@ -275,6 +284,7 @@ def google_oauth(payload: GoogleOAuthRequest, db: Session = Depends(get_db)):
                 supabase_id=supabase_id,
             )
             UserService.assign_default_role(db, db_user.id)
+            _send_welcome_email(db_user.email, db_user.first_name)
         else:
             if db_user.supabase_id != supabase_id:
                 _link_google_account(

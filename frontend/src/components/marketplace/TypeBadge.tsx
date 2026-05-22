@@ -4,6 +4,8 @@ export function TypeBadge({ type }: { type: ProductType }) {
         bordado: 'bg-blue-100 text-blue-700',
         'neon-flex': 'bg-purple-100 text-purple-700',
         acrilico: 'bg-green-100 text-green-700',
+        vinilo: 'bg-amber-100 text-amber-700',
+        sublimacion: 'bg-pink-100 text-pink-700',
     };
     return (
         <span className={`px-2 py-0.5 rounded text-xs font-medium ${colors[type]}`}>

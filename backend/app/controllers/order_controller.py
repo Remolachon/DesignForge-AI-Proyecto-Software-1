@@ -5,6 +5,7 @@ from sqlalchemy.exc import OperationalError
 
 from app.database.database import get_db
 from app.database.connection_retry import retry_on_connection_error
+from app.services.email_service import EmailService
 from app.services.order_service import OrderService
 from app.schemas.order_schema import (
     CreateOrderRequest,
@@ -24,6 +25,31 @@ from app.models.order import Order
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/orders", tags=["Orders"])
+
+
+def _send_order_created_email(db: Session, db_user: User, order: Order, payment_url: str | None) -> None:
+    try:
+        role_name = UserService.get_user_role_name(db, db_user.id)
+        order_detail = OrderService.get_order_detail(
+            db=db,
+            order_id=order.id,
+            user_id=db_user.id,
+            role_name=role_name,
+            company_id=db_user.company_id,
+        )
+        result = EmailService.send_order_created_email(
+            recipient_email=db_user.email,
+            first_name=db_user.first_name,
+            order_id=order.id,
+            order_name=order_detail.get("title") or "tu pedido",
+            quantity=int(order_detail.get("quantity") or 1),
+            total_amount=float(order_detail.get("price") or order.total_amount or 0),
+            payment_url=payment_url,
+        )
+        if result.get("status") == "error":
+            logger.warning("No se pudo enviar el correo de pedido creado: %s", result.get("error"))
+    except Exception as exc:
+        logger.warning("No se pudo preparar el correo de pedido creado: %s", exc)
 
 
 def _get_db_user_with_retry(db: Session, current_user):
@@ -63,6 +89,13 @@ def create_order(
 
         if payment_result.get("status") == "error":
             raise HTTPException(status_code=400, detail=payment_result.get("error", "Error generando URL de pago"))
+
+        _send_order_created_email(
+            db=db,
+            db_user=db_user,
+            order=order,
+            payment_url=payment_result.get("payment_url"),
+        )
 
         return {
             "message": "Order created successfully",
@@ -108,6 +141,13 @@ def create_marketplace_order(
 
         if payment_result.get("status") == "error":
             raise HTTPException(status_code=400, detail=payment_result.get("error", "Error generando URL de pago"))
+
+        _send_order_created_email(
+            db=db,
+            db_user=db_user,
+            order=order,
+            payment_url=payment_result.get("payment_url"),
+        )
 
         return {
             "message": "Marketplace order created successfully",
