@@ -9,6 +9,7 @@ interface MarketplaceProductCardProps {
     onEdit: (product: MarketplaceProduct) => void;
     onDelete: (product: MarketplaceProduct) => void;
     onViewReviews?: (product: MarketplaceProduct) => void;
+    showEditAction?: boolean;
     imageLoading?: 'eager' | 'lazy';
 }
 export function MarketplaceProductCard({
@@ -17,6 +18,7 @@ export function MarketplaceProductCard({
     onEdit,
     onDelete,
     onViewReviews,
+    showEditAction = true,
     imageLoading = 'lazy',
 }: MarketplaceProductCardProps) {
     const mainMedia = product.media?.find(m => m.media_role === 'main') || product.media?.[0];
@@ -135,16 +137,17 @@ export function MarketplaceProductCard({
                             </>
                         )}
                     </button>
-                    {/* Editar */}
-                    <button
-                        onClick={() => onEdit(product)}
-                        title="Editar producto"
-                        className="px-3 py-1.5 rounded-lg border border-border bg-white hover:bg-muted
+                    {showEditAction && (
+                        <button
+                            onClick={() => onEdit(product)}
+                            title="Editar producto"
+                            className="px-3 py-1.5 rounded-lg border border-border bg-white hover:bg-muted
                        text-xs font-medium transition-colors flex items-center gap-1"
-                    >
-                        <Pencil className="w-3.5 h-3.5" />
-                        Editar
-                    </button>
+                        >
+                            <Pencil className="w-3.5 h-3.5" />
+                            Editar
+                        </button>
+                    )}
                     {/* Eliminar */}
                     <button
                         onClick={() => onDelete(product)}

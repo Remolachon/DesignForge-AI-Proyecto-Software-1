@@ -77,7 +77,7 @@ export default function Header() {
           {!fullName ? (
             <div className="flex items-center gap-4">
               <Link href={loginHref}>
-                <Button variant="tertiary" className="rounded-full px-5 py-2 transition-all duration-200 hover:bg-primary/10 hover:text-primary hover:shadow-sm hover:-translate-y-0.5">
+                <Button variant="tertiary" className="rounded-full px-5 py-2 transition-all duration-200 hover:bg-accent/15 hover:text-accent hover:shadow-md hover:-translate-y-0.5">
                   Iniciar Sesión
                 </Button>
               </Link>
@@ -90,10 +90,10 @@ export default function Header() {
               
               {/* SWITCH DE MODO ELEGANTE */}
               {(role === "administrador" || role === "funcionario") && (
-                <div className="flex items-center mr-2 sm:mr-4 bg-secondary/30 backdrop-blur-md border border-border/40 rounded-full p-1 shadow-sm">
+                <div className="inline-flex items-center mr-2 sm:mr-4 bg-secondary/30 backdrop-blur-md border border-border/40 rounded-full p-1 shadow-sm">
                   <button
                     onClick={() => handleModeToggle(false)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                    className={`flex min-w-[92px] items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
                       !isRoleMode
                         ? "bg-background text-primary shadow-sm ring-1 ring-border/50"
                         : "text-muted-foreground hover:text-primary hover:bg-secondary/50"
@@ -104,15 +104,15 @@ export default function Header() {
                   </button>
                   <button
                     onClick={() => handleModeToggle(true)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                    className={`flex min-w-[116px] sm:min-w-[144px] items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
                       isRoleMode
                         ? "bg-gradient-to-r from-accent to-accent-magenta text-white shadow-md ring-1 ring-accent/50"
                         : "text-muted-foreground hover:text-primary hover:bg-secondary/50"
                     }`}
                   >
                     <Shield className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline-block">
-                      {role === "administrador" ? "Admin" : "Func."}
+                    <span className="hidden sm:inline-block whitespace-nowrap">
+                      {role === "administrador" ? "Administrador" : "Funcionario"}
                     </span>
                   </button>
                 </div>

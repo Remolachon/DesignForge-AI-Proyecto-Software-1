@@ -7,6 +7,16 @@ interface StatusSelectProps {
     onChange: (id: string, newStatus: OrderStatus) => void;
 }
 export function StatusSelect({ orderId, currentStatus, onChange }: StatusSelectProps) {
+    const editableStatuses = ORDER_STATUSES.filter((status) => status !== 'Pendiente de pago');
+
+    if (currentStatus === 'Pendiente de pago') {
+        return (
+            <span className={`text-xs px-2 py-1.5 rounded-full border font-medium inline-flex ${getStatusColor(currentStatus)}`}>
+                {currentStatus}
+            </span>
+        );
+    }
+
     return (
         <select
             value={currentStatus}
@@ -17,7 +27,7 @@ export function StatusSelect({ orderId, currentStatus, onChange }: StatusSelectP
         ${getStatusColor(currentStatus)}
       `}
         >
-            {ORDER_STATUSES.map((s) => (
+            {editableStatuses.map((s) => (
                 <option key={s} value={s} className="bg-white text-gray-900 font-normal">
                     {s}
                 </option>

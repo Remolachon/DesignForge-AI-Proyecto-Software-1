@@ -1,10 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
 
 import Header from '@/components/Header';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
 import { useAdminMarketplace } from '@/components/marketplace/hooks/useAdminMarketplace';
@@ -61,17 +59,11 @@ export default function AdminMarketplace() {
         {/* Encabezado */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-semibold text-primary mb-2">
-              Marketplace (Administrador)
-            </h1>
+            <h1 className="text-3xl font-semibold text-primary mb-2">Gestión del Marketplace</h1>
             <p className="text-muted-foreground">
-              Vista del marketplace para administradores (todos los productos). Agrega, edita y administra los productos disponibles.
+              Vista del marketplace para administradores con control de visibilidad y administración de productos.
             </p>
           </div>
-          <Button className="gap-2 w-full sm:w-auto" onClick={openCreate}>
-            <Plus className="w-5 h-5" />
-            Agregar Producto
-          </Button>
         </div>
 
         {/* Estadísticas rápidas */}
@@ -114,6 +106,7 @@ export default function AdminMarketplace() {
                 onEdit={openEdit}
                 onDelete={setDeletingProduct}
                 onViewReviews={setSelectedReviewsProduct}
+                showEditAction={false}
                 imageLoading={idx === 0 ? 'eager' : 'lazy'}
               />
             ))}

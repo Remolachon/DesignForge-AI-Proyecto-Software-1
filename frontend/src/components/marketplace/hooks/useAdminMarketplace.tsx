@@ -52,8 +52,8 @@ export function useAdminMarketplace() {
     });
 
     // ── Estadísticas ──────────────────────────────────────────────────────────
-    const totalActive = products.filter((p) => p.isActive).length;
-    const totalInactive = products.filter((p) => !p.isActive).length;
+    const totalActive = products.filter((p) => p.isPublic).length;
+    const totalInactive = products.filter((p) => !p.isPublic).length;
     const outOfStock = products.filter((p) => !p.inStock).length;
 
     // ── Acciones CRUD ─────────────────────────────────────────────────────────
