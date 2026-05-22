@@ -15,6 +15,7 @@ from app.controllers import order_controller
 from app.controllers import interaction_controller
 from app.controllers import upload_controller
 from app.controllers import ai_controller
+from app.controllers.sales_controller import router as sales_router, funcionario_router as sales_funcionario_router
 from app.database.database import check_db_connection
 
 logger = logging.getLogger(__name__)
@@ -114,6 +115,8 @@ app.include_router(order_controller.router)
 app.include_router(interaction_controller.router)
 app.include_router(upload_controller.router)
 app.include_router(ai_controller.router)
+app.include_router(sales_router)
+app.include_router(sales_funcionario_router)
 
 
 @app.get("/")
