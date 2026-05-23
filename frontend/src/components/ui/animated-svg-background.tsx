@@ -1,6 +1,6 @@
 "use client";
 import { cn } from "@/lib/utils/cn";
-import { motion } from "motion/react";
+import { motion, type Transition } from "framer-motion";
 import React from "react";
 
 export const BackgroundLines = ({
@@ -35,6 +35,15 @@ const pathVariants = {
     opacity: [0, 1, 1, 0],
   },
 };
+
+const getPathTransition = (idx: number, duration?: number): Transition => ({
+  duration: duration || 10,
+  ease: "linear",
+  repeat: Infinity,
+  repeatType: "loop",
+  delay: idx % 10,
+  repeatDelay: (idx % 10) + 2,
+});
 
 const SVG = ({
   svgOptions,
@@ -109,14 +118,7 @@ const SVG = ({
           variants={pathVariants}
           initial="initial"
           animate="animate"
-          transition={{
-            duration: svgOptions?.duration || 10,
-            ease: "linear",
-            repeat: Infinity,
-            repeatType: "loop",
-            delay: Math.floor(Math.random() * 10),
-            repeatDelay: Math.floor(Math.random() * 10 + 2),
-          }}
+          transition={getPathTransition(idx, svgOptions?.duration)}
           key={`path-first-${idx}`}
         />
       ))}
@@ -131,14 +133,7 @@ const SVG = ({
           variants={pathVariants}
           initial="initial"
           animate="animate"
-          transition={{
-            duration: svgOptions?.duration || 10,
-            ease: "linear",
-            repeat: Infinity,
-            repeatType: "loop",
-            delay: Math.floor(Math.random() * 10),
-            repeatDelay: Math.floor(Math.random() * 10 + 2),
-          }}
+          transition={getPathTransition(idx, svgOptions?.duration)}
           key={`path-second-${idx}`}
         />
       ))}

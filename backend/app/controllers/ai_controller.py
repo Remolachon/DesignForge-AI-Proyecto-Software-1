@@ -591,12 +591,6 @@ async def generate_product_preview(
     if style not in STYLE_CONFIG:
         raise HTTPException(400, f"Estilo no válido. Opciones: {list(STYLE_CONFIG)}")
 
-    if not HF_TOKEN:
-        raise HTTPException(500, "Error: HF_TOKEN no configurado.")
-    
-    if not HF_SPACE_ID:
-        raise HTTPException(500, "Error: HF_SPACE_ID no configurado.")
-
     try:
         contents = await file.read()
         image = Image.open(io.BytesIO(contents)).convert("RGBA")
@@ -606,7 +600,16 @@ async def generate_product_preview(
 
         # 2. Llamada a HF Space (con fallback automático)
         print(f"[IA LOG]: Iniciando generación para estilo '{style}'...")
-        preview = await call_sd_img2img(prepared, style)
+        preview = None
+
+        if HF_SPACE_ID:
+            try:
+                preview = await asyncio.wait_for(call_sd_img2img(prepared, style), timeout=MAX_TOTAL_SECONDS)
+            except Exception as exc:
+                print(f"[IA WARNING]: Fallback local activado para estilo '{style}' por error remoto: {exc}")
+
+        if preview is None:
+            preview = generate_fallback(prepared, style)
 
         # 3. Guardar resultado final en Supabase
         out_path = f"{COMPANY_ID}/previews/{uuid4()}.png"

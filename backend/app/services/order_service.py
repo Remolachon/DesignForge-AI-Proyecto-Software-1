@@ -78,16 +78,14 @@ class OrderService:
         Considera tanto ProductionStages como transaction statuses.
         """
         from sqlalchemy import and_, or_
-        
-        # Órdenes con transacciones en estado pending/declined/etc
+
         pending_tx = (
             db.query(Order.id)
             .join(Transaction)
             .filter(Transaction.status.in_(["pending", "declined", "expired", "cancelled", "refunded", "unknown"]))
             .distinct()
         )
-        
-        # También incluir órdenes con stage ProductionStage.name = "Pendiente de pago" si existe
+
         pending_stage_ids = (
             db.query(Order.id)
             .join(Order.items)
@@ -95,7 +93,7 @@ class OrderService:
             .filter(ProductionStage.name.in_(["Pendiente de pago"]))
             .distinct()
         )
-        
+
         return or_(Order.id.in_(pending_tx), Order.id.in_(pending_stage_ids))
 
     @staticmethod
@@ -1000,37 +998,40 @@ class OrderService:
                     file_options={"content-type": source_asset.mime_type or fallback_content_type},
                 )
 
-                db.add(
-                    FileAsset(
-                        bucket_name=order_bucket,
-                        storage_path=order_storage_path,
-                        file_type="reference_image",
-                        order_item_id=item.id,
-                        is_active=True,
-                        media_kind=source_asset.media_kind,
-                        media_role="attachment",
-                        sort_order=None,
-                        mime_type=source_asset.mime_type,
-                    )
-                )
-                db.flush()
-                copied_assets += 1
-            except Exception as exc:
-                logger.error(f"Error copiando asset {source_bucket}/{source_path} para orden {order.id}: {str(exc)}")
-                try:
+                with db.begin_nested():
                     db.add(
                         FileAsset(
-                            bucket_name=source_bucket,
-                            storage_path=source_path,
+                            bucket_name=order_bucket,
+                            storage_path=order_storage_path,
                             file_type="reference_image",
                             order_item_id=item.id,
                             is_active=True,
                             media_kind=source_asset.media_kind,
-                            media_role=source_asset.media_role,
-                            sort_order=source_asset.sort_order,
+                            media_role="attachment",
+                            sort_order=None,
                             mime_type=source_asset.mime_type,
                         )
                     )
+                    db.flush()
+                copied_assets += 1
+            except Exception as exc:
+                logger.error(f"Error copiando asset {source_bucket}/{source_path} para orden {order.id}: {str(exc)}")
+                try:
+                    with db.begin_nested():
+                        db.add(
+                            FileAsset(
+                                bucket_name=source_bucket,
+                                storage_path=source_path,
+                                file_type="reference_image",
+                                order_item_id=item.id,
+                                is_active=True,
+                                media_kind=source_asset.media_kind,
+                                media_role=source_asset.media_role,
+                                sort_order=source_asset.sort_order,
+                                mime_type=source_asset.mime_type,
+                            )
+                        )
+                        db.flush()
                     copied_assets += 1
                 except Exception as exc2:
                     logger.error(f"Error al crear FileAsset de fallback para {source_bucket}/{source_path}: {str(exc2)}")
@@ -1054,15 +1055,13 @@ class OrderService:
         base_price = float(product.base_price)
         subtotal = base_price * data.quantity
         _, _, total_amount = OrderService._calculate_amounts_with_vat(subtotal)
-        
+
         item.unit_price = base_price
         item.total_price = subtotal
-        
         order.total_amount = total_amount
         db.commit()
         db.refresh(order)
-        
-        # Crear registro en transactions
+
         OrderService._create_transaction(
             db=db,
             order_id=order.id,
@@ -1071,7 +1070,7 @@ class OrderService:
             payment_method="payu",
         )
         db.commit()
-        
+
         return order
 
     @staticmethod
