@@ -22,7 +22,7 @@ interface SalesFilterBarProps {
 export function SalesFilterBar({ value, onChange }: SalesFilterBarProps) {
   return (
     <div
-      className="inline-flex items-center gap-1 rounded-2xl bg-gray-100 p-1"
+      className="inline-flex items-center gap-1 rounded-2xl bg-muted p-1"
       role="group"
       aria-label="Filtro de período"
     >
@@ -38,8 +38,8 @@ export function SalesFilterBar({ value, onChange }: SalesFilterBarProps) {
             className={[
               "rounded-xl px-4 py-1.5 text-sm font-medium transition-all duration-200",
               isActive
-                ? "bg-white text-gray-900 shadow-sm ring-1 ring-gray-200/70"
-                : "text-gray-500 hover:text-gray-700",
+                ? "bg-background text-foreground shadow-sm ring-1 ring-border"
+                : "text-muted-foreground hover:text-foreground",
             ].join(" ")}
           >
             {filter.label}

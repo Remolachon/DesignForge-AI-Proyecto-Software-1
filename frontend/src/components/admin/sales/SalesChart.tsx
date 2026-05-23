@@ -35,16 +35,16 @@ function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload || payload.length === 0) return null;
 
   return (
-    <div className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-lg text-sm">
-      <p className="mb-2 font-semibold text-gray-700">{label}</p>
+    <div className="rounded-xl border border-border bg-popover px-4 py-3 shadow-lg text-sm text-popover-foreground">
+      <p className="mb-2 font-semibold text-foreground">{label}</p>
       {payload.map((entry: any) => (
         <div key={entry.dataKey} className="flex items-center gap-2">
           <span
             className="inline-block h-2.5 w-2.5 rounded-full"
             style={{ backgroundColor: entry.color }}
           />
-          <span className="text-gray-500 capitalize">{entry.name}:</span>
-          <span className="font-medium text-gray-800">
+          <span className="text-muted-foreground capitalize">{entry.name}:</span>
+          <span className="font-medium text-foreground">
             {entry.dataKey === "transacciones"
               ? entry.value
               : formatCOP(entry.value as number)}
@@ -80,13 +80,13 @@ interface SalesChartProps {
 
 export function SalesChart({ data, loading = false }: SalesChartProps) {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+    <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Tendencia de ventas</h2>
-          <p className="text-xs text-gray-400 mt-0.5">Ventas y ganancias en el período seleccionado</p>
+          <h2 className="text-lg font-semibold text-card-foreground">Tendencia de ventas</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Ventas y ganancias en el período seleccionado</p>
         </div>
-        <div className="flex items-center gap-4 text-xs text-gray-500">
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <span className="inline-block h-2.5 w-2.5 rounded-full bg-indigo-500" />
             Ventas
@@ -101,10 +101,10 @@ export function SalesChart({ data, loading = false }: SalesChartProps) {
       {loading ? (
         <ChartSkeleton />
       ) : data.length === 0 ? (
-        <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50">
+        <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-border bg-muted/30">
           <div className="text-center">
-            <p className="text-sm font-medium text-gray-400">Sin datos para este período</p>
-            <p className="mt-1 text-xs text-gray-300">
+            <p className="text-sm font-medium text-muted-foreground">Sin datos para este período</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">
               Prueba seleccionando un período diferente
             </p>
           </div>
