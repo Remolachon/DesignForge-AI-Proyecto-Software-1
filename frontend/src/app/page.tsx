@@ -7,6 +7,7 @@ import { HOME_CATALOG_PRODUCTS } from "@/constants/productCatalog";
 import { InfiniteGrid } from "@/components/ui/infinite-grid";
 import { Magnetic } from "@/components/core/magnetic";
 import { Tilt } from "@/components/core/tilt";
+import { BackgroundLines } from "@/components/ui/animated-svg-background";
 
 export default function Landing() {
   return (
@@ -57,27 +58,29 @@ export default function Landing() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 bg-primary text-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-semibold mb-6">
-            ¿Quieres vender tus productos con nosotros?
-          </h2>
-          <p className="text-xl mb-8 opacity-90">
-            Registra tu empresa y empieza a publicar tu catálogo en nuestra plataforma.
-          </p>
-          <Link href="/crear-empresa" className="inline-block relative z-50 mt-8">
-            <Magnetic intensityX={0.35} intensityY={0.08} actionArea='global' range={250} springOptions={{ stiffness: 80, damping: 10, mass: 0.5 }}>
-              <Button size="lg" className="group relative overflow-hidden bg-accent text-accent-foreground hover:brightness-110 shadow-lg hover:shadow-2xl transition-all duration-500">
-                {/* Shine effect div */}
-                <div className="pointer-events-none absolute top-0 -left-[100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12 group-hover:[animation:shine-sweep_2.5s_ease-in-out_infinite] z-0" />
+      <section className="relative w-full">
+        <BackgroundLines className="py-20 px-4 flex items-center justify-center flex-col bg-primary dark:bg-background text-white h-[30rem] md:h-[35rem] overflow-hidden">
+          <div className="max-w-4xl mx-auto text-center relative z-20 pointer-events-auto">
+            <h2 className="text-4xl font-semibold mb-6 drop-shadow-sm">
+              ¿Quieres vender tus productos con nosotros?
+            </h2>
+            <p className="text-xl mb-8 opacity-90 font-medium">
+              Registra tu empresa y empieza a publicar tu catálogo en nuestra plataforma.
+            </p>
+            <Link href="/crear-empresa" className="inline-block relative z-50 mt-8 pointer-events-auto">
+              <Magnetic intensityX={0.35} intensityY={0.08} actionArea='global' range={250} springOptions={{ stiffness: 80, damping: 10, mass: 0.5 }}>
+                <Button size="lg" className="group relative overflow-hidden bg-accent text-accent-foreground hover:brightness-110 shadow-lg hover:shadow-2xl transition-all duration-500 pointer-events-auto">
+                  {/* Shine effect div */}
+                  <div className="pointer-events-none absolute top-0 -left-[100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12 group-hover:[animation:shine-sweep_2.5s_ease-in-out_infinite] z-0" />
 
-                <Magnetic intensity={0.06} actionArea='global' range={250} springOptions={{ stiffness: 80, damping: 10, mass: 0.5 }}>
-                  <span className="relative z-10">Comenzar ahora</span>
-                </Magnetic>
-              </Button>
-            </Magnetic>
-          </Link>
-        </div>
+                  <Magnetic intensity={0.06} actionArea='global' range={250} springOptions={{ stiffness: 80, damping: 10, mass: 0.5 }}>
+                    <span className="relative z-10">Comenzar ahora</span>
+                  </Magnetic>
+                </Button>
+              </Magnetic>
+            </Link>
+          </div>
+        </BackgroundLines>
       </section>
     </div>
   );
