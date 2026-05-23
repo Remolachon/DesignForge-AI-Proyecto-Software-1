@@ -11,9 +11,9 @@ interface DeleteModalProps {
 export function DeleteModal({ productName, onConfirm, onCancel, loading = false }: DeleteModalProps) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 text-center">
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Trash2 className="w-6 h-6 text-red-500" />
+            <div className="bg-background text-foreground border border-border rounded-xl shadow-xl w-full max-w-sm p-6 text-center">
+                <div className="w-12 h-12 bg-red-100 dark:bg-red-900/40 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Trash2 className="w-6 h-6 text-red-500 dark:text-red-400" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Eliminar producto</h3>
                 <p className="text-sm text-muted-foreground mb-6">

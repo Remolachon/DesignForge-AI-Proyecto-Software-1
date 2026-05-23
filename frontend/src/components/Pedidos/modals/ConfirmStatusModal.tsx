@@ -10,9 +10,9 @@ interface ConfirmStatusModalProps {
 export function ConfirmStatusModal({ orderId, nextStatus, onConfirm, onCancel }: ConfirmStatusModalProps) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 text-center">
-                <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <RefreshCw className="w-6 h-6 text-amber-600" />
+            <div className="bg-background text-foreground border border-border rounded-xl shadow-xl w-full max-w-sm p-6 text-center">
+                <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/40 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <RefreshCw className="w-6 h-6 text-amber-600 dark:text-amber-400" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Confirmar cambio de estado</h3>
                 <p className="text-sm text-muted-foreground mb-6">

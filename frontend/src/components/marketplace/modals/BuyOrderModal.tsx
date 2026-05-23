@@ -66,7 +66,7 @@ export function BuyOrderModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div className="bg-background text-foreground border border-border rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div>
@@ -105,21 +105,21 @@ export function BuyOrderModal({
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-500 italic py-2">
+              <p className="text-sm text-muted-foreground italic py-2">
                 Este producto no tiene atributos configurados.
               </p>
             )}
 
             <div className="grid grid-cols-2 gap-3 items-end">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Cantidad</label>
                 <input
                   type="number"
                   min={1}
                   max={10}
                   value={quantity}
                   onChange={(event) => onQuantityChange(Number(event.target.value) || 1)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-accent focus:border-transparent transition-shadow"
+                  className="w-full border border-border bg-background rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-accent focus:border-transparent transition-shadow"
                   disabled={loading}
                 />
                 {errors.quantity && (
@@ -148,7 +148,7 @@ export function BuyOrderModal({
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+          <div className="flex justify-end gap-3 pt-4 border-t border-border">
             <Button
               type="button"
               variant="outline"
