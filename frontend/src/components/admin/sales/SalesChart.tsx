@@ -37,34 +37,39 @@ function CustomTooltip({ active, payload, label }: any) {
   return (
     <div className="rounded-xl border border-border bg-popover px-4 py-3 shadow-lg text-sm text-popover-foreground">
       <p className="mb-2 font-semibold text-foreground">{label}</p>
-      {payload.map((entry: any) => (
-        <div key={entry.dataKey} className="flex items-center gap-2">
-          <span
-            className="inline-block h-2.5 w-2.5 rounded-full"
-            style={{ backgroundColor: entry.color }}
-          />
-          <span className="text-muted-foreground capitalize">{entry.name}:</span>
-          <span className="font-medium text-foreground">
-            {entry.dataKey === "transacciones"
-              ? entry.value
-              : formatCOP(entry.value as number)}
-          </span>
-        </div>
-      ))}
+      {payload.map((entry: any) => {
+        if (entry.dataKey === "ganancias" && entry.payload?.hideProfitsInTooltip) return null;
+        return (
+          <div key={entry.dataKey} className="flex items-center gap-2">
+            <span
+              className="inline-block h-2.5 w-2.5 rounded-full"
+              style={{ backgroundColor: entry.color }}
+            />
+            <span className="text-muted-foreground capitalize">{entry.name}:</span>
+            <span className="font-medium text-foreground">
+              {entry.dataKey === "transacciones"
+                ? entry.value
+                : formatCOP(entry.value as number)}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
+const SKELETON_HEIGHTS = [45, 60, 35, 75, 50, 80, 40, 65];
+
 function ChartSkeleton() {
   return (
     <div className="flex h-64 w-full animate-pulse items-end gap-3 px-4 pb-4 pt-6">
-      {Array.from({ length: 8 }).map((_, i) => (
+      {SKELETON_HEIGHTS.map((height, i) => (
         <div
           key={i}
           className="flex-1 rounded-t-md bg-gray-200"
-          style={{ height: `${30 + Math.random() * 60}%` }}
+          style={{ height: `${height}%` }}
         />
       ))}
     </div>
@@ -76,25 +81,30 @@ function ChartSkeleton() {
 interface SalesChartProps {
   data: ChartDataPoint[];
   loading?: boolean;
+  hideProfits?: boolean;
 }
 
-export function SalesChart({ data, loading = false }: SalesChartProps) {
+export function SalesChart({ data, loading = false, hideProfits = false }: SalesChartProps) {
   return (
     <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-card-foreground">Tendencia de ventas</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Ventas y ganancias en el período seleccionado</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {hideProfits ? "Ventas en el período seleccionado" : "Ventas y ganancias en el período seleccionado"}
+          </p>
         </div>
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <span className="inline-block h-2.5 w-2.5 rounded-full bg-indigo-500" />
             Ventas
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-500" />
-            Ganancias
-          </span>
+          {!hideProfits && (
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-500" />
+              Ganancias
+            </span>
+          )}
         </div>
       </div>
 
@@ -111,7 +121,7 @@ export function SalesChart({ data, loading = false }: SalesChartProps) {
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={280}>
-          <LineChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+          <LineChart data={hideProfits ? data.map(d => ({ ...d, hideProfitsInTooltip: true })) : data} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
             <XAxis
               dataKey="label"
@@ -136,16 +146,18 @@ export function SalesChart({ data, loading = false }: SalesChartProps) {
               dot={{ r: 4, fill: "#6366f1", strokeWidth: 0 }}
               activeDot={{ r: 6, strokeWidth: 0 }}
             />
-            <Line
-              type="monotone"
-              dataKey="ganancias"
-              name="Ganancias"
-              stroke="#10b981"
-              strokeWidth={2.5}
-              strokeDasharray="5 4"
-              dot={{ r: 4, fill: "#10b981", strokeWidth: 0 }}
-              activeDot={{ r: 6, strokeWidth: 0 }}
-            />
+            {!hideProfits && (
+              <Line
+                type="monotone"
+                dataKey="ganancias"
+                name="Ganancias"
+                stroke="#10b981"
+                strokeWidth={2.5}
+                strokeDasharray="5 4"
+                dot={{ r: 4, fill: "#10b981", strokeWidth: 0 }}
+                activeDot={{ r: 6, strokeWidth: 0 }}
+              />
+            )}
           </LineChart>
         </ResponsiveContainer>
       )}

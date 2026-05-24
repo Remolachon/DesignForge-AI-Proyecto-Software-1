@@ -355,37 +355,7 @@ def get_company_sales_summary(db: Session, filter: TimeFilter, company_id: int) 
     total_transacciones = int(row.total_transacciones or 0)
     transacciones_aprobadas = int(row.transacciones_aprobadas or 0)
 
-    profit_sql = text("""
-        SELECT
-            COALESCE(SUM((oi.unit_price - p.base_price) * oi.quantity), 0) AS total_ganancias
-        FROM transactions t
-        JOIN orders o      ON o.id = t.order_id
-        JOIN order_items oi ON oi.order_id = o.id
-        JOIN products p    ON p.id = oi.product_id
-        WHERE p.company_id = :company_id
-          AND t.status = 'approved'
-          AND t.transaction_date >= :start
-          AND t.transaction_date <= :end
-    """)
-    profit_row = db.execute(profit_sql, {"company_id": company_id, "start": start, "end": end}).fetchone()
-    total_ganancias = float(profit_row.total_ganancias or 0)
-
-    if total_ganancias <= 0 and total_ventas > 0:
-        approved_sql = text("""
-            SELECT COALESCE(SUM(t.amount), 0) AS ventas_aprobadas
-            FROM transactions t
-            JOIN orders o      ON o.id = t.order_id
-            JOIN order_items oi ON oi.order_id = o.id
-            JOIN products p    ON p.id = oi.product_id
-            WHERE p.company_id = :company_id
-              AND t.status = 'approved'
-              AND t.transaction_date >= :start
-              AND t.transaction_date <= :end
-        """)
-        approved_row = db.execute(
-            approved_sql, {"company_id": company_id, "start": start, "end": end}
-        ).fetchone()
-        total_ganancias = float(approved_row.ventas_aprobadas or 0) * 0.30
+    total_ganancias = 0.0
 
     ticket_promedio = total_ventas / total_transacciones if total_transacciones > 0 else 0.0
     tasa_aprobacion = (
@@ -419,14 +389,8 @@ def get_company_sales_chart(db: Session, filter: TimeFilter, company_id: int) ->
         SELECT
             DATE_TRUNC('{trunc_unit}', t.transaction_date) AS period,
             COALESCE(SUM(t.amount), 0)                      AS ventas,
-            COUNT(DISTINCT t.id)                            AS transacciones,
-            COALESCE(
-                SUM(
-                    CASE WHEN t.status = 'approved'
-                    THEN (oi.unit_price - p.base_price) * oi.quantity
-                    ELSE 0 END
-                ), 0
-            ) AS ganancias
+            COUNT(DISTINCT t.id)                            AS transacciones
+
         FROM transactions t
         JOIN orders o      ON o.id = t.order_id
         JOIN order_items oi ON oi.order_id = o.id
@@ -444,11 +408,8 @@ def get_company_sales_chart(db: Session, filter: TimeFilter, company_id: int) ->
     for row in rows:
         period: datetime = row.period
         ventas = float(row.ventas or 0)
-        ganancias = float(row.ganancias or 0)
         transacciones = int(row.transacciones or 0)
-
-        if ganancias <= 0 and ventas > 0:
-            ganancias = ventas * 0.30
+        ganancias = 0.0
 
         if trunc_unit == "hour":
             label = period.strftime("%H:%M")

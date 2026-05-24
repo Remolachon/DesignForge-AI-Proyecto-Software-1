@@ -164,14 +164,6 @@ export default function FuncionarioVentasPage() {
       accentColor: "bg-indigo-500",
     },
     {
-      id: "total-ganancias",
-      title: "Ganancias Netas",
-      value: summary ? formatCOP(summary.total_ganancias) : "—",
-      subtitle: "Margen sobre costo base",
-      icon: <TrendingUp />,
-      accentColor: "bg-emerald-500",
-    },
-    {
       id: "total-transacciones",
       title: "Transacciones",
       value: summary ? String(summary.total_transacciones) : "—",
@@ -239,7 +231,7 @@ export default function FuncionarioVentasPage() {
 
         {/* ── Sales chart ── */}
         <section aria-label="Gráfica de ventas">
-          <SalesChart data={chartData} loading={chartLoading} />
+          <SalesChart data={chartData} loading={chartLoading} hideProfits={true} />
         </section>
 
         {/* ── Transactions table ── */}

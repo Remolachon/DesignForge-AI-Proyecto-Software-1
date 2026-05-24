@@ -64,7 +64,7 @@ export default function Header() {
   // Ruta del prefijo de navegación según rol (puede diferir del nombre del rol)
   const roleRoutePrefixMap: Record<string, string> = {
     administrador: "/administrador",
-    funcionario_adm: "/funcionario",
+    funcionario_adm: "/funcionario-adm",
     funcionario: "/funcionario",
   };
   const roleRoutePrefix = roleRoutePrefixMap[role ?? ""] ?? `/${role}`;
@@ -84,13 +84,14 @@ export default function Header() {
       // Switched to Cliente mode
       if (pathname.startsWith(roleRoutePrefix)) {
         const strippedPath = pathname.replace(roleRoutePrefix, "");
+        const validClientPaths = ["/pedidos", "/crear-pedido"];
 
         if (strippedPath.startsWith("/marketplace")) {
           router.push(strippedPath);
-        } else if (strippedPath === "" || strippedPath === "/") {
-          router.push("/cliente/dashboard");
-        } else {
+        } else if (validClientPaths.some(p => strippedPath.startsWith(p))) {
           router.push(`/cliente${strippedPath}`);
+        } else {
+          router.push("/cliente/dashboard");
         }
       } else {
         router.push("/cliente/dashboard");

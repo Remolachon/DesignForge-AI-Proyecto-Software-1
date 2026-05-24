@@ -75,7 +75,7 @@ export default function FuncionarioAdmDashboard() {
               description="Administrar productos"
             />
             <QuickActionCard
-              href="/funcionario/ventas"
+              href="/funcionario-adm/ventas"
               icon={<TrendingUp className="h-5 w-5 text-white" />}
               iconBg="bg-gradient-to-br from-blue-500 to-indigo-600"
               title="Ventas y Finanzas"
