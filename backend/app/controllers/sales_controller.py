@@ -64,7 +64,7 @@ def _require_funcionario(db: Session, current_user) -> tuple[User, int]:
         if not db_user:
             raise HTTPException(status_code=404, detail="Usuario no existe en DB")
         role_name = UserService.get_user_role_name(db, db_user.id)
-        if role_name != "funcionario":
+        if role_name not in {"funcionario", "funcionario_adm"}:
             raise HTTPException(status_code=403, detail="No autorizado")
         if not db_user.company_id:
             raise HTTPException(

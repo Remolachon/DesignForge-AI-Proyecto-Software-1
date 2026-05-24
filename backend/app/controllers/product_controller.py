@@ -43,7 +43,7 @@ def _get_funcionario_user_with_retry(db: Session, current_user):
             raise HTTPException(status_code=404, detail="Usuario no existe en DB")
 
         role_name = UserService.get_user_role_name(db, db_user.id)
-        if role_name not in ("funcionario", "administrador"):
+        if role_name not in ("funcionario", "funcionario_adm", "administrador"):
             raise HTTPException(status_code=403, detail="No autorizado")
 
         return db_user
@@ -90,7 +90,7 @@ def get_admin_products(
 
         if role_name == "administrador":
             company_id = None
-        elif role_name == "funcionario":
+        elif role_name in ("funcionario", "funcionario_adm"):
             company_id = db_user.company_id or None
         else:
             raise HTTPException(status_code=403, detail="No autorizado")
@@ -119,7 +119,7 @@ def get_admin_products_page(
 
         if role_name == "administrador":
             company_id = None
-        elif role_name == "funcionario":
+        elif role_name in ("funcionario", "funcionario_adm"):
             company_id = db_user.company_id or None
         else:
             raise HTTPException(status_code=403, detail="No autorizado")

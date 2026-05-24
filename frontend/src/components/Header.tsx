@@ -64,13 +64,16 @@ export default function Header() {
   // Ruta del prefijo de navegación según rol (puede diferir del nombre del rol)
   const roleRoutePrefixMap: Record<string, string> = {
     administrador: "/administrador",
-    funcionario_adm: "/funcionario-adm",
+    funcionario_adm: "/funcionario",
     funcionario: "/funcionario",
   };
   const roleRoutePrefix = roleRoutePrefixMap[role ?? ""] ?? `/${role}`;
 
   // Determinar si estamos en el modo del rol o en el modo cliente
-  const isRoleMode = pathname?.startsWith(roleRoutePrefix);
+  const isRoleMode =
+    role === "funcionario_adm"
+      ? Boolean(pathname?.startsWith("/funcionario") || pathname?.startsWith("/funcionario-adm"))
+      : pathname?.startsWith(roleRoutePrefix);
 
   const handleModeToggle = (targetIsRole: boolean) => {
     if (!pathname || !role) return;

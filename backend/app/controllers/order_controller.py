@@ -180,7 +180,9 @@ def get_dashboard_data(
 
         if requested_role == "cliente":
             dashboard_role = "cliente"
-        elif requested_role == "funcionario" and role_name == "funcionario":
+        elif requested_role == "funcionario" and role_name in {"funcionario", "funcionario_adm"}:
+            dashboard_role = "funcionario"
+        elif role_name == "funcionario_adm":
             dashboard_role = "funcionario"
 
         return OrderService.get_dashboard_data(
@@ -255,7 +257,7 @@ def get_funcionario_orders_page(
 
     try:
         role_name = UserService.get_user_role_name(db, db_user.id)
-        if role_name != "funcionario":
+        if role_name not in {"funcionario", "funcionario_adm"}:
             raise HTTPException(status_code=403, detail="No autorizado")
 
         return OrderService.get_funcionario_orders_page(
@@ -285,7 +287,7 @@ def update_order_status(
 
     try:
         role_name = UserService.get_user_role_name(db, db_user.id)
-        if role_name != "funcionario":
+        if role_name not in {"funcionario", "funcionario_adm"}:
             raise HTTPException(status_code=403, detail="No autorizado")
 
         updated_order = OrderService.update_order_status(
@@ -386,7 +388,7 @@ def get_payment_status(
         raise HTTPException(status_code=404, detail="Orden no encontrada")
 
     role_name = UserService.get_user_role_name(db, db_user.id)
-    if order.user_id != db_user.id and role_name != "funcionario":
+    if order.user_id != db_user.id and role_name not in {"funcionario", "funcionario_adm"}:
         raise HTTPException(status_code=403, detail="No tienes permiso")
 
     return OrderService.get_order_payment_status(db, order_id)

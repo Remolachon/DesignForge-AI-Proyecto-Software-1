@@ -422,7 +422,7 @@ class OrderService:
 
     @staticmethod
     def get_dashboard_data(db: Session, user_id: int, role_name: str, company_id: int | None = None):
-        is_funcionario = role_name == "funcionario"
+        is_funcionario = role_name in {"funcionario", "funcionario_adm"}
         is_admin = role_name == "administrador"
 
         query = (
@@ -1125,7 +1125,7 @@ class OrderService:
         # Admins can see any order. Funcionarios see orders linked to their company via the product.
         if role_name == "administrador":
             pass
-        elif role_name == "funcionario":
+        elif role_name in {"funcionario", "funcionario_adm"}:
             if not company_id:
                 return None
             query = query.filter(Order.items.any(OrderItem.product.has(Product.company_id == company_id)))

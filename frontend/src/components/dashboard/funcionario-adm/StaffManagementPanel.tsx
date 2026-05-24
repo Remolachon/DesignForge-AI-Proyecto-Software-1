@@ -138,9 +138,19 @@ export function StaffManagementPanel() {
       setInviteEmail('');
       await loadStaff();
     } catch (err: unknown) {
-      console.error('Error al invitar:', err);
-      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      setInviteError(detail || 'Ocurrió un error al intentar invitar al usuario.');
+      const axiosError = err as {
+        response?: { status?: number; data?: { detail?: string } };
+        message?: string;
+      };
+      const status = axiosError.response?.status;
+      const detail = axiosError.response?.data?.detail;
+
+      if (status && [400, 403, 404].includes(status)) {
+        setInviteError(detail || 'No se pudo completar la invitación.');
+      } else {
+        console.error('Error al invitar:', err);
+        setInviteError(detail || axiosError.message || 'Ocurrió un error al intentar invitar al usuario.');
+      }
     } finally {
       setInviteLoading(false);
     }

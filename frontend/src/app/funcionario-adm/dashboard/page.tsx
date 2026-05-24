@@ -59,7 +59,7 @@ export default function FuncionarioAdmDashboard() {
         {/* ── ACCESOS RÁPIDOS (mismo bloque que el dashboard funcionario) ── */}
         <section>
           <h2 className="mb-4 text-xl font-semibold">Accesos Rápidos</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <QuickActionCard
               href="/funcionario/pedidos"
               icon={<Package className="h-5 w-5 text-primary" />}
@@ -68,17 +68,10 @@ export default function FuncionarioAdmDashboard() {
               description="Actualizar estados"
             />
             <QuickActionCard
-              href="/funcionario/calendario"
-              icon={<Clock className="h-5 w-5 text-white" />}
-              iconBg="bg-gradient-to-br from-accent to-accent-magenta"
-              title="Calendario"
-              description="Organizar producción"
-            />
-            <QuickActionCard
               href="/funcionario/marketplace"
               icon={<ShoppingBag className="h-5 w-5 text-primary" />}
               iconBg="bg-primary/10"
-              title="Marketplace"
+              title="Gestionar Marketplace"
               description="Administrar productos"
             />
             <QuickActionCard
