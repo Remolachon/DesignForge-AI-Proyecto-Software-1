@@ -98,7 +98,7 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
                   </span>
                   <span className="text-sm text-muted-foreground font-medium uppercase tracking-wider">COP</span>
                 </div>
-                
+
                 {initialProduct.reviews > 0 && (
                   <button
                     type="button"
@@ -161,21 +161,9 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
             <div className="mt-6 lg:mt-8 grid grid-cols-2 gap-4">
               <div className="flex items-center gap-3 group p-3 rounded-xl hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50">
                 <div className="p-2.5 bg-primary/10 rounded-lg text-primary group-hover:scale-110 transition-transform">
-                  <Truck className="w-5 h-5" />
-                </div>
-                <span className="text-sm font-semibold text-foreground/80">Envío seguro</span>
-              </div>
-              <div className="flex items-center gap-3 group p-3 rounded-xl hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50">
-                <div className="p-2.5 bg-primary/10 rounded-lg text-primary group-hover:scale-110 transition-transform">
                   <Leaf className="w-5 h-5" />
                 </div>
                 <span className="text-sm font-semibold text-foreground/80">Material premium</span>
-              </div>
-              <div className="flex items-center gap-3 group p-3 rounded-xl hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50">
-                <div className="p-2.5 bg-primary/10 rounded-lg text-primary group-hover:scale-110 transition-transform">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <span className="text-sm font-semibold text-foreground/80">Garantía total</span>
               </div>
               <div className="flex items-center gap-3 group p-3 rounded-xl hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50">
                 <div className="p-2.5 bg-primary/10 rounded-lg text-primary group-hover:scale-110 transition-transform">

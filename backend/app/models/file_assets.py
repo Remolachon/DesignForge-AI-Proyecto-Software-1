@@ -1,7 +1,19 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, BigInteger, SmallInteger, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, BigInteger, SmallInteger, DateTime, Enum as SAEnum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database.database import Base
+
+FILE_TYPE_VALUES = (
+    "product_main",
+    "product_gallery",
+    "product_thumbnail",
+    "company_logo",
+    "company_banner",
+    "reference_image",
+    "ai_generated",
+    "invoice",
+    "payment_receipt",
+)
 
 class FileAsset(Base):
     __tablename__ = "file_assets"
@@ -9,7 +21,15 @@ class FileAsset(Base):
     id = Column(Integer, primary_key=True, index=True)
     bucket_name = Column(String, nullable=False)
     storage_path = Column(String, nullable=False)
-    file_type = Column(String, nullable=True)
+    file_type = Column(
+        SAEnum(
+            *FILE_TYPE_VALUES,
+            name="file_type_enum",
+            native_enum=True,
+            validate_strings=True,
+        ),
+        nullable=True,
+    )
     mime_type = Column(String, nullable=True)
     size_bytes = Column(BigInteger, nullable=True)
     sort_order = Column(SmallInteger, nullable=True)

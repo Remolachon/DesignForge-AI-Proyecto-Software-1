@@ -58,7 +58,7 @@ const SortableMediaItem = ({
         <div
             ref={setNodeRef}
             style={style}
-            className={`relative flex flex-col md:flex-row items-center gap-3 p-3 bg-white border rounded-xl shadow-sm group ${
+            className={`relative flex flex-col md:flex-row items-center gap-3 p-3 bg-background border rounded-xl shadow-sm group ${
                 isDragging ? 'shadow-md ring-2 ring-primary/50 opacity-90' : 'border-border'
             }`}
         >
@@ -233,7 +233,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({ items, onChange, e
                     isDragActive
                         ? 'border-primary bg-primary/5'
                         : error
-                        ? 'border-red-300 bg-red-50/50 hover:bg-red-50'
+                        ? 'border-red-300 bg-red-50/50 hover:bg-red-50 dark:bg-red-900/40 dark:hover:bg-red-900/60'
                         : 'border-border hover:bg-muted/50'
                 }`}
             >

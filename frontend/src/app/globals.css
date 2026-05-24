@@ -8,77 +8,98 @@
 :root {
   --font-size: 16px;
 
-  --background: #ffffff;
-  --foreground: oklch(0.145 0 0);
+  /* Base */
+  --background: #F7F9FC;
+  --foreground: #0F172A;
 
-  --primary: #0B213F;
-  --primary-foreground: oklch(1 0 0);
+  /* Brand */
+  --primary: #132238;
+  --primary-foreground: #FFFFFF;
 
-  --secondary: oklch(0.95 0.0058 264.53);
-  --secondary-foreground: #030213;
+  /* Surfaces */
+  --secondary: #EEF2F7;
+  --secondary-foreground: #1E293B;
 
-  --accent: #00E5C2;
-  --accent-foreground: #0B213F;
-  --accent-magenta: #FF2D95; 
+  /* Accent system */
+  --accent: #3CF2D0;
+  --accent-foreground: #062B2A;
 
-  --muted: #ececf0;
-  --muted-foreground: #717182;
+  /* Creative accent */
+  --accent-magenta: #FF4DA6;
 
-  --destructive: #d4183d;
-  --destructive-foreground: #ffffff;
+  /* Neutral system */
+  --muted: #E9EEF5;
+  --muted-foreground: #64748B;
 
-  --border: rgba(0, 0, 0, 0.1);
+  /* Feedback */
+  --destructive: #E11D48;
+  --destructive-foreground: #FFFFFF;
+
+  --success: #10B981;
+  --warning: #F59E0B;
+
+  /* UI */
+  --border: rgba(15, 23, 42, 0.08);
   --input: transparent;
-  --input-background: #f3f3f5;
+  --input-background: #FFFFFF;
 
-  --ring: oklch(0.708 0 0);
+  --ring: #3CF2D0;
 
-  --radius: 0.625rem;
+  --radius: 0.9rem;
 
-  /* extras */
-  --gray-900: #1a1a1a;
-  --gray-700: #4a4a4a;
-  --gray-400: #9ca3af;
-  --gray-100: #f3f4f6;
-
-  --success: #10b981;
-  --warning: #f59e0b;
+  /* Extra neutrals */
+  --gray-900: #0F172A;
+  --gray-700: #334155;
+  --gray-400: #94A3B8;
+  --gray-100: #F1F5F9;
 }
 
 /* =========================
    DARK MODE
 ========================= */
 .dark {
-  --background: #0B1120;
+  /* Base */
+  --background: #07111F;
   --foreground: #F8FAFC;
 
-  --primary: #38BDF8;
-  --primary-foreground: #020617;
+  /* Brand */
+  --primary: #7DD3FC;
+  --primary-foreground: #04111D;
 
-  --secondary: #1E293B;
-  --secondary-foreground: #F8FAFC;
+  /* Surfaces */
+  --secondary: #111C2D;
+  --secondary-foreground: #E2E8F0;
 
-  --accent: #00E5C2;
-  --accent-foreground: #0B213F;
-  --accent-magenta: #FF2D95;
+  /* Accent */
+  --accent: #3CF2D0;
+  --accent-foreground: #041B1A;
 
-  --muted: #1E293B;
+  /* Creative accent */
+  --accent-magenta: #FF4DA6;
+
+  /* Neutral system */
+  --muted: #162235;
   --muted-foreground: #94A3B8;
 
-  --destructive: #EF4444;
-  --destructive-foreground: #FAFAFA;
+  /* Feedback */
+  --destructive: #FB7185;
+  --destructive-foreground: #FFFFFF;
 
-  --border: rgba(255, 255, 255, 0.1);
+  --success: #34D399;
+  --warning: #FBBF24;
+
+  /* UI */
+  --border: rgba(255, 255, 255, 0.08);
   --input: transparent;
-  --input-background: #1E293B;
+  --input-background: #111C2D;
 
-  --ring: #00E5C2;
+  --ring: #3CF2D0;
 
-  /* extras */
-  --gray-900: #F3F4F6;
-  --gray-700: #D1D5DB;
-  --gray-400: #9CA3AF;
-  --gray-100: #1F2937;
+  /* Extra neutrals */
+  --gray-900: #F8FAFC;
+  --gray-700: #CBD5E1;
+  --gray-400: #94A3B8;
+  --gray-100: #1A2435;
 }
 
 /* =========================
@@ -103,7 +124,15 @@
    CUSTOM ANIMATIONS
 ========================= */
 @keyframes shine-sweep {
-  0% { left: -100%; }
-  20% { left: 200%; }
-  100% { left: 200%; }
+  0% {
+    left: -100%;
+  }
+
+  20% {
+    left: 200%;
+  }
+
+  100% {
+    left: 200%;
+  }
 }

@@ -28,17 +28,17 @@ function formatDate(iso: string | null): string {
 
 const STATUS_STYLES: Record<string, string> = {
   approved:
-    "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
+    "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-400 dark:ring-emerald-900",
   pending:
-    "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
+    "bg-amber-50 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:ring-amber-900",
   declined:
-    "bg-red-50 text-red-700 ring-1 ring-red-200",
+    "bg-red-50 text-red-700 ring-1 ring-red-200 dark:bg-red-900/40 dark:text-red-400 dark:ring-red-900",
   expired:
-    "bg-gray-100 text-gray-600 ring-1 ring-gray-200",
+    "bg-gray-100 text-gray-600 ring-1 ring-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700",
   cancelled:
-    "bg-gray-100 text-gray-600 ring-1 ring-gray-200",
+    "bg-gray-100 text-gray-600 ring-1 ring-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700",
   refunded:
-    "bg-purple-50 text-purple-700 ring-1 ring-purple-200",
+    "bg-purple-50 text-purple-700 ring-1 ring-purple-200 dark:bg-purple-900/40 dark:text-purple-400 dark:ring-purple-900",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -115,19 +115,19 @@ export function TransactionsTable({
   const canNext = offset + limit < total;
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+    <div className="rounded-2xl border border-border bg-card shadow-sm">
       {/* Header */}
-      <div className="flex flex-col gap-3 border-b border-gray-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-b border-border px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Transacciones</h2>
-          <p className="text-xs text-gray-400">
+          <h2 className="text-lg font-semibold text-card-foreground">Transacciones</h2>
+          <p className="text-xs text-muted-foreground">
             {total > 0 ? `${from}–${to} de ${total} transacciones` : "Sin transacciones en este período"}
           </p>
         </div>
 
         {/* Status filter pills */}
         <div
-          className="inline-flex items-center gap-1 rounded-xl bg-gray-100 p-1"
+          className="inline-flex items-center gap-1 rounded-xl bg-muted p-1"
           role="group"
           aria-label="Filtro de estado"
         >
@@ -141,8 +141,8 @@ export function TransactionsTable({
               className={[
                 "rounded-lg px-3 py-1 text-xs font-medium transition-all duration-200",
                 statusFilter === opt.value
-                  ? "bg-white text-gray-900 shadow-sm ring-1 ring-gray-200/70"
-                  : "text-gray-500 hover:text-gray-700",
+                  ? "bg-background text-foreground shadow-sm ring-1 ring-border"
+                  : "text-muted-foreground hover:text-foreground",
               ].join(" ")}
             >
               {opt.label}
@@ -153,33 +153,33 @@ export function TransactionsTable({
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-50 text-sm">
+        <table className="min-w-full divide-y divide-border text-sm">
           <thead>
-            <tr className="bg-gray-50/60">
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">
+            <tr className="bg-muted">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 ID
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Cliente
               </th>
-              <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Monto
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Estado
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Método
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Fecha
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Ref. PayU
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
+          <tbody className="divide-y divide-border">
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
             ) : items.length === 0 ? (
@@ -200,28 +200,28 @@ export function TransactionsTable({
               items.map((tx) => (
                 <tr
                   key={tx.id}
-                  className="transition-colors duration-100 hover:bg-gray-50/70"
+                  className="transition-colors duration-100 hover:bg-muted/50"
                 >
-                  <td className="px-4 py-3.5 font-mono text-xs text-gray-500">
+                  <td className="px-4 py-3.5 font-mono text-xs text-muted-foreground">
                     #{tx.id}
                   </td>
                   <td className="px-4 py-3.5">
-                    <p className="font-medium text-gray-800">{tx.customer_name}</p>
-                    <p className="text-xs text-gray-400">{tx.customer_email}</p>
+                    <p className="font-medium text-foreground">{tx.customer_name}</p>
+                    <p className="text-xs text-muted-foreground">{tx.customer_email}</p>
                   </td>
-                  <td className="px-4 py-3.5 text-right font-semibold text-gray-900">
+                  <td className="px-4 py-3.5 text-right font-semibold text-foreground">
                     {formatCOP(tx.amount)}
                   </td>
                   <td className="px-4 py-3.5">
                     <StatusBadge status={tx.status} />
                   </td>
-                  <td className="px-4 py-3.5 capitalize text-gray-600">
+                  <td className="px-4 py-3.5 capitalize text-muted-foreground">
                     {tx.payment_method}
                   </td>
-                  <td className="px-4 py-3.5 text-gray-500 text-xs whitespace-nowrap">
+                  <td className="px-4 py-3.5 text-muted-foreground text-xs whitespace-nowrap">
                     {formatDate(tx.transaction_date)}
                   </td>
-                  <td className="px-4 py-3.5 font-mono text-xs text-gray-400 max-w-[10rem] truncate">
+                  <td className="px-4 py-3.5 font-mono text-xs text-muted-foreground max-w-[10rem] truncate">
                     {tx.payu_reference ?? "—"}
                   </td>
                 </tr>
@@ -233,8 +233,8 @@ export function TransactionsTable({
 
       {/* Pagination */}
       {total > 0 && (
-        <div className="flex items-center justify-between border-t border-gray-100 px-6 py-3">
-          <p className="text-xs text-gray-400">
+        <div className="flex items-center justify-between border-t border-border px-6 py-3">
+          <p className="text-xs text-muted-foreground">
             Mostrando {from}–{to} de {total}
           </p>
           <div className="flex items-center gap-2">
@@ -243,7 +243,7 @@ export function TransactionsTable({
               type="button"
               onClick={onPrev}
               disabled={!canPrev || loading}
-              className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex items-center gap-1 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronLeft className="h-3.5 w-3.5" />
               Anterior
@@ -253,7 +253,7 @@ export function TransactionsTable({
               type="button"
               onClick={onNext}
               disabled={!canNext || loading}
-              className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex items-center gap-1 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
             >
               Siguiente
               <ChevronRight className="h-3.5 w-3.5" />

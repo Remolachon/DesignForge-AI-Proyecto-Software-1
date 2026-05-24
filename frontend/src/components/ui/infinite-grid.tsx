@@ -42,13 +42,13 @@ export const InfiniteGrid = ({ children, className }: { children?: React.ReactNo
             )}
         >
             {/* Layer 1: Subtle background grid (always visible) */}
-            <div className="absolute inset-0 z-0 opacity-[0.05]">
+            <div className="absolute inset-0 z-0 opacity-[0.07]">
                 <GridPattern offsetX={gridOffsetX} offsetY={gridOffsetY} size={gridSize} />
             </div>
 
             {/* Layer 2: Highlighted grid (revealed by mouse mask) */}
             <motion.div
-                className="absolute inset-0 z-0 opacity-40"
+                className="absolute inset-0 z-0 opacity-85"
                 style={{ maskImage, WebkitMaskImage: maskImage }}
             >
                 <GridPattern offsetX={gridOffsetX} offsetY={gridOffsetY} size={gridSize} />

@@ -3,21 +3,26 @@ class AudioService {
   private successOrder: HTMLAudioElement | null = null;
   private initialized = false;
 
+  private createSound(src: string, volume: number) {
+    const audio = new Audio(src);
+    audio.preload = 'auto';
+    audio.volume = volume;
+    audio.addEventListener('error', () => {
+      console.warn(`AudioService: No se pudo cargar ${src}.`);
+    });
+    return audio;
+  }
+
   private init() {
     if (this.initialized || typeof window === 'undefined') return;
 
-    this.loginBell = this.createAudio('/sounds/happy-bell-alert.ogg');
-    this.successOrder = this.createAudio('/sounds/success-order.mp3');
+    this.loginBell = this.createSound('/sounds/happy-bell-alert.ogg', 0.5);
+    this.successOrder = this.createSound('/sounds/elevator-bell.ogg', 0.6);
 
     this.initialized = true;
   }
 
-  private createAudio(src: string) {
-    const audio = new Audio(src);
-    audio.preload = 'auto';
-    audio.volume = 0.6;
-    return audio;
-  }
+  // keep only createSound (used above) and centralized playAudio
 
   private playAudio(audio: HTMLAudioElement | null, fallbackFrequency: number) {
     if (!audio) {
@@ -39,8 +44,7 @@ class AudioService {
   private playFallbackTone(frequency: number) {
     if (typeof window === 'undefined') return;
 
-    const audioWindow = window as Window & { webkitAudioContext?: typeof AudioContext };
-    const AudioContextCtor = audioWindow.AudioContext ?? audioWindow.webkitAudioContext;
+    const AudioContextCtor = (window as any).AudioContext ?? (window as any).webkitAudioContext;
 
     if (!AudioContextCtor) return;
 

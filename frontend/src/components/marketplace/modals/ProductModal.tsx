@@ -170,9 +170,9 @@ export function ProductModal({ mode, initialData, initialMediaItems, initialShap
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="bg-background text-foreground border border-border rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 {/* Header del modal */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 bg-white z-10">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 bg-background z-10">
                     <h2 className="text-lg font-semibold">
                         {mode === 'create' ? 'Agregar Producto' : 'Editar Producto'}
                     </h2>
@@ -191,7 +191,7 @@ export function ProductModal({ mode, initialData, initialMediaItems, initialShap
                             value={form.name}
                             onChange={(e) => set('name', e.target.value)}
                             placeholder="Ej: Letrero Neon Estándar"
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm
+                            className="w-full px-3 py-2 border border-border bg-background rounded-lg text-sm
                          focus:outline-none focus:ring-2 focus:ring-accent transition-shadow"
                         />
                     </FormField>
@@ -201,7 +201,7 @@ export function ProductModal({ mode, initialData, initialMediaItems, initialShap
                             onChange={(e) => set('description', e.target.value)}
                             placeholder="Descripción breve del producto..."
                             rows={3}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm resize-none
+                            className="w-full px-3 py-2 border border-border bg-background rounded-lg text-sm resize-none
                          focus:outline-none focus:ring-2 focus:ring-accent transition-shadow"
                         />
                     </FormField>
@@ -213,7 +213,7 @@ export function ProductModal({ mode, initialData, initialMediaItems, initialShap
                                 value={form.basePrice}
                                 onChange={(e) => set('basePrice', e.target.value)}
                                 placeholder="Ej: 150000"
-                                className="w-full px-3 py-2 border border-border rounded-lg text-sm
+                                className="w-full px-3 py-2 border border-border bg-background rounded-lg text-sm
                            focus:outline-none focus:ring-2 focus:ring-accent transition-shadow"
                             />
                         </FormField>
@@ -224,7 +224,7 @@ export function ProductModal({ mode, initialData, initialMediaItems, initialShap
                                 value={form.stock}
                                 onChange={(e) => set('stock', e.target.value)}
                                 placeholder="Ej: 10"
-                                className="w-full px-3 py-2 border border-border rounded-lg text-sm
+                                className="w-full px-3 py-2 border border-border bg-background rounded-lg text-sm
                            focus:outline-none focus:ring-2 focus:ring-accent transition-shadow"
                             />
                         </FormField>
@@ -233,7 +233,7 @@ export function ProductModal({ mode, initialData, initialMediaItems, initialShap
                         <select
                             value={form.productType}
                             onChange={(e) => set('productType', e.target.value)}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white
+                            className="w-full px-3 py-2 border border-border bg-background rounded-lg text-sm
                          focus:outline-none focus:ring-2 focus:ring-accent transition-shadow"
                         >
                             {PRODUCT_TYPES.map((t) => (
@@ -248,7 +248,7 @@ export function ProductModal({ mode, initialData, initialMediaItems, initialShap
                         <select
                             value={form.productShape}
                             onChange={(e) => set('productShape', e.target.value)}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white
+                            className="w-full px-3 py-2 border border-border bg-background rounded-lg text-sm
                          focus:outline-none focus:ring-2 focus:ring-accent transition-shadow"
                             disabled={loadingShapes}
                         >
@@ -284,7 +284,7 @@ export function ProductModal({ mode, initialData, initialMediaItems, initialShap
                                                 value={shapeAttributeValues[attribute.code] || ''}
                                                 onChange={(event) => setShapeAttributeValues((prev) => ({ ...prev, [attribute.code]: event.target.value }))}
                                                 placeholder={attribute.placeholder || `Ej: ${attribute.label.toLowerCase()}`}
-                                                className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-accent transition-shadow"
+                                                className="w-full px-3 py-2 border border-border bg-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-shadow"
                                             />
                                         ) : (
                                             <input
@@ -292,7 +292,7 @@ export function ProductModal({ mode, initialData, initialMediaItems, initialShap
                                                 value={shapeAttributeValues[attribute.code] || ''}
                                                 onChange={(event) => setShapeAttributeValues((prev) => ({ ...prev, [attribute.code]: event.target.value }))}
                                                 placeholder={attribute.placeholder || `Ej: ${attribute.label.toLowerCase()}`}
-                                                className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-accent transition-shadow"
+                                                className="w-full px-3 py-2 border border-border bg-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-shadow"
                                             />
                                         )}
                                     </FormField>
@@ -315,7 +315,7 @@ export function ProductModal({ mode, initialData, initialMediaItems, initialShap
                     </FormField>
 
                     {/* Acciones */}
-                    <div className="flex justify-end gap-3 pt-6 sticky bottom-0 bg-white">
+                    <div className="flex justify-end gap-3 pt-6 sticky bottom-0 bg-background">
                         <Button type="button" variant="outline" onClick={onClose}>
                             Cancelar
                         </Button>

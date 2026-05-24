@@ -153,15 +153,15 @@ export function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModa
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'En diseño':
-        return 'bg-blue-100 text-blue-700';
+        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400';
       case 'En producción':
-        return 'bg-yellow-100 text-yellow-700';
+        return 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400';
       case 'Listo para entregar':
-        return 'bg-green-100 text-green-700';
+        return 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400';
       case 'Entregado':
-        return 'bg-emerald-600 text-white';
+        return 'bg-emerald-600 text-white dark:bg-emerald-900/60 dark:text-emerald-400';
       default:
-        return 'bg-gray-100 text-gray-600';
+        return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -199,7 +199,7 @@ export function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModa
             {/* Imagen */}
             {(resolvedMedia.length > 0 || resolvedImageUrl) && (
               <div className="space-y-3">
-                <div className="relative w-full aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                <div className="relative w-full aspect-video bg-muted rounded-lg overflow-hidden">
                   {displayMedia.length > 0 && displayMedia[currentMediaIndex]?.url ? (
                     <>
                       {displayMedia[currentMediaIndex].mediaKind === 'video' || (displayMedia[currentMediaIndex].mimeType || '').startsWith('video/') ? (

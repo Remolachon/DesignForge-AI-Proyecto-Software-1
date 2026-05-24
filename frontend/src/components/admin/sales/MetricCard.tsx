@@ -21,7 +21,7 @@ export function MetricCard({
 }: MetricCardProps) {
   if (loading) {
     return (
-      <div className="relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm">
         {/* Skeleton shimmer */}
         <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
         <div className="flex items-start justify-between">
@@ -37,7 +37,7 @@ export function MetricCard({
   }
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
       {/* Decorative accent bar */}
       <div
         className={`absolute left-0 top-0 h-full w-1 rounded-l-2xl ${accentColor} opacity-80 transition-opacity group-hover:opacity-100`}
@@ -45,14 +45,14 @@ export function MetricCard({
 
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1 space-y-1 pl-2">
-          <p className="truncate text-xs font-medium uppercase tracking-wider text-gray-500">
+          <p className="truncate text-xs font-medium uppercase tracking-wider text-muted-foreground">
             {title}
           </p>
-          <p className="text-2xl font-bold leading-tight text-gray-900 sm:text-3xl">
+          <p className="text-2xl font-bold leading-tight text-foreground sm:text-3xl">
             {value}
           </p>
           {subtitle && (
-            <p className="text-xs text-gray-400">{subtitle}</p>
+            <p className="text-xs text-muted-foreground/70">{subtitle}</p>
           )}
         </div>
 

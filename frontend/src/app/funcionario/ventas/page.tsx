@@ -190,17 +190,17 @@ export default function FuncionarioVentasPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50">
+    <div className="min-h-screen bg-background text-foreground">
       <Header />
 
       <main className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
         {/* ── Page header ── */}
         <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
               Ventas de mi Empresa
             </h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-muted-foreground">
               Monitorea el rendimiento financiero y el historial de transacciones de tus productos.
             </p>
           </div>
@@ -212,7 +212,7 @@ export default function FuncionarioVentasPage() {
         {globalError && (
           <div
             role="alert"
-            className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/40 dark:text-red-400"
           >
             <Receipt className="mt-0.5 h-4 w-4 flex-shrink-0" />
             <span>{globalError}</span>
@@ -245,7 +245,7 @@ export default function FuncionarioVentasPage() {
         {/* ── Transactions table ── */}
         <section aria-label="Tabla de transacciones">
           {txError ? (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/40 dark:text-red-400">
               {txError}
             </div>
           ) : (
