@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/buttonMayus";
 import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect } from "react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { syncRoleFromBackend } from "@/services/auth.service";
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -17,7 +18,7 @@ export default function Header() {
   const [storedName, setStoredName] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
 
-  // Obtener datos desde localStorage
+  // Obtener datos desde localStorage y sincronizar rol
   useEffect(() => {
     const name = localStorage.getItem("user_name");
     const userRole = localStorage.getItem("role");
@@ -27,6 +28,14 @@ export default function Header() {
       setStoredName(name);
       setRole(userRole);
     }, 0);
+
+    // Sincronizar el rol en segundo plano por si cambió en el backend
+    // (ej. el usuario creó una empresa y pasó a ser funcionario_adm)
+    syncRoleFromBackend().then((newRole) => {
+      if (newRole && newRole !== userRole) {
+        setRole(newRole);
+      }
+    });
   }, []);
 
   // Nombre del usuario
@@ -40,29 +49,38 @@ export default function Header() {
   const dashboardRoute =
     role === "administrador"
       ? "/administrador/dashboard"
-      :
-      role === "funcionario"
-        ? "/funcionario/dashboard"
-        : role === "cliente"
-          ? "/cliente/dashboard"
-          : "/";
+      : role === "funcionario_adm"
+        ? "/funcionario-adm/dashboard"
+        : role === "funcionario"
+          ? "/funcionario/dashboard"
+          : role === "cliente"
+            ? "/cliente/dashboard"
+            : "/";
 
   const loginHref = pathname?.startsWith("/cliente/crear-pedido")
     ? `/login?next=${encodeURIComponent("/cliente/crear-pedido?resume=1")}`
     : "/login";
 
+  // Ruta del prefijo de navegación según rol (puede diferir del nombre del rol)
+  const roleRoutePrefixMap: Record<string, string> = {
+    administrador: "/administrador",
+    funcionario_adm: "/funcionario-adm",
+    funcionario: "/funcionario",
+  };
+  const roleRoutePrefix = roleRoutePrefixMap[role ?? ""] ?? `/${role}`;
+
   // Determinar si estamos en el modo del rol o en el modo cliente
-  const isRoleMode = pathname?.startsWith(`/${role}`);
+  const isRoleMode = pathname?.startsWith(roleRoutePrefix);
 
   const handleModeToggle = (targetIsRole: boolean) => {
     if (!pathname || !role) return;
 
     if (targetIsRole) {
-      router.push(`/${role}/dashboard`);
+      router.push(`${roleRoutePrefix}/dashboard`);
     } else {
       // Switched to Cliente mode
-      if (pathname.startsWith(`/${role}`)) {
-        const strippedPath = pathname.replace(`/${role}`, "");
+      if (pathname.startsWith(roleRoutePrefix)) {
+        const strippedPath = pathname.replace(roleRoutePrefix, "");
 
         if (strippedPath.startsWith("/marketplace")) {
           router.push(strippedPath);
@@ -105,7 +123,7 @@ export default function Header() {
             <div className="relative z-50 flex items-center gap-3">
 
               {/* SWITCH DE MODO ELEGANTE */}
-              {(role === "administrador" || role === "funcionario") && (
+              {(role === "administrador" || role === "funcionario" || role === "funcionario_adm") && (
                 <div className="inline-flex items-center mr-2 sm:mr-4 bg-secondary/30 backdrop-blur-md border border-border/40 rounded-full p-1 shadow-sm">
                   <button
                     onClick={() => handleModeToggle(false)}
@@ -126,7 +144,11 @@ export default function Header() {
                   >
                     <Shield className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline-block whitespace-nowrap">
-                      {role === "administrador" ? "Administrador" : "Funcionario"}
+                      {role === "administrador"
+                        ? "Administrador"
+                        : role === "funcionario_adm"
+                          ? "Func. Adm"
+                          : "Funcionario"}
                     </span>
                   </button>
                 </div>

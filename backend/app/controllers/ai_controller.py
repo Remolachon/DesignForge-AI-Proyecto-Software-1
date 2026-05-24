@@ -601,23 +601,24 @@ async def generate_product_preview(
         contents = await file.read()
         image = Image.open(io.BytesIO(contents)).convert("RGBA")
 
-        # 1. Preparar imagen base
-        prepared = prepare_source_image(image, size=512, style=style, bg_color=STYLE_CONFIG[style].get("bg_color"),)
+        # 1. Preparar imagen base (comentado por uso de fallback)
+        # prepared = prepare_source_image(image, size=512, style=style, bg_color=STYLE_CONFIG[style].get("bg_color"),)
 
-        # 2. Llamada a HF Space (con fallback automático)
-        print(f"[IA LOG]: Iniciando generación para estilo '{style}'...")
-        preview = await call_sd_img2img(prepared, style)
+        # 2. Llamada a Fallback Local (IA desactivada temporalmente)
+        print(f"[IA LOG]: Iniciando generación por FALLBACK LOCAL para estilo '{style}'...")
+        # preview = await call_sd_img2img(prepared, style)
+        preview = generate_fallback(image, style)
 
         # 3. Guardar resultado final en Supabase
         out_path = f"{COMPANY_ID}/previews/{uuid4()}.png"
         final_url = upload_image_bytes(pil_to_png_bytes(preview), out_path)
         
         return {
-            "status": "AI_SUCCESS",
+            "status": "FALLBACK_SUCCESS",
             "preview_url": final_url,
             "style_applied": style,
-            "space_id": HF_SPACE_ID,
-            "message": "Imagen generada exitosamente"
+            "space_id": "local_fallback",
+            "message": "Imagen generada exitosamente (Fallback Local)"
         }
 
     except HTTPException:

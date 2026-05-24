@@ -24,6 +24,13 @@ import { validatePhone, validateRequired } from "@/lib/utils/validation";
 import { createCompany } from "@/services/company.service";
 import { getDashboardByRole } from "@/services/auth.service";
 
+// Tipo extendido con new_role que devuelve el backend
+type CompanyCreateResponse = {
+  id: number;
+  new_role?: string;
+  [key: string]: unknown;
+};
+
 type FormErrors = {
   nit: string;
   name: string;
@@ -115,17 +122,21 @@ export function CompanyCreateForm() {
     setLoading(true);
 
     try {
-      await createCompany({
+      const result = (await createCompany({
         nit: nit.trim(),
         name: name.trim(),
         description: description.trim(),
         address: address.trim(),
         phone: phone.trim(),
-      });
+      })) as unknown as CompanyCreateResponse;
+
+      // Actualizar rol en localStorage con el rol recién asignado por el backend
+      const assignedRole = result.new_role || role;
+      localStorage.setItem("role", assignedRole);
 
       toast.success("Empresa creada correctamente");
       setConfirmOpen(false);
-      router.replace(getDashboardByRole(role));
+      router.replace(getDashboardByRole(assignedRole));
     } catch (error: unknown) {
       const detail = (error as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
 

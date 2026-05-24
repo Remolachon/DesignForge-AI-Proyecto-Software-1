@@ -56,7 +56,24 @@ def create_company(
         payload=payload,
         created_by_user=db_user,
     )
-    return company
+
+    # Obtener el rol recién asignado para que el frontend pueda actualizar localStorage
+    new_role = UserService.get_user_role_name(db, db_user.id)
+
+    return CompanyResponse(
+        id=company.id,
+        nit=company.nit,
+        name=company.name,
+        description=company.description,
+        address=company.address,
+        phone=company.phone,
+        email=company.email,
+        start_date=company.start_date,
+        status=company.status,
+        is_active=bool(company.is_active),
+        created_by_user_id=company.created_by_user_id,
+        new_role=new_role,
+    )
 
 
 @router.get("/admin", response_model=list[CompanyAdminResponse])

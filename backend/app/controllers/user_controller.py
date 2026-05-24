@@ -51,3 +51,32 @@ def get_me(
             status_code=503,
             detail="Servicio de base de datos temporalmente no disponible"
         )
+
+
+@router.get("/me/role")
+def get_my_role(
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Devuelve el rol actual del usuario autenticado.
+    Útil para sincronizar localStorage cuando el rol cambia en el backend
+    (trigger de empresa, aprobación por admin, etc.) sin necesidad de re-login.
+    """
+    try:
+        def _query():
+            user = UserService.get_user_by_supabase_id(db, current_user.id)
+            if user is None:
+                raise HTTPException(status_code=404, detail="Usuario no encontrado")
+            role = UserService.get_user_role_name(db, user.id)
+            return {"role": role, "company_id": user.company_id}
+
+        return retry_on_connection_error(_query, max_retries=3)
+    except HTTPException:
+        raise
+    except OperationalError as e:
+        logger.error(f"Error de BD al obtener rol: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Servicio de base de datos temporalmente no disponible"
+        )

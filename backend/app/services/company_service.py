@@ -81,6 +81,13 @@ class CompanyService:
             db.add(company)
             db.commit()
             db.refresh(company)
+
+            # Aplicar rol y empresa al creador usando el UserService
+            # (el trigger de DB también lo hace, pero no desactiva el rol previo)
+            UserService.set_user_company(db, created_by_user.id, company.id, commit=False)
+            UserService.set_user_role(db, created_by_user.id, "funcionario_adm", commit=False)
+            db.commit()
+
             return company
         except IntegrityError:
             db.rollback()
@@ -132,7 +139,7 @@ class CompanyService:
             UserService.set_user_role(
                 db,
                 user_id=creator.id,
-                role_name="funcionario",
+                role_name="funcionario_adm",
                 commit=False,
             )
 

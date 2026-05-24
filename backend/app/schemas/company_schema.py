@@ -28,6 +28,7 @@ class CompanyResponse(BaseModel):
     status: str
     is_active: bool = False
     created_by_user_id: int
+    new_role: str | None = None  # Rol asignado al crear la empresa
 
     class Config:
         from_attributes = True

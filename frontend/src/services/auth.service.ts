@@ -27,6 +27,10 @@ export const getDashboardByRole = (role: string | undefined) => {
     return "/administrador/dashboard";
   }
 
+  if (normalizedRole === "funcionario_adm") {
+    return "/funcionario-adm/dashboard";
+  }
+
   if (normalizedRole === "funcionario") {
     return "/funcionario/dashboard";
   }
@@ -206,4 +210,27 @@ export const logout = async () => {
   localStorage.removeItem("token");
   localStorage.removeItem("user_name");
   localStorage.removeItem("role");
+};
+
+/**
+ * Obtiene el rol actual del usuario desde el backend y lo sincroniza en localStorage.
+ * Útil cuando el rol cambia (creación de empresa, aprobación por admin) sin re-login.
+ */
+export const syncRoleFromBackend = async (): Promise<string | null> => {
+  const token = localStorage.getItem("token");
+  if (!token) return null;
+
+  try {
+    const response = await axios.get(`${API_BASE_URL}/users/me/role`, {
+      headers: { Authorization: `Bearer ${token}` },
+      timeout: REQUEST_TIMEOUT_MS,
+    });
+    const { role } = response.data as { role: string; company_id: number | null };
+    if (role) {
+      localStorage.setItem("role", role);
+    }
+    return role ?? null;
+  } catch {
+    return null;
+  }
 };
