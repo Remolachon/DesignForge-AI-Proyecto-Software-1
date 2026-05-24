@@ -11,9 +11,10 @@ import { ConfirmBuyModal } from './modals/ConfirmBuyModal';
 import { useMarketplaceBuy } from './hooks/useMarketplaceBuy';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ProductReviewsModal } from './modals/ProductReviewsModal';
+import { MarketplaceLoading } from './MarketplaceLoading';
 
 export const Marketplace = () => {
-  const { products } = useProducts();
+  const { products, loading: productsLoading } = useProducts();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { attrValues, errors, loading, quantity, setQuantity, initAttributes, setField, createOrder, resetForm, validateForm } =
@@ -37,6 +38,10 @@ export const Marketplace = () => {
   useEffect(() => {
     setHasToken(Boolean(localStorage.getItem('token')));
   }, []);
+
+  if (productsLoading) {
+    return <MarketplaceLoading isAdmin={false} />;
+  }
 
   const filtered = products.filter((p) => {
     const matchesSearch =

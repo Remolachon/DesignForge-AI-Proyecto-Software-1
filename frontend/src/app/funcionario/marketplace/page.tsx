@@ -15,6 +15,7 @@ import { ProductModal } from '@/components/marketplace/modals/ProductModal';
 import { DeleteModal } from '@/components/marketplace/modals/DeleteModal';
 import { ConfirmActionModal } from '@/components/marketplace/modals/ConfirmActionModal';
 import { ProductReviewsModal } from '@/components/marketplace/modals/ProductReviewsModal';
+import { MarketplaceLoading } from '@/components/marketplace/MarketplaceLoading';
 import { type MarketplaceProduct } from '@/types/marketplace';
 
 export default function FuncionarioMarketplace() {
@@ -53,6 +54,10 @@ export default function FuncionarioMarketplace() {
     confirmDelete,
   } = useMarketplace();
 
+  if (loading && products.length === 0) {
+    return <MarketplaceLoading isAdmin={true} />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -90,13 +95,7 @@ export default function FuncionarioMarketplace() {
         />
 
         {/* Grid de productos */}
-        {loading ? (
-          <Card>
-            <CardContent className="py-16 text-center">
-              <p className="text-muted-foreground text-sm">Cargando productos...</p>
-            </CardContent>
-          </Card>
-        ) : filtered.length === 0 ? (
+        {filtered.length === 0 ? (
           <Card>
             <CardContent className="py-16 text-center">
               <p className="text-muted-foreground text-sm">

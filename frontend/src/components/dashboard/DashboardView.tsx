@@ -10,10 +10,12 @@ import { UrgentOrderCard } from './UrgentOrderCard';
 
 import { BaseOrder, AdminOrder } from '@/types/order';
 import { useDashboard } from '@/components/dashboard/hooks/useDashboard';
+import { useState, useEffect } from 'react';
 
 import {
   Plus,
   Package,
+  Store,
   Clock,
   TrendingUp,
   ShoppingBag,
@@ -26,6 +28,14 @@ type Role = 'cliente' | 'funcionario';
 
 export function DashboardView({ role }: { role: Role }) {
   const isCliente = role === 'cliente';
+
+  const [globalRole, setGlobalRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    setGlobalRole(localStorage.getItem('role'));
+  }, []);
+
+  const hasCompany = globalRole === 'funcionario' || globalRole === 'administrador' || globalRole === 'funcionario_adm';
 
   const { orders, stats, loading } = useDashboard(role);
 
@@ -46,7 +56,7 @@ export function DashboardView({ role }: { role: Role }) {
               {isCliente ? 'Bienvenido' : 'Panel de Producción'}
             </h1>
             <p className="text-sm text-muted-foreground sm:text-base">
-              {isCliente ? 'Gestiona tus pedidos y crea nuevos diseños personalizados' : 'Gestiona pedidos, asigna solicitudes pendientes y organiza la producción'} 
+              {isCliente ? 'Gestiona tus pedidos y crea nuevos diseños personalizados' : 'Gestiona pedidos, asigna solicitudes pendientes y organiza la producción'}
             </p>
           </div>
 
@@ -80,88 +90,98 @@ export function DashboardView({ role }: { role: Role }) {
 
         {/* ACCESOS RÁPIDOS */}
         <section>
-        <h2 className="mb-4 text-xl font-semibold">Accesos Rápidos</h2>
+          <h2 className="mb-4 text-xl font-semibold">Accesos Rápidos</h2>
 
-        <div className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {isCliente ? (
-            <>
+              <>
                 <QuickActionCard
-                href="/cliente/crear-pedido"
-                icon={<Plus className="w-5 h-5 text-white" />}
-                iconBg="bg-gradient-to-br from-accent to-accent-magenta"
-                title="Crear Pedido"
-                description="Diseña un producto personalizado con IA"
+                  href="/cliente/crear-pedido"
+                  icon={<Plus className="w-5 h-5 text-white" />}
+                  iconBg="bg-gradient-to-br from-accent to-accent-magenta"
+                  title="Crear Pedido"
+                  description="Diseña un producto personalizado con IA"
                 />
 
                 <QuickActionCard
-                href="/marketplace"
-                icon={<ShoppingBag className="w-5 h-5 text-primary" />}
-                iconBg="bg-primary/10"
-                title="Marketplace"
-                description="Explora productos listos"
+                  href="/marketplace"
+                  icon={<ShoppingBag className="w-5 h-5 text-primary" />}
+                  iconBg="bg-primary/10"
+                  title="Marketplace"
+                  description="Explora productos listos"
                 />
 
                 <QuickActionCard
-                href="/cliente/pedidos"
-                icon={<Package className="w-5 h-5 text-primary" />}
-                iconBg="bg-primary/10"
-                title="Mis Pedidos"
-                description="Ver historial"
+                  href="/cliente/pedidos"
+                  icon={<Package className="w-5 h-5 text-primary" />}
+                  iconBg="bg-primary/10"
+                  title="Mis Pedidos"
+                  description="Ver historial"
                 />
-            </>
+
+                {!hasCompany && (
+                  <QuickActionCard
+                    href="/crear-empresa"
+                    icon={<Store className="w-5 h-5 text-primary" />}
+                    iconBg="bg-primary/10"
+                    title="Vende tus productos"
+                    description="Registra tu empresa y empieza a vender"
+                  />
+                )}
+              </>
             ) : (
-            <>
+              <>
                 <QuickActionCard
-                href="/funcionario/pedidos"
-                icon={<Package className="w-5 h-5 text-primary" />}
-                iconBg="bg-primary/10"
-                title="Gestionar Pedidos"
-                description="Actualizar estados"
+                  href="/funcionario/pedidos"
+                  icon={<Package className="w-5 h-5 text-primary" />}
+                  iconBg="bg-primary/10"
+                  title="Gestionar Pedidos"
+                  description="Actualizar estados"
                 />
 
                 <QuickActionCard
-                href="/funcionario/pedidos-pendientes"
-                icon={<Clock className="w-5 h-5 text-primary" />}
-                iconBg="bg-primary/10"
-                title="Pedidos Pendientes"
-                description="Asignar pedidos personalizados"
+                  href="/funcionario/pedidos-pendientes"
+                  icon={<Clock className="w-5 h-5 text-primary" />}
+                  iconBg="bg-primary/10"
+                  title="Pedidos Pendientes"
+                  description="Asignar pedidos personalizados"
                 />
 
                 <QuickActionCard
-                href="/funcionario/marketplace"
-                icon={<ShoppingBag className="w-5 h-5 text-primary" />}
-                iconBg="bg-primary/10"
-                title="Gestionar Marketplace"
-                description="Administrar productos"
+                  href="/funcionario/marketplace"
+                  icon={<ShoppingBag className="w-5 h-5 text-primary" />}
+                  iconBg="bg-primary/10"
+                  title="Gestionar Marketplace"
+                  description="Administrar productos"
                 />
-            </>
+              </>
             )}
-        </div>
+          </div>
         </section>
 
         {/* LISTA */}
         <section>
-        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">
-            {isCliente ? 'Pedidos Recientes' : 'Pedidos Urgentes'}
+              {isCliente ? 'Pedidos Recientes' : 'Pedidos Urgentes'}
             </h2>
 
             <Link href={isCliente ? '/cliente/pedidos' : '/funcionario/pedidos'}>
-            <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm">
                 Ver todos
-            </Button>
+              </Button>
             </Link>
-        </div>
+          </div>
 
-        <div className="space-y-4">
+          <div className="space-y-4">
             {orders.slice(0, 3).map((order) =>
-            isCliente ? (
+              isCliente ? (
                 <OrderCard key={order.id} order={order as BaseOrder} />
-            ) : (
+              ) : (
                 <UrgentOrderCard key={order.id} order={order as AdminOrder} />
-            )
+              )
             )}
-        </div>
+          </div>
         </section>
       </main>
     </div>
