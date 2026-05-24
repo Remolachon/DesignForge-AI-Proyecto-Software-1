@@ -202,7 +202,18 @@ async def call_sd_img2img(pil_img: Image.Image, style: str) -> Image.Image:
         def run_prediction():
             # Sin token: el Space es público
             # Sin kwargs extra: compatibilidad con versiones antiguas de gradio_client
-            client = Client(HF_SPACE_ID)
+            # Crear cliente intentando incluir token si está presente (soporta espacios privados)
+            client = None
+            if HF_TOKEN:
+                try:
+                    client = Client(HF_SPACE_ID, hf_token=HF_TOKEN)
+                except TypeError:
+                    try:
+                        client = Client(HF_SPACE_ID, HF_TOKEN)
+                    except Exception:
+                        client = Client(HF_SPACE_ID)
+            else:
+                client = Client(HF_SPACE_ID)
 
             print(f"[IA LOG]: Enviando — strength={cfg['strength']}, guidance={cfg['guidance_scale']}, steps={cfg['steps']}")
             return client.predict(
@@ -595,15 +606,14 @@ async def generate_product_preview(
         contents = await file.read()
         image = Image.open(io.BytesIO(contents)).convert("RGBA")
 
-        # 1. Preparar imagen base (comentado por uso de fallback)
-        # prepared = prepare_source_image(image, size=512, style=style, bg_color=STYLE_CONFIG[style].get("bg_color"),)
+        # 1. Preparar imagen base
+        prepared = prepare_source_image(
+            image,
+            size=512,
+            style=style,
+            bg_color=STYLE_CONFIG[style].get("bg_color"),
+        )
 
-<<<<<<< HEAD
-        # 2. Llamada a Fallback Local (IA desactivada temporalmente)
-        print(f"[IA LOG]: Iniciando generación por FALLBACK LOCAL para estilo '{style}'...")
-        # preview = await call_sd_img2img(prepared, style)
-        preview = generate_fallback(image, style)
-=======
         # 2. Llamada a HF Space (con fallback automático)
         print(f"[IA LOG]: Iniciando generación para estilo '{style}'...")
         preview = None
@@ -616,7 +626,6 @@ async def generate_product_preview(
 
         if preview is None:
             preview = generate_fallback(prepared, style)
->>>>>>> avances-kevin
 
         # 3. Guardar resultado final en Supabase
         out_path = f"{COMPANY_ID}/previews/{uuid4()}.png"

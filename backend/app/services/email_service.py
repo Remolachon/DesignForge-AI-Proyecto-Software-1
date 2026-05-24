@@ -1,9 +1,9 @@
 import logging
 import re
-import smtplib
-from email.message import EmailMessage
-from email.utils import formataddr, parseaddr
+from email.utils import parseaddr
 from html import escape
+
+import requests
 
 from app.config.settings import settings
 
@@ -12,29 +12,25 @@ logger = logging.getLogger(__name__)
 
 
 class EmailService:
+    BREVO_ENDPOINT = "https://api.brevo.com/v3/smtp/email"
     EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+    BRAND_NAME = "DesignForge AI"
 
     @staticmethod
     def _is_enabled() -> bool:
-        password = settings.EMAIL_PASSWORD or getattr(settings, "EMAIL_PASS", None)
-        return bool(settings.EMAIL_HOST and settings.EMAIL_USER and password)
+        return bool(settings.BREVO_API_KEY and settings.BREVO_EMAIL_FROM)
 
     @staticmethod
     def _sender_address() -> str:
-        return (settings.EMAIL_USER or "").strip()
-
-    @staticmethod
-    def _smtp_password() -> str:
-        password = settings.EMAIL_PASSWORD or getattr(settings, "EMAIL_PASS", None) or ""
-        return re.sub(r"\s+", "", password)
+        return (settings.BREVO_EMAIL_FROM or "").strip()
 
     @staticmethod
     def _sender_name() -> str:
-        return settings.EMAIL_FROM_NAME or "DesignForge AI"
+        return EmailService.BRAND_NAME
 
     @staticmethod
     def _brand_name() -> str:
-        return settings.EMAIL_FROM_NAME or "DesignForge AI"
+        return EmailService.BRAND_NAME
 
     @staticmethod
     def _frontend_url() -> str | None:
@@ -64,20 +60,31 @@ class EmailService:
         return f"{cls._brand_name()} | {subject}"
 
     @classmethod
-    def _build_email_message(
+    def _build_brevo_payload(
         cls,
         recipient_email: str,
         subject: str,
         plain_text: str,
         html_body: str,
-    ) -> EmailMessage:
-        message = EmailMessage()
-        message["From"] = formataddr((cls._sender_name(), cls._sender_address()))
-        message["To"] = recipient_email
-        message["Subject"] = subject
-        message.set_content(plain_text)
-        message.add_alternative(html_body, subtype="html")
-        return message
+    ) -> dict:
+        return {
+            "sender": {
+                "name": cls._sender_name(),
+                "email": cls._sender_address(),
+            },
+            "to": [
+                {
+                    "email": recipient_email,
+                }
+            ],
+            "subject": subject,
+            "textContent": plain_text,
+            "htmlContent": html_body,
+            "replyTo": {
+                "email": cls._sender_address(),
+                "name": cls._sender_name(),
+            },
+        }
 
     @classmethod
     def _wrap_html(cls, title: str, heading: str, body_html: str, cta_label: str | None = None, cta_url: str | None = None) -> str:
@@ -138,81 +145,82 @@ class EmailService:
             }
 
         if not cls._is_enabled():
-            logger.warning("Correo no enviado porque la configuración SMTP no está completa")
+            logger.warning("Correo no enviado porque la configuración de Brevo no está completa")
             return {
                 "status": "disabled",
                 "message": "La configuración de correo no está habilitada.",
             }
 
-        message = cls._build_email_message(
-            recipient_email=normalized_recipient,
-            subject=cls._base_subject(subject),
-            plain_text=plain_text,
-            html_body=html_body,
-        )
-
-        timeout = 20
         try:
-            port = int(settings.EMAIL_PORT or 465)
-            smtp_host = (settings.EMAIL_HOST or "").strip()
-            smtp_user = cls._sender_address()
-            smtp_password = cls._smtp_password()
+            payload = cls._build_brevo_payload(
+                recipient_email=normalized_recipient,
+                subject=cls._base_subject(subject),
+                plain_text=plain_text,
+                html_body=html_body,
+            )
 
-            def _send_with_ssl() -> None:
-                with smtplib.SMTP_SSL(smtp_host, port, timeout=timeout) as server:
-                    server.login(smtp_user, smtp_password)
-                    server.send_message(message)
+            response = requests.post(
+                cls.BREVO_ENDPOINT,
+                headers={
+                    "accept": "application/json",
+                    "api-key": settings.BREVO_API_KEY or "",
+                    "content-type": "application/json",
+                },
+                json=payload,
+                timeout=20,
+            )
 
-            def _send_with_starttls() -> None:
-                with smtplib.SMTP(smtp_host, port, timeout=timeout) as server:
-                    server.ehlo()
-                    server.starttls()
-                    server.ehlo()
-                    server.login(smtp_user, smtp_password)
-                    server.send_message(message)
+            if 200 <= response.status_code < 300:
+                return {
+                    "status": "sent",
+                    "message": "Correo enviado correctamente.",
+                }
 
-            if port == 465:
-                try:
-                    _send_with_ssl()
-                except (smtplib.SMTPException, OSError):
-                    logger.exception("Fallo SMTP_SSL; intentando STARTTLS como respaldo")
-                    fallback_port = 587
-                    with smtplib.SMTP(smtp_host, fallback_port, timeout=timeout) as server:
-                        server.ehlo()
-                        server.starttls()
-                        server.ehlo()
-                        server.login(smtp_user, smtp_password)
-                        server.send_message(message)
-            else:
-                _send_with_starttls()
+            response_detail = ""
+            try:
+                response_data = response.json()
+                response_detail = str(
+                    response_data.get("message")
+                    or response_data.get("code")
+                    or response_data.get("error")
+                    or ""
+                ).strip()
+            except ValueError:
+                response_detail = response.text.strip()
 
-            return {
-                "status": "sent",
-                "message": "Correo enviado correctamente.",
-            }
-        except smtplib.SMTPRecipientsRefused:
-            logger.warning("El servidor SMTP rechazó el destinatario %s", normalized_recipient)
-            return {
-                "status": "error",
-                "error": "El servidor de correo rechazó la dirección del destinatario.",
-            }
-        except smtplib.SMTPAuthenticationError:
-            logger.exception("Error de autenticación SMTP")
-            return {
-                "status": "error",
-                "error": "Gmail rechazó la autenticación. Verifica que la cuenta tenga verificación en dos pasos y una contraseña de aplicación vigente.",
-            }
-        except smtplib.SMTPException:
-            logger.exception("Fallo SMTP al enviar correo")
+            if response.status_code in {400, 422}:
+                logger.warning(
+                    "Brevo rechazó el destinatario %s: %s",
+                    normalized_recipient,
+                    response_detail or response.status_code,
+                )
+                return {
+                    "status": "error",
+                    "error": "La dirección de correo del destinatario no pudo ser aceptada por el proveedor de correo.",
+                }
+
+            if response.status_code in {401, 403}:
+                logger.error("Error de autenticación Brevo")
+                return {
+                    "status": "error",
+                    "error": "Brevo rechazó la autenticación. Verifica que BREVO_API_KEY sea válida y que el remitente esté configurado.",
+                }
+
+            logger.error(
+                "Fallo Brevo al enviar correo. Status=%s Detail=%s",
+                response.status_code,
+                response_detail,
+            )
             return {
                 "status": "error",
                 "error": "No fue posible enviar el correo en este momento.",
             }
-        except OSError:
-            logger.exception("Fallo de red al enviar correo")
+
+        except requests.RequestException:
+            logger.exception("Fallo de red al enviar correo con Brevo")
             return {
                 "status": "error",
-                "error": "No fue posible conectar con el servidor de correo.",
+                "error": "No fue posible conectar con el proveedor de correo.",
             }
 
     @classmethod

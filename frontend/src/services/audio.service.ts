@@ -4,6 +4,11 @@ class AudioService {
   private initialized = false;
 
   private createSound(src: string, volume: number) {
+    // Guard: evitar usar API de navegador en SSR o entornos sin soporte
+    if (typeof window === 'undefined' || typeof (window as any).Audio === 'undefined') {
+      return null;
+    }
+
     const audio = new Audio(src);
     audio.preload = 'auto';
     audio.volume = volume;

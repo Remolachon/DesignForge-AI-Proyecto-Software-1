@@ -214,6 +214,17 @@ class OrderService:
         return media_kind == "video" or mime_type.startswith("video/")
 
     @staticmethod
+    def _order_asset_media_role(asset: FileAsset) -> str | None:
+        media_role = (asset.media_role or "").strip().lower()
+        if media_role:
+            return media_role
+        if (asset.file_type or "") == "product_main":
+            return "main"
+        if (asset.file_type or "") == "product_gallery":
+            return "gallery"
+        return "attachment"
+
+    @staticmethod
     def _resolve_order_assets(db: Session, item: OrderItem | None) -> list[FileAsset]:
         if not item:
             return []
@@ -971,6 +982,7 @@ class OrderService:
         for source_asset in product_assets:
             source_bucket = source_asset.bucket_name
             source_path = source_asset.storage_path
+            source_media_role = OrderService._order_asset_media_role(source_asset)
 
             if source_path:
                 public_prefix = f"/object/public/{source_bucket}/"
@@ -986,56 +998,79 @@ class OrderService:
                 elif public_prefix in source_path:
                     source_path = source_path.split(public_prefix, 1)[1]
 
-            file_ext = source_path.split(".")[-1] if source_path and "." in source_path else (source_asset.extension or "png")
-            order_storage_path = f"{user_id}/orders/{order.id}/{uuid4().hex}.{file_ext}"
+                if not source_path:
+                    continue
 
-            try:
-                file_bytes = supabase_admin.storage.from_(source_bucket).download(source_path)
-                fallback_content_type = f"video/{file_ext}" if (source_asset.media_kind or "").lower() == "video" else f"image/{file_ext}"
-                supabase_admin.storage.from_(order_bucket).upload(
-                    path=order_storage_path,
-                    file=file_bytes,
-                    file_options={"content-type": source_asset.mime_type or fallback_content_type},
-                )
+                file_ext = source_path.split(".")[-1] if "." in source_path else (source_asset.extension or "png")
+                order_storage_path = f"{user_id}/orders/{order.id}/{uuid4().hex}.{file_ext}"
+                target_bucket = source_bucket
+                target_path = source_path
+                target_mime_type = source_asset.mime_type
 
-                with db.begin_nested():
-                    db.add(
-                        FileAsset(
-                            bucket_name=order_bucket,
-                            storage_path=order_storage_path,
-                            file_type="reference_image",
-                            order_item_id=item.id,
-                            is_active=True,
-                            media_kind=source_asset.media_kind,
-                            media_role="attachment",
-                            sort_order=None,
-                            mime_type=source_asset.mime_type,
-                        )
-                    )
-                    db.flush()
-                copied_assets += 1
-            except Exception as exc:
-                logger.error(f"Error copiando asset {source_bucket}/{source_path} para orden {order.id}: {str(exc)}")
                 try:
+                    if not OrderService._is_video_asset(source_asset):
+                        file_bytes = supabase_admin.storage.from_(source_bucket).download(source_path)
+                        fallback_content_type = f"image/{file_ext}"
+                        supabase_admin.storage.from_(order_bucket).upload(
+                            path=order_storage_path,
+                            file=file_bytes,
+                            file_options={"content-type": source_asset.mime_type or fallback_content_type},
+                        )
+                        target_bucket = order_bucket
+                        target_path = order_storage_path
+                        target_mime_type = source_asset.mime_type or fallback_content_type
+                    else:
+                        logger.info(
+                            "Se preserva la referencia original del asset de video para la orden %s: %s/%s",
+                            order.id,
+                            source_bucket,
+                            source_path,
+                        )
+
                     with db.begin_nested():
                         db.add(
                             FileAsset(
-                                bucket_name=source_bucket,
-                                storage_path=source_path,
+                                bucket_name=target_bucket,
+                                storage_path=target_path,
                                 file_type="reference_image",
                                 order_item_id=item.id,
                                 is_active=True,
                                 media_kind=source_asset.media_kind,
-                                media_role=source_asset.media_role,
-                                sort_order=source_asset.sort_order,
-                                mime_type=source_asset.mime_type,
+                                media_role=source_media_role,
+                                sort_order=None,
+                                mime_type=target_mime_type,
                             )
                         )
                         db.flush()
                     copied_assets += 1
-                except Exception as exc2:
-                    logger.error(f"Error al crear FileAsset de fallback para {source_bucket}/{source_path}: {str(exc2)}")
-                    continue
+                except Exception as exc:
+                    logger.warning(
+                        "No se pudo copiar asset %s/%s para orden %s; se usará la referencia original: %s",
+                        source_bucket,
+                        source_path,
+                        order.id,
+                        exc,
+                    )
+                    try:
+                        with db.begin_nested():
+                            db.add(
+                                FileAsset(
+                                    bucket_name=source_bucket,
+                                    storage_path=source_path,
+                                    file_type="reference_image",
+                                    order_item_id=item.id,
+                                    is_active=True,
+                                    media_kind=source_asset.media_kind,
+                                    media_role=source_media_role,
+                                    sort_order=None,
+                                    mime_type=source_asset.mime_type,
+                                )
+                            )
+                            db.flush()
+                        copied_assets += 1
+                    except Exception as exc2:
+                        logger.error(f"Error al crear FileAsset de fallback para {source_bucket}/{source_path}: {str(exc2)}")
+                        continue
 
         if copied_assets == 0:
             raise ValueError("No se pudo copiar la media del producto")

@@ -195,6 +195,8 @@ Requiere:
 - `SUPABASE_URL`
 - `SUPABASE_KEY`
 - `HF_TOKEN` (Hugging Face para IA)
+- `BREVO_API_KEY` (envío transaccional de correos)
+- `BREVO_EMAIL_FROM` (correo remitente verificado en Brevo)
 - etc.
 
 ---
