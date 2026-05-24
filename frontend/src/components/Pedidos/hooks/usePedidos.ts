@@ -18,6 +18,7 @@ function normalizeText(value: string) {
 function canonicalStatus(value: string): OrderStatus {
   const s = normalizeText(value);
 
+  if (s === 'pendiente') return 'Pendiente';
   if (s === 'en diseno') return 'En diseño';
   if (s === 'en produccion') return 'En producción';
   if (s === 'listo para entregar') return 'Listo para entregar';

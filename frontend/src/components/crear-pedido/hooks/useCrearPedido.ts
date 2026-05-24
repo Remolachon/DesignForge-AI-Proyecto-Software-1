@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { ProductType } from "@/types/types";
+import { type MarketplaceShapeAttribute } from "@/services/marketplace-catalog.service";
 
 type WizardStep = 1 | 2 | 3 | 4;
 
@@ -13,7 +14,10 @@ interface State {
   uploadedImage: string | null; // 🔥 ahora será URL (no base64)
   generatedImages: string[]; // URLs de imágenes generadas con IA
   selectedGeneratedImage: string | null; // Imagen seleccionada
-  attributeValues: Record<string, string>; // Atributos dinámicos del producto
+  selectedShapeId: number | null;
+  selectedShapeName: string | null;
+  shapeAttributes: MarketplaceShapeAttribute[];
+  shapeAttributeValues: Record<string, string>;
 }
 
 const STORAGE_KEY = "crear-pedido";
@@ -26,7 +30,10 @@ const initialState: State = {
   uploadedImage: null,
   generatedImages: [],
   selectedGeneratedImage: null,
-  attributeValues: {},
+  selectedShapeId: null,
+  selectedShapeName: null,
+  shapeAttributes: [],
+  shapeAttributeValues: {},
 };
 
 export function useCrearPedido({
@@ -67,7 +74,7 @@ export function useCrearPedido({
   }, [state]);
 
   // 🔹 PRODUCT TYPE
-  const setProductType = (type: ProductType) => {
+  const setProductType = useCallback((type: ProductType) => {
     setState((prev) => ({
       ...prev,
       productType: type,
@@ -75,26 +82,22 @@ export function useCrearPedido({
       uploadedImage: null,
       generatedImages: [],
       selectedGeneratedImage: null,
-      attributeValues: {},
+      selectedShapeId: null,
+      selectedShapeName: null,
+      shapeAttributes: [],
+      shapeAttributeValues: {},
     }));
-  };
+  }, []);
 
-  const setQuantity = (quantity: number) => {
+  const setQuantity = useCallback((quantity: number) => {
     setState((prev) => ({
       ...prev,
       quantity: Math.min(10, Math.max(1, quantity)),
     }));
-  };
-
-  const setAttributeValues = (values: Record<string, string>) => {
-    setState((prev) => ({
-      ...prev,
-      attributeValues: values,
-    }));
-  };
+  }, []);
 
   // 🔹 SET IMAGE DIRECT (para quitar imagen)
-  const setUploadedImage = (img: string | null) => {
+  const setUploadedImage = useCallback((img: string | null) => {
     latestUploadedImageRef.current = img;
     setState((prev) => ({
       ...prev,
@@ -102,14 +105,43 @@ export function useCrearPedido({
       generatedImages: [],
       selectedGeneratedImage: null,
     }));
-  };
+  }, []);
 
-  const setSelectedGeneratedImage = (image: string | null) => {
+  const setSelectedGeneratedImage = useCallback((image: string | null) => {
     setState((prev) => ({
       ...prev,
       selectedGeneratedImage: image,
     }));
-  };
+  }, []);
+
+  const setSelectedShape = useCallback((shapeId: number | null, shapeName: string | null) => {
+    setState((prev) => ({
+      ...prev,
+      selectedShapeId: shapeId,
+      selectedShapeName: shapeName,
+      shapeAttributes: [],
+      shapeAttributeValues: {},
+    }));
+  }, []);
+
+  const setShapeAttributes = useCallback((shapeAttributes: MarketplaceShapeAttribute[]) => {
+    setState((prev) => ({
+      ...prev,
+      shapeAttributes,
+    }));
+  }, []);
+
+  const setShapeAttributeValues = useCallback((
+    values:
+      | Record<string, string>
+      | ((prev: Record<string, string>) => Record<string, string>),
+  ) => {
+    setState((prev) => ({
+      ...prev,
+      shapeAttributeValues:
+        typeof values === "function" ? values(prev.shapeAttributeValues) : values,
+    }));
+  }, []);
 
   // 🔥 SUBIDA REAL A SUPABASE STORAGE
   const handleFileUpload = async (
@@ -218,7 +250,7 @@ export function useCrearPedido({
         return {
           ...prev,
           generatedImages: nextImages,
-          selectedGeneratedImage: reset ? generatedUrl : prev.selectedGeneratedImage || generatedUrl,
+          selectedGeneratedImage: reset ? null : prev.selectedGeneratedImage,
         };
       });
 
@@ -272,7 +304,7 @@ export function useCrearPedido({
       case 2:
         return state.uploadedImage !== null;
       case 3:
-        return state.selectedGeneratedImage !== null;
+        return state.uploadedImage !== null;
       default:
         return true;
     }
@@ -299,6 +331,12 @@ export function useCrearPedido({
     resetGeneratedImages,
 
     setSelectedGeneratedImage,
-    setAttributeValues,
+    selectedShapeId: state.selectedShapeId,
+    selectedShapeName: state.selectedShapeName,
+    shapeAttributes: state.shapeAttributes,
+    shapeAttributeValues: state.shapeAttributeValues,
+    setSelectedShape,
+    setShapeAttributes,
+    setShapeAttributeValues,
   };
 }

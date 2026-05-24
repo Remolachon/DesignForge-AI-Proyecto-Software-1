@@ -24,11 +24,12 @@ export function StatusSelect({ orderId, currentStatus, onChange }: StatusSelectP
             className={`
         text-xs px-2 py-1.5 rounded-full border font-medium cursor-pointer
         focus:outline-none focus:ring-2 focus:ring-accent transition-colors
+        bg-card text-foreground
         ${getStatusColor(currentStatus)}
       `}
         >
             {editableStatuses.map((s) => (
-                <option key={s} value={s} className="bg-white text-gray-900 font-normal">
+                <option key={s} value={s} className="bg-card text-foreground font-normal">
                     {s}
                 </option>
             ))}

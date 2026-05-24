@@ -8,10 +8,12 @@ from app.models.file_assets import FileAsset
 from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.order_item_attribute import OrderItemAttribute
+from app.models.notification import Notification
 from app.models.product_attribute import ProductAttribute
 from app.models.product_attribute_value import ProductAttributeValue
 from app.models.inventory import Inventory
 from app.models.product import Product
+from app.models.product_shape import ProductShape
 from app.models.product_type import ProductType
 from app.models.productionStage import ProductionStage
 from app.models.statusHistory import StatusHistory
@@ -97,9 +99,21 @@ class OrderService:
         return or_(Order.id.in_(pending_tx), Order.id.in_(pending_stage_ids))
 
     @staticmethod
+    def _get_filter_for_pending_custom_orders(db: Session):
+        from sqlalchemy import and_
+
+        pending_stage = OrderService._ensure_stage(db, "Pendiente")
+        return and_(
+            Order.items.any(OrderItem.current_stage_id == pending_stage.id),
+            Order.items.any(OrderItem.product_id.is_(None)),
+        )
+
+    @staticmethod
     def _canonical_status(value: str | None) -> str:
         normalized = OrderService._normalize_status(value)
 
+        if normalized == "pendiente":
+            return "Pendiente"
         if normalized in {"pendiente de pago", "pendiente_pago", "pending payment"}:
             return "Pendiente de pago"
         if normalized == "en diseño":
@@ -788,9 +802,18 @@ class OrderService:
             raise ValueError("La imagen es obligatoria")
         if not data.attributes:
             raise ValueError("Faltan datos de configuración (atributos)")
+        if not data.shape_id:
+            raise ValueError("Debes seleccionar un shape de producto")
 
-        pending_stage = OrderService._ensure_stage(db, "Pendiente de pago")
+        shape = db.query(ProductShape).filter(ProductShape.id == data.shape_id).first()
+        if not shape and data.shape_name:
+            shape = db.query(ProductShape).filter(ProductShape.name == data.shape_name).first()
+        if not shape:
+            raise ValueError("Shape de producto no válido")
+
+        pending_stage = OrderService._ensure_stage(db, "Pendiente")
         OrderService._ensure_stage(db, "En diseño")
+        OrderService._ensure_stage(db, "Pendiente de pago")
 
         product_type_obj = db.query(ProductType).filter(ProductType.name == data.product_type).first()
         if not product_type_obj:
@@ -850,6 +873,23 @@ class OrderService:
                 )
             )
 
+        db.add(
+            OrderItemAttribute(
+                order_item_id=item.id,
+                attribute_code="shape_id",
+                attribute_label="Shape ID",
+                value=str(shape.id),
+            )
+        )
+        db.add(
+            OrderItemAttribute(
+                order_item_id=item.id,
+                attribute_code="shape_name",
+                attribute_label="Shape",
+                value=shape.name,
+            )
+        )
+
         base_prices = {
             "bordado": 15000,
             "neon-flex": 45000,
@@ -865,17 +905,166 @@ class OrderService:
         db.commit()
         db.refresh(order)
         
-        # Crear registro en transactions
-        OrderService._create_transaction(
-            db=db,
-            order_id=order.id,
-            user_id=user_id,
-            amount=total_amount,
-            payment_method="payu",
-        )
-        db.commit()
-        
         return order
+
+    @staticmethod
+    def get_pending_custom_orders_page(
+        db: Session,
+        page: int,
+        page_size: int,
+        search: str | None = None,
+    ):
+        pending_stage = OrderService._ensure_stage(db, "Pendiente")
+        query = (
+            db.query(Order)
+            .options(*OrderService._order_query_options())
+            .filter(Order.items.any(OrderItem.current_stage_id == pending_stage.id))
+            .filter(Order.items.any(OrderItem.product_id.is_(None)))
+            .order_by(Order.created_at.desc())
+        )
+
+        if search:
+            raw = search.strip()
+            term = f"%{raw}%"
+            term_numeric = raw.replace("#", "")
+            matching_ids = (
+                db.query(Order.id)
+                .join(User, Order.user_id == User.id)
+                .join(Order.items)
+                .join(OrderItem.product_type)
+                .filter(
+                    (cast(Order.id, String).ilike(term))
+                    | (cast(Order.id, String).ilike(f"%{term_numeric}%"))
+                    | (User.first_name.ilike(term))
+                    | (User.last_name.ilike(term))
+                    | (User.email.ilike(term))
+                    | (ProductType.name.ilike(term))
+                )
+                .distinct()
+            )
+            query = query.filter(Order.id.in_(matching_ids))
+
+        page_data = OrderService._paginate(query, page, page_size)
+        serialized = [OrderService._serialize_order(db, order, include_client=True, include_image_url=True) for order in page_data["items"]]
+
+        return {
+            "items": serialized,
+            "page": page_data["page"],
+            "pageSize": page_data["page_size"],
+            "totalItems": page_data["total_items"],
+            "totalPages": page_data["total_pages"],
+        }
+
+    @staticmethod
+    def accept_pending_custom_order(
+        db: Session,
+        order_id: int,
+        accepted_by_user_id: int,
+        company_id: int,
+    ):
+        order = (
+            db.query(Order)
+            .options(*OrderService._order_query_options())
+            .filter(Order.id == order_id)
+            .first()
+        )
+
+        if not order or not order.items:
+            raise ValueError("Pedido no encontrado")
+
+        item = order.items[0]
+        pending_stage = OrderService._ensure_stage(db, "Pendiente")
+        pending_payment_stage = OrderService._ensure_stage(db, "Pendiente de pago")
+
+        if item.current_stage_id != pending_stage.id or item.product_id is not None:
+            raise ValueError("Solo se pueden aceptar pedidos personalizados pendientes")
+
+        shape_attr = next((attr for attr in item.attributes if attr.attribute_code == "shape_id"), None)
+        shape_name_attr = next((attr for attr in item.attributes if attr.attribute_code == "shape_name"), None)
+        shape = None
+        if shape_attr and shape_attr.value and str(shape_attr.value).isdigit():
+            shape = db.query(ProductShape).filter(ProductShape.id == int(shape_attr.value)).first()
+        if not shape and shape_name_attr and shape_name_attr.value:
+            shape = db.query(ProductShape).filter(ProductShape.name == shape_name_attr.value).first()
+
+        if not shape:
+            raise ValueError("No se encontró el shape asociado al pedido")
+
+        if not item.product_type_id:
+            raise ValueError("El pedido no tiene tipo de producto asociado")
+
+        subtotal = float(order.total_amount or 0) / (1 + OrderService.VAT_RATE_CO)
+        product = Product(
+            company_id=company_id,
+            product_type_id=item.product_type_id,
+            product_shape_id=shape.id,
+            created_by_user_id=accepted_by_user_id,
+            name=f"Pedido personalizado #{order.id}",
+            description="Producto contenedor generado desde un pedido personalizado aceptado.",
+            base_price=round(subtotal, 2),
+            is_public=False,
+            is_active=True,
+        )
+        db.add(product)
+        db.flush()
+
+        previous_stage_id = item.current_stage_id
+        item.product_id = product.id
+        item.current_stage_id = pending_payment_stage.id
+        db.add(
+            StatusHistory(
+                order_item_id=item.id,
+                production_stage_id=previous_stage_id,
+                new_stage_id=pending_payment_stage.id,
+                changed_by=accepted_by_user_id,
+                changed_at=OrderService._now_local(),
+            )
+        )
+
+        db.commit()
+        db.refresh(order)
+
+        user = order.user if order.user else db.query(User).filter(User.id == order.user_id).first()
+        company = db.query(Company).filter(Company.id == company_id).first()
+        company_name = company.name if company else "la empresa"
+        product_name = shape.name or (item.product_type.name if item.product_type and item.product_type.name else "tu pedido")
+
+        if user:
+            try:
+                notification = Notification(
+                    user_id=user.id,
+                    title="Tu pedido fue aceptado",
+                    message=f"Tu pedido #{order.id} fue aceptado por {company_name}. Ya puedes revisarlo y pagarlo desde tus pedidos.",
+                    type="custom-order-accepted",
+                    is_read=False,
+                    link_url="/cliente/pedidos",
+                    created_at=OrderService._now_local(),
+                )
+                db.add(notification)
+                db.flush()
+
+                if user.email:
+                    result = EmailService.send_order_accepted_email(
+                        recipient_email=user.email,
+                        first_name=user.first_name,
+                        order_id=order.id,
+                        order_name=product_name,
+                        company_name=company_name,
+                    )
+                    if result.get("status") == "error":
+                        logger.warning("No se pudo enviar el correo de pedido aceptado: %s", result.get("error"))
+                db.commit()
+            except Exception:
+                db.rollback()
+
+        updated_order = (
+            db.query(Order)
+            .options(*OrderService._order_query_options())
+            .filter(Order.id == order_id)
+            .first()
+        )
+
+        return OrderService._serialize_order(db, updated_order, include_client=True, include_image_url=True)
 
     @staticmethod
     def create_marketplace_order(db: Session, user_id: int, data):
@@ -1126,9 +1315,20 @@ class OrderService:
         if role_name == "administrador":
             pass
         elif role_name in {"funcionario", "funcionario_adm"}:
-            if not company_id:
+            pending_stage = OrderService._ensure_stage(db, "Pendiente")
+            is_pending_custom_order = (
+                db.query(Order.id)
+                .filter(Order.id == order_id)
+                .filter(Order.items.any(OrderItem.current_stage_id == pending_stage.id))
+                .filter(Order.items.any(OrderItem.product_id.is_(None)))
+                .first()
+            )
+
+            if not company_id and not is_pending_custom_order:
                 return None
-            query = query.filter(Order.items.any(OrderItem.product.has(Product.company_id == company_id)))
+
+            if not is_pending_custom_order:
+                query = query.filter(Order.items.any(OrderItem.product.has(Product.company_id == company_id)))
         else:
             # Regular users can only see their own orders
             query = query.filter(Order.user_id == user_id)

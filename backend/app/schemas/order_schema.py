@@ -5,6 +5,8 @@ class CreateOrderRequest(BaseModel):
     product_type: str
     image_url: str | None
     quantity: int = Field(default=1, ge=1, le=10)
+    shape_id: int | None = None
+    shape_name: str | None = None
     attributes: dict[str, dict[str, str]] = Field(default_factory=dict)
 
 

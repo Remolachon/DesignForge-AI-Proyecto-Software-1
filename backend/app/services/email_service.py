@@ -295,6 +295,38 @@ class EmailService:
         return cls._send_message(recipient_email, subject, plain_text, html_body)
 
     @classmethod
+    def send_order_accepted_email(
+        cls,
+        recipient_email: str,
+        first_name: str | None,
+        order_id: int,
+        order_name: str,
+        company_name: str,
+    ) -> dict:
+        safe_name = cls._safe_text(first_name, "cliente")
+        safe_order = cls._safe_text(order_name, "tu pedido")
+        safe_company = cls._safe_text(company_name, "la empresa asignada")
+        subject = "Tu pedido fue aceptado"
+        plain_text = (
+            f"Hola {safe_name}:\n\n"
+            f"Tu pedido #{order_id} ({safe_order}) fue aceptado por {safe_company}.\n"
+            "Ya puedes revisarlo desde tu panel de pedidos.\n\n"
+            f"Equipo de {cls._brand_name()}"
+        )
+        html_body = cls._wrap_html(
+            title=subject,
+            heading="Tu pedido ya fue asignado",
+            body_html=f"""
+                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Hola {escape(safe_name)},</p>
+                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Tu pedido <strong>#{order_id}</strong> ({escape(safe_order)}) fue aceptado por <strong>{escape(safe_company)}</strong>.</p>
+                <p style=\"margin:0;font-size:16px;line-height:1.7;\">Ya puedes revisar el estado del pedido desde tu panel. Cuando quede habilitado para pago, verás la opción allí mismo.</p>
+            """,
+            cta_label="Ver mis pedidos",
+            cta_url=f"{cls._frontend_url()}/cliente/pedidos" if cls._frontend_url() else None,
+        )
+        return cls._send_message(recipient_email, subject, plain_text, html_body)
+
+    @classmethod
     def send_payment_confirmed_email(
         cls,
         recipient_email: str,

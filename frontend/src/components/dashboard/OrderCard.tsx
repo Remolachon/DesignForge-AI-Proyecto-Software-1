@@ -122,7 +122,7 @@ export function OrderCard({ order }: OrderCardProps) {
                   </span>
                 </div>
                 <div className="flex gap-2">
-                  {order.status === 'Pendiente de pago' && (
+                    {order.status === 'Pendiente de pago' && (
                     <Button
                       onClick={handlePay}
                       disabled={paying}

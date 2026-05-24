@@ -50,6 +50,8 @@ export type CreateCustomOrderPayload = {
   product_type: string;
   image_url: string | null;
   quantity: number;
+  shape_id: number;
+  shape_name: string;
   attributes: Record<string, { label: string; value: string }>;
 };
 

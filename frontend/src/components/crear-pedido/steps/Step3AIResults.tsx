@@ -71,7 +71,7 @@ export default function Step3AIResults({
         <div>
           <h2 className="text-2xl font-semibold">Resultados IA</h2>
           <p className="text-muted-foreground mt-2 max-w-2xl">
-            Elige la versión generada por IA que mejor represente tu diseño. Si no te gusta, puedes generar nuevas variantes hasta 3 opciones.
+            Puedes revisar las variantes generadas por IA y elegir una si quieres. Si no seleccionas ninguna, el pedido continuará con la imagen que subiste.
           </p>
         </div>
 
@@ -154,7 +154,7 @@ export default function Step3AIResults({
 
       {generatedImages.length >= 1 && (
         <p className="mt-4 text-sm text-muted-foreground">
-          Puedes seleccionar hasta 3 variantes para comparar. Una vez elegida una, haz clic en Siguiente para confirmar.
+          Puedes comparar hasta 3 variantes. Si no eliges ninguna, sigue con la imagen original y avanza con Siguiente.
         </p>
       )}
     </div>

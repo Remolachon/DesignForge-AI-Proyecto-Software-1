@@ -81,6 +81,7 @@ function getAuthHeaders() {
 function canonicalStatus(status: string): OrderStatus {
   const normalized = status.trim().toLowerCase();
 
+  if (normalized === 'pendiente') return 'Pendiente';
   if (normalized === 'pendiente de pago') return 'Pendiente de pago';
   if (normalized === 'pago rechazado') return 'Pendiente de pago';
   if (normalized === 'pago no aprobado') return 'Pendiente de pago';
@@ -154,6 +155,47 @@ export const funcionarioOrderService = {
     if (!response.ok) throw new Error('No se pudieron cargar los pedidos');
 
     return response.json();
+  },
+
+  async getPendingCustomOrdersPage(
+    params: { page: number; pageSize: number; search?: string },
+    signal?: AbortSignal,
+  ) {
+    const query = new URLSearchParams();
+    query.set('page', String(params.page));
+    query.set('page_size', String(params.pageSize));
+
+    if (params.search) query.set('search', params.search);
+
+    const response = await fetch(
+      `${API_URL}/orders/pending-custom/page?${query.toString()}`,
+      {
+        method: 'GET',
+        headers: getAuthHeaders(),
+        signal,
+      },
+    );
+
+    if (!response.ok) throw new Error('No se pudieron cargar los pedidos pendientes');
+
+    return response.json();
+  },
+
+  async acceptPendingCustomOrder(orderId: string): Promise<AdminOrder> {
+    const response = await fetch(`${API_URL}/orders/${orderId}/accept`, {
+      method: 'PATCH',
+      headers: {
+        ...getAuthHeaders(),
+      },
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err?.detail || 'No se pudo aceptar el pedido');
+    }
+
+    const data = await response.json();
+    return toAdminOrder(data.order as DashboardOrder);
   },
 
   async updateStatus(orderId: string, status: OrderStatus): Promise<AdminOrder> {

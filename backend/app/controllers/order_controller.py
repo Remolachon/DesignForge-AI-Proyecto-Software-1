@@ -85,26 +85,10 @@ def create_order(
             data=data
         )
 
-        payment_result = OrderService.generate_payment_url(db, order.id)
-
-        if payment_result.get("status") == "error":
-            raise HTTPException(status_code=400, detail=payment_result.get("error", "Error generando URL de pago"))
-
-        _send_order_created_email(
-            db=db,
-            db_user=db_user,
-            order=order,
-            payment_url=payment_result.get("payment_url"),
-        )
-
         return {
-            "message": "Order created successfully",
+            "message": "Pedido creado correctamente y quedó pendiente de asignación",
             "order_id": order.id,
             "total_amount": float(order.total_amount),
-            "payment_url": payment_result.get("payment_url"),
-            "payment_action_url": payment_result.get("payment_action_url"),
-            "payment_payload": payment_result.get("payment_payload"),
-            "payment_reference": payment_result.get("payment_reference"),
         }
     except OperationalError as e:
         logger.error(f"Error de BD al crear orden: {e}")
@@ -274,6 +258,71 @@ def get_funcionario_orders_page(
             status_code=503,
             detail="Servicio de base de datos temporalmente no disponible"
         )
+
+
+@router.get("/pending-custom/page", response_model=OrdersPageResponse)
+def get_pending_custom_orders_page(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    search: str | None = Query(None),
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    db_user = _get_db_user_with_retry(db, current_user)
+
+    try:
+        role_name = UserService.get_user_role_name(db, db_user.id)
+        if role_name not in {"funcionario", "funcionario_adm"}:
+            raise HTTPException(status_code=403, detail="No autorizado")
+
+        return OrderService.get_pending_custom_orders_page(
+            db=db,
+            page=page,
+            page_size=page_size,
+            search=search,
+        )
+    except OperationalError as e:
+        logger.error(f"Error de BD al obtener pedidos pendientes: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Servicio de base de datos temporalmente no disponible"
+        )
+
+
+@router.patch("/{order_id}/accept", response_model=UpdateOrderStatusResponse)
+def accept_pending_custom_order(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    db_user = _get_db_user_with_retry(db, current_user)
+
+    try:
+        role_name = UserService.get_user_role_name(db, db_user.id)
+        if role_name not in {"funcionario", "funcionario_adm"}:
+            raise HTTPException(status_code=403, detail="No autorizado")
+        if not db_user.company_id:
+            raise HTTPException(status_code=400, detail="No tienes una empresa asignada")
+
+        updated_order = OrderService.accept_pending_custom_order(
+            db=db,
+            order_id=order_id,
+            accepted_by_user_id=db_user.id,
+            company_id=db_user.company_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except OperationalError as e:
+        logger.error(f"Error de BD al aceptar pedido pendiente: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Servicio de base de datos temporalmente no disponible"
+        )
+
+    return {
+        "message": "Pedido aceptado",
+        "order": updated_order,
+    }
 
 
 @router.patch("/{order_id}/status", response_model=UpdateOrderStatusResponse)

@@ -40,11 +40,11 @@ export default function FuncionarioAdmDashboard() {
               Panel de Administración
             </h1>
             <p className="text-sm text-muted-foreground sm:text-base">
-              Gestiona pedidos, producción y el equipo de tu empresa
+              Gestiona pedidos, asigna solicitudes pendientes y organiza el equipo de tu empresa
             </p>
           </div>
-          <Link href="/funcionario/calendario">
-            <Button>Ver Calendario</Button>
+          <Link href="/funcionario/pedidos-pendientes">
+            <Button>Pedidos Pendientes</Button>
           </Link>
         </div>
 

@@ -46,7 +46,7 @@ export function DashboardView({ role }: { role: Role }) {
               {isCliente ? 'Bienvenido' : 'Panel de Producción'}
             </h1>
             <p className="text-sm text-muted-foreground sm:text-base">
-              {isCliente ? 'Gestiona tus pedidos y crea nuevos diseños personalizados' : 'Gestiona pedidos y organiza el calendario de producción'} 
+              {isCliente ? 'Gestiona tus pedidos y crea nuevos diseños personalizados' : 'Gestiona pedidos, asigna solicitudes pendientes y organiza la producción'} 
             </p>
           </div>
 
@@ -55,8 +55,8 @@ export function DashboardView({ role }: { role: Role }) {
               <Button><Plus /> Crear Pedido</Button>
             </Link>
           ) : (
-            <Link href="/funcionario/calendario">
-              <Button>Ver Calendario</Button>
+            <Link href="/funcionario/pedidos-pendientes">
+              <Button>Pedidos Pendientes</Button>
             </Link>
           )}
         </div>
@@ -120,11 +120,11 @@ export function DashboardView({ role }: { role: Role }) {
                 />
 
                 <QuickActionCard
-                href="/funcionario/calendario"
-                icon={<Clock className="w-5 h-5 text-white" />}
-                iconBg="bg-gradient-to-br from-accent to-accent-magenta"
-                title="Calendario"
-                description="Organizar producción"
+                href="/funcionario/pedidos-pendientes"
+                icon={<Clock className="w-5 h-5 text-primary" />}
+                iconBg="bg-primary/10"
+                title="Pedidos Pendientes"
+                description="Asignar pedidos personalizados"
                 />
 
                 <QuickActionCard

@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { funcionarioOrderService, type OrderDetail } from '@/services/funcionario-order.service';
 import { ProductService } from '@/services/product.service';
 import { getImageUrl } from '@/lib/supabase/getImageUrl';
+import { getStatusColor } from '@/lib/utils/statusColors';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 type ResolvedMedia = {
@@ -150,24 +151,9 @@ export function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModa
 
   const displayMedia = resolvedMedia.length > 1 ? resolvedMedia : fallbackMedia;
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'En diseño':
-        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400';
-      case 'En producción':
-        return 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400';
-      case 'Listo para entregar':
-        return 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400';
-      case 'Entregado':
-        return 'bg-emerald-600 text-white dark:bg-emerald-900/60 dark:text-emerald-400';
-      default:
-        return 'bg-muted text-muted-foreground';
-    }
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card text-foreground border-border">
         {/* Accesibilidad: Radix requiere título y descripción siempre presentes */}
         <DialogTitle className="sr-only">
           {order ? `Detalle del pedido ${order.title}` : 'Detalle del pedido'}
@@ -187,7 +173,7 @@ export function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModa
             </div>
           </div>
         ) : error ? (
-          <div className="text-center py-8 text-red-600">{error}</div>
+          <div className="py-8 text-center text-red-600">{error}</div>
         ) : order ? (
           <div className="space-y-6">
             {/* Header */}

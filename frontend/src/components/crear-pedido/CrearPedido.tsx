@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useCrearPedido } from "@/components/crear-pedido/hooks/useCrearPedido";
-import { customOrderAttributes } from "@/config/customOrderAttributes";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,7 @@ import { paymentService } from "@/services/payment.service";
 import Step1ProductType from "@/components/crear-pedido/steps/Step1ProductType";
 import Step2Upload from "@/components/crear-pedido/steps/Step2Upload";
 import Step3AIResults from "@/components/crear-pedido/steps/Step3AIResults";
-import Step5Confirm from "@/components/crear-pedido/steps/Step5Confirm";
+import Step5Confirm from "./steps/Step5Confirm";
 
 export default function CrearPedido() {
   const router = useRouter();
@@ -66,8 +65,13 @@ export default function CrearPedido() {
     generateAIImages,
     resetGeneratedImages,
     setSelectedGeneratedImage,
-    attributeValues,
-    setAttributeValues,
+    selectedShapeId,
+    selectedShapeName,
+    shapeAttributes,
+    shapeAttributeValues,
+    setSelectedShape,
+    setShapeAttributes,
+    setShapeAttributeValues,
   } = useCrearPedido({ restoreDraft });
 
 
@@ -99,42 +103,33 @@ export default function CrearPedido() {
         return;
       }
 
+      if (!selectedShapeId || !selectedShapeName) {
+        toast.error("Selecciona un shape para continuar");
+        return;
+      }
+
       const attributesPayload: Record<string, { label: string; value: string }> = {};
-      const config = productType ? customOrderAttributes[productType] || [] : [];
-      
-      for (const [key, val] of Object.entries(attributeValues)) {
-        const attrConfig = config.find((a: any) => a.code === key);
-        if (attrConfig) {
-          attributesPayload[key] = { label: attrConfig.label, value: val as string };
+      for (const attr of shapeAttributes) {
+        const value = shapeAttributeValues[attr.code];
+        if (value !== undefined && value !== null && String(value).trim()) {
+          attributesPayload[attr.code] = { label: attr.label, value: String(value).trim() };
         }
       }
 
-      const result = await paymentService.createCustomOrder({
+      await paymentService.createCustomOrder({
         product_type: productType,
         image_url: selectedGeneratedImage || uploadedImage,
         quantity,
+        shape_id: selectedShapeId,
+        shape_name: selectedShapeName,
         attributes: attributesPayload,
       });
-
-      if (!result.payment_url) {
-        throw new Error("No se pudo iniciar el pago con PayU");
-      }
-
-      if (result.payment_action_url && result.payment_payload) {
-        sessionStorage.setItem(
-          `payu_payload_${result.order_id}`,
-          JSON.stringify({
-            actionUrl: result.payment_action_url,
-            payload: result.payment_payload,
-          })
-        );
-      }
 
       // 🔥 LIMPIAR TODO
       reset();
 
-      toast.success("Pedido creado. Continúa al checkout seguro.");
-      router.push(`/pagos/checkout?orderId=${result.order_id}`);
+      toast.success("Pedido creado. Quedará pendiente hasta que una empresa lo acepte.");
+      router.push("/cliente/pedidos");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Error al crear pedido";
 
@@ -232,8 +227,13 @@ export default function CrearPedido() {
             quantity={quantity}
             setQuantity={setQuantity}
             image={selectedGeneratedImage || uploadedImage}
-            attributeValues={attributeValues}
-            setAttributeValues={setAttributeValues}
+            selectedShapeId={selectedShapeId}
+            selectedShapeName={selectedShapeName}
+            shapeAttributes={shapeAttributes}
+            shapeAttributeValues={shapeAttributeValues}
+            setSelectedShape={setSelectedShape}
+            setShapeAttributes={setShapeAttributes}
+            setShapeAttributeValues={setShapeAttributeValues}
             onValidationChange={setIsStep5Valid}
           />
         )}
@@ -258,7 +258,7 @@ export default function CrearPedido() {
         ) : (
           <Button onClick={handleConfirmOrder} disabled={loading || !isStep5Valid}>
             {loading && <Loader2 className="w-5 h-5 animate-spin" />}
-            Confirmar Pedido
+            Enviar solicitud
           </Button>
         )}
       </div>

@@ -42,6 +42,17 @@ export function ProductModal({ mode, initialData, initialMediaItems, initialShap
         [shapeAttributes]
     );
 
+    const formatShapeAttributeLabel = (label: string, code: string) => {
+        const normalized = `${label} ${code}`.toLowerCase();
+        if (normalized.includes('color')) return label;
+        if (normalized.includes('largo')) return 'Largo (cm)';
+        if (normalized.includes('ancho')) return 'Ancho (cm)';
+        if (normalized.includes('alto') || normalized.includes('altura')) return 'Alto (cm)';
+        if (normalized.includes('profundidad')) return 'Profundidad (cm)';
+        if (normalized.includes('diametro') || normalized.includes('diámetro')) return 'Diámetro (cm)';
+        return label;
+    };
+
     const set = (key: keyof ProductFormData, value: string) => {
         setForm((prev) => ({ ...prev, [key]: value }));
         if (errors[key]) setErrors((prev) => ({ ...prev, [key]: '' }));
@@ -244,15 +255,14 @@ export function ProductModal({ mode, initialData, initialMediaItems, initialShap
                         </select>
                     </FormField>
 
-                    <FormField label="Shape del producto" error={errors.productShape}>
+                    <FormField label="Forma del producto" error={errors.productShape}>
                         <select
                             value={form.productShape}
                             onChange={(e) => set('productShape', e.target.value)}
-                            className="w-full px-3 py-2 border border-border bg-background rounded-lg text-sm
-                         focus:outline-none focus:ring-2 focus:ring-accent transition-shadow"
+                            className="w-full px-3 py-2 border border-border bg-card rounded-lg text-sm text-foreground shadow-sm outline-none transition focus:outline-none focus:ring-2 focus:ring-accent"
                             disabled={loadingShapes}
                         >
-                            <option value="">Selecciona un shape</option>
+                            <option value="">Selecciona una forma</option>
                             {shapes.map((shape) => (
                                 <option key={shape.id} value={shape.name}>
                                     {shape.name}
@@ -265,16 +275,16 @@ export function ProductModal({ mode, initialData, initialMediaItems, initialShap
                     </FormField>
 
                     {selectedShape && (
-                        <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-4">
+                        <div className="rounded-xl border border-border bg-card/90 p-4 space-y-4 shadow-sm">
                             <div>
-                                <p className="text-sm font-semibold text-foreground">Atributos requeridos para {selectedShape.name}</p>
+                                <p className="text-sm font-semibold text-foreground">Datos requeridos para {selectedShape.name}</p>
                                 <p className="text-xs text-muted-foreground">Completa estos campos para dejar el producto listo para el marketplace.</p>
                             </div>
                             <div className="grid gap-4">
                                 {visibleShapeAttributes.length > 0 ? visibleShapeAttributes.map((attribute) => (
                                     <FormField
                                         key={attribute.id}
-                                        label={attribute.label}
+                                        label={formatShapeAttributeLabel(attribute.label, attribute.code)}
                                         error={shapeAttributeErrors[attribute.code]}
                                     >
                                         {attribute.input_type === 'number' ? (
@@ -283,16 +293,16 @@ export function ProductModal({ mode, initialData, initialMediaItems, initialShap
                                                 min={0}
                                                 value={shapeAttributeValues[attribute.code] || ''}
                                                 onChange={(event) => setShapeAttributeValues((prev) => ({ ...prev, [attribute.code]: event.target.value }))}
-                                                placeholder={attribute.placeholder || `Ej: ${attribute.label.toLowerCase()}`}
-                                                className="w-full px-3 py-2 border border-border bg-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-shadow"
+                                                placeholder={attribute.placeholder || `Ej: ${formatShapeAttributeLabel(attribute.label, attribute.code).toLowerCase()}`}
+                                                className="w-full px-3 py-2 border border-border bg-card rounded-lg text-sm text-foreground shadow-sm outline-none transition focus:outline-none focus:ring-2 focus:ring-accent"
                                             />
                                         ) : (
                                             <input
                                                 type="text"
                                                 value={shapeAttributeValues[attribute.code] || ''}
                                                 onChange={(event) => setShapeAttributeValues((prev) => ({ ...prev, [attribute.code]: event.target.value }))}
-                                                placeholder={attribute.placeholder || `Ej: ${attribute.label.toLowerCase()}`}
-                                                className="w-full px-3 py-2 border border-border bg-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-shadow"
+                                                placeholder={attribute.placeholder || `Ej: ${formatShapeAttributeLabel(attribute.label, attribute.code).toLowerCase()}`}
+                                                className="w-full px-3 py-2 border border-border bg-card rounded-lg text-sm text-foreground shadow-sm outline-none transition focus:outline-none focus:ring-2 focus:ring-accent"
                                             />
                                         )}
                                     </FormField>
