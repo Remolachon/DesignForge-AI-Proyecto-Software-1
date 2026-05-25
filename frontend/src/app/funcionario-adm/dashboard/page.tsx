@@ -49,14 +49,12 @@ export default function FuncionarioAdmDashboard() {
         </div>
 
         {/* ── STATS (mismo bloque que el dashboard funcionario) ── */}
-        <section className="rounded-3xl border border-border/60 bg-card/90 p-5 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.55)] backdrop-blur-sm sm:p-6">
-          <div className="grid w-full gap-6 md:grid-cols-2 xl:grid-cols-4">
-            <StatCard label="En Diseño"           value={stats.design}      icon={<AlertCircle />} colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400"   />
-            <StatCard label="En Producción"        value={stats.production}  icon={<Clock />}       colorClass="bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400"  />
-            <StatCard label="Listo para entregar"  value={stats.ready}       icon={<CheckCircle />} colorClass="bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400"  />
-            <StatCard label="Total Pedidos"        value={stats.total}       icon={<Package />}     colorClass="bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400" />
-          </div>
-        </section>
+        <div className="grid w-full gap-6 md:grid-cols-2 xl:grid-cols-4">
+          <StatCard label="En Diseño"           value={stats.design}      icon={<AlertCircle />} colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400"   />
+          <StatCard label="En Producción"        value={stats.production}  icon={<Clock />}       colorClass="bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400"  />
+          <StatCard label="Listo para entregar"  value={stats.ready}       icon={<CheckCircle />} colorClass="bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400"  />
+          <StatCard label="Total Pedidos"        value={stats.total}       icon={<Package />}     colorClass="bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400" />
+        </div>
 
         {/* ── ACCESOS RÁPIDOS (mismo bloque que el dashboard funcionario) ── */}
         <section className="rounded-3xl border border-border/60 bg-card/90 p-5 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.55)] backdrop-blur-sm sm:p-6">
