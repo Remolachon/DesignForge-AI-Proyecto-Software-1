@@ -14,7 +14,7 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: ["var(--font-inter)", "sans-serif"],
-        satoshi: ["Satoshi", "sans-serif"],
+        chillax: ["'Chillax'", "sans-serif"],
       },
       colors: {
         // 🔥 conecta Tailwind con tus variables CSS

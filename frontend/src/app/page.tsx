@@ -6,28 +6,48 @@ import { getPublicImageUrl } from "@/lib/supabase/getPublicImageUrl";
 import { HOME_CATALOG_PRODUCTS } from "@/constants/productCatalog";
 import { InfiniteGrid } from "@/components/ui/infinite-grid";
 import { Magnetic } from "@/components/core/magnetic";
-import { Tilt } from "@/components/core/tilt";
 import { BackgroundLines } from "@/components/ui/animated-svg-background";
-
+import { TextEffect } from '@/components/core/text-effect';
+import { FadeIn } from '@/components/core/fade-in';
+import { CardStack } from '@/components/ui/card-stack';
+import LightRays from '@/components/ui/light-rays';
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-background text-foreground font-satoshi">
+    <div className="min-h-screen bg-background text-foreground font-chillax">
       <Header />
 
       {/* Hero Section */}
       <InfiniteGrid className="py-24 sm:py-32 px-4 min-h-[85vh]">
         <div className="max-w-5xl mx-auto text-center">
-          <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-primary mb-6 tracking-tight drop-shadow-sm">
-            Diseña y crea productos
-            <span className="block mt-2 bg-gradient-to-r from-accent to-accent-magenta bg-clip-text text-transparent">
+          <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-primary mb-6 tracking-tight drop-shadow-sm flex flex-col items-center justify-center space-y-2">
+            <TextEffect
+              per='char'
+              delay={0}
+              variants={{
+                container: { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.05 } } },
+                item: { hidden: { opacity: 0, rotateX: 90, y: 10 }, visible: { opacity: 1, rotateX: 0, y: 0, transition: { duration: 0.2 } } },
+              }}
+            >
+              Diseña y crea productos
+            </TextEffect>
+            <TextEffect
+              per='char'
+              delay={0.3}
+              className="bg-gradient-to-r from-accent to-accent-magenta bg-clip-text text-transparent"
+              as="span"
+            >
               únicos y personalizados
-            </span>
+            </TextEffect>
           </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto font-medium">
-            Bordados, letreros neon y productos acrílicos diseñados con IA.
-            <br className="hidden sm:block" /> Tu imaginación, nuestra artesanía.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pointer-events-auto">
+          <div className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto font-medium flex flex-col items-center">
+            <TextEffect per='char' delay={0.8} preset='blur'>
+              Bordados, letreros neon y productos acrílicos diseñados IA.
+            </TextEffect>
+            <TextEffect per='char' delay={1} preset='blur'>
+              Tu imaginación, nuestra artesanía.
+            </TextEffect>
+          </div>
+          <FadeIn delay={2.5} className="flex flex-col sm:flex-row gap-4 justify-center items-center pointer-events-auto">
             <Link href="/cliente/crear-pedido" className="sm:w-auto w-full">
               <Button size="lg" className="w-full sm:w-auto text-md px-8 py-6 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 hover:-translate-y-1">
                 Crear mi primer pedido
@@ -38,21 +58,48 @@ export default function Landing() {
                 Explorar Marketplace
               </Button>
             </Link>
-          </div>
+          </FadeIn>
         </div>
       </InfiniteGrid>
 
       {/* Product Types */}
-      <section className="py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-semibold text-center mb-12 text-primary">
+      <section className="py-24 px-4 overflow-hidden relative flex flex-col justify-center min-h-[80vh]">
+        {/* Light Rays Background */}
+        <div className="absolute inset-0 pointer-events-none z-0">
+          <LightRays
+            raysOrigin="bottom-center"
+            lightColor="#a78bfa"
+            darkColor="#ffffff" // Blanco LED para modo oscuro
+            raysSpeed={1.2}
+            lightSpread={1.5}
+            rayLength={1.5}
+            fadeDistance={0.6}
+            followMouse={true}
+            mouseInfluence={0.1}
+            noiseAmount={0.02}
+            distortion={0.05}
+          />
+        </div>
+
+        <div className="max-w-6xl mx-auto relative z-10 w-full">
+          <h2 className="text-3xl font-semibold text-center mb-16 text-primary drop-shadow-sm">
             Nuestros productos
           </h2>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {HOME_CATALOG_PRODUCTS.map((product) => (
-              <ProductCard key={product.title} {...product} />
-            ))}
+          <div className="flex justify-center w-full">
+            <CardStack
+              items={HOME_CATALOG_PRODUCTS.map((product) => ({
+                id: product.title,
+                title: product.title,
+                description: product.description,
+                imageSrc: getPublicImageUrl(product.storagePath),
+                tag: product.accent ? 'Popular' : undefined,
+              }))}
+              autoAdvance
+              intervalMs={3000}
+              cardWidth={340}
+              cardHeight={400}
+            />
           </div>
         </div>
       </section>
@@ -86,45 +133,3 @@ export default function Landing() {
   );
 }
 
-// 🔹 Componente desacoplado y limpio
-function ProductCard({
-  title,
-  description,
-  storagePath,
-  accent,
-}: {
-  title: string;
-  description: string;
-  storagePath: string;
-  accent?: boolean;
-}) {
-  const imageUrl = getPublicImageUrl(storagePath);
-
-  return (
-    <Tilt rotationFactor={8} isRevese>
-      <div className="group relative overflow-hidden rounded-xl bg-background border border-border hover:shadow-lg transition-all duration-300 h-full flex flex-col">
-        <div className="relative aspect-[4/3] overflow-hidden">
-          <Image
-            src={imageUrl}
-            alt={title}
-            fill
-            loading="lazy"
-            unoptimized
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        </div>
-
-        <div className="p-6 flex-1">
-          <h3 className="text-xl font-semibold mb-2">{title}</h3>
-          <p className="text-muted-foreground">{description}</p>
-        </div>
-
-        {accent && (
-          <div className="absolute top-4 right-4 px-3 py-1 bg-accent text-accent-foreground rounded-full text-sm font-medium">
-            Popular
-          </div>
-        )}
-      </div>
-    </Tilt>
-  );
-}
