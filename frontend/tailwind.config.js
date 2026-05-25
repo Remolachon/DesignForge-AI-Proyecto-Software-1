@@ -12,6 +12,10 @@ module.exports = {
   darkMode: "class",
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["var(--font-inter)", "sans-serif"],
+        satoshi: ["Satoshi", "sans-serif"],
+      },
       colors: {
         // 🔥 conecta Tailwind con tus variables CSS
         background: "var(--background)",

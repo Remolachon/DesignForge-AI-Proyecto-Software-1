@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
 
 export default function PublicLayout({ children }: { children: ReactNode }) {
-  return <>{children}</>;
+  return <div className="font-satoshi contents">{children}</div>;
 }

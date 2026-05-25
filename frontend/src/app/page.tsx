@@ -11,7 +11,7 @@ import { BackgroundLines } from "@/components/ui/animated-svg-background";
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground font-satoshi">
       <Header />
 
       {/* Hero Section */}

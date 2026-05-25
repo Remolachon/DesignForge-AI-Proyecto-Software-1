@@ -10,6 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/components/ui/utils';
 import { interactionService, type NotificationItem } from '@/services/interaction.service';
+import { audioService } from '@/services/audio.service';
 
 function formatRelativeDate(value: string) {
   const createdAt = new Date(value);
@@ -58,7 +59,12 @@ export function NotificationBell() {
     try {
       const data = await interactionService.getNotifications();
       setItems((data.items || []).slice(0, 10));
-      setUnreadCount(data.unreadCount);
+      setUnreadCount((prevCount) => {
+        if (data.unreadCount > prevCount) {
+          audioService.playNewNotification();
+        }
+        return data.unreadCount;
+      });
     } catch {
       setItems([]);
       setUnreadCount(0);

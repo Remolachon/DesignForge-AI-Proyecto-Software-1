@@ -1,6 +1,7 @@
 class AudioService {
   private loginBell: HTMLAudioElement | null = null;
   private successOrder: HTMLAudioElement | null = null;
+  private newNotification: HTMLAudioElement | null = null;
   private initialized = false;
 
   private createSound(src: string, volume: number) {
@@ -23,6 +24,7 @@ class AudioService {
 
     this.loginBell = this.createSound('/sounds/happy-bell-alert.ogg', 0.5);
     this.successOrder = this.createSound('/sounds/elevator-bell.ogg', 0.6);
+    this.newNotification = this.createSound('/sounds/new-notification.ogg', 0.5);
 
     this.initialized = true;
   }
@@ -84,6 +86,11 @@ class AudioService {
   public playSuccessOrder() {
     this.init();
     this.playAudio(this.successOrder, 660);
+  }
+
+  public playNewNotification() {
+    this.init();
+    this.playAudio(this.newNotification, 1000);
   }
 }
 
