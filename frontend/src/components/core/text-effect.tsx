@@ -96,10 +96,13 @@ export function TextEffect({
   const MotionTag = motion[as as keyof typeof motion] as any;
   const selectedVariants = preset ? presetVariants[preset] : null;
 
-  const containerVariants = variants?.container || selectedVariants?.container || defaultContainerVariants;
+  const baseContainerVariants = variants?.container || selectedVariants?.container || defaultContainerVariants;
   const itemVariants = variants?.item || selectedVariants?.item || defaultItemVariants;
 
+  let containerVariants = baseContainerVariants;
+
   if (delay > 0) {
+    containerVariants = { ...baseContainerVariants };
     if (containerVariants.visible && typeof containerVariants.visible === 'object') {
       const v = containerVariants.visible as any;
       containerVariants.visible = {

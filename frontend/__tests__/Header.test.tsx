@@ -69,4 +69,3 @@ describe('Header Component', () => {
     expect(avatarButton).toBeInTheDocument();
   });
 });
-});

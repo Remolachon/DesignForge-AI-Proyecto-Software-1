@@ -308,4 +308,3 @@ export function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModa
     </Dialog>
   );
 }
-}
