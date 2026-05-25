@@ -25,11 +25,11 @@ describe('Header Component', () => {
     // Configurar el mock para usuario no autenticado
     vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
       user: null,
-      loading: false,
+      setUser: vi.fn(),
       login: vi.fn(),
       register: vi.fn(),
       logout: vi.fn(),
-    });
+    } as ReturnType<typeof AuthContext.useAuth>);
 
     const { default: HeaderComponent } = await import('@/components/Header');
     render(<HeaderComponent />);
@@ -48,11 +48,11 @@ describe('Header Component', () => {
         first_name: 'Test',
         last_name: 'User'
       },
-      loading: false,
+      setUser: vi.fn(),
       login: vi.fn(),
       register: vi.fn(),
       logout: vi.fn(),
-    });
+    } as ReturnType<typeof AuthContext.useAuth>);
 
     localStorage.setItem('role', 'administrador');
     localStorage.setItem('user_name', 'Test User');
