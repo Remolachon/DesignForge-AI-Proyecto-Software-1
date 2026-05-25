@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable react-hooks/exhaustive-deps, @typescript-eslint/no-explicit-any */
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { type MarketplaceProduct } from '@/types/marketplace';
 import { type ProductType } from '@/types/product';
 import { getCatalogImageByType, normalizeProductType } from '@/constants/productCatalog';

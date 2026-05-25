@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps */
 
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';

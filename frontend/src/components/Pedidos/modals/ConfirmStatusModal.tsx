@@ -18,7 +18,7 @@ export function ConfirmStatusModal({ orderId, nextStatus, onConfirm, onCancel }:
                 <p className="text-sm text-muted-foreground mb-6">
                     ¿Seguro que deseas actualizar el pedido{' '}
                     <span className="font-medium text-foreground">#{orderId}</span> a{' '}
-                    <span className="font-medium text-foreground">{nextStatus}</span>?
+                    <span className="font-medium text-foreground">&quot;{nextStatus}&quot;</span>?
                 </p>
                 <div className="flex gap-3">
                     <Button variant="outline" className="flex-1" onClick={onCancel}>

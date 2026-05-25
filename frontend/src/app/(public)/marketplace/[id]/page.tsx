@@ -1,6 +1,8 @@
+ 
 import { ProductService } from "@/services/product.service";
 import { ProductDetailView } from "./ProductDetailView";
 import Header from "@/components/Header";
+import Link from "next/link";
 
 interface PageProps {
   params: Promise<{
@@ -17,7 +19,7 @@ export async function generateMetadata({ params }: PageProps) {
       title: `${product.title} - DesignForge`,
       description: product.description,
     };
-  } catch (error) {
+  } catch {
     return {
       title: "Producto no encontrado - DesignForge",
     };
@@ -25,19 +27,16 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function ProductDetailPage({ params }: PageProps) {
+  let product = null;
+
   try {
     const resolvedParams = await params;
-    const product = await ProductService.getProductById(resolvedParams.id);
+    product = await ProductService.getProductById(resolvedParams.id);
+  } catch {
+    product = null;
+  }
 
-    return (
-      <div className="bg-background text-foreground flex flex-col">
-        <Header />
-        <main className="flex-1">
-          <ProductDetailView initialProduct={product} />
-        </main>
-      </div>
-    );
-  } catch (error) {
+  if (!product) {
     return (
       <div className="flex flex-col">
         <Header />
@@ -46,14 +45,23 @@ export default async function ProductDetailPage({ params }: PageProps) {
           <p className="text-muted-foreground mb-8">
             El producto que buscas no existe o ha sido removido.
           </p>
-          <a
+          <Link
             href="/marketplace"
             className="bg-primary text-primary-foreground px-6 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors"
           >
             Volver al Marketplace
-          </a>
+          </Link>
         </main>
       </div>
     );
   }
+
+  return (
+    <div className="bg-background text-foreground flex flex-col">
+      <Header />
+      <main className="flex-1">
+        <ProductDetailView initialProduct={product} />
+      </main>
+    </div>
+  );
 }

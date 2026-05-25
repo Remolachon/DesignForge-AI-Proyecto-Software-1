@@ -35,7 +35,7 @@ export function ConfirmBuyModal({
         <h3 className="text-lg font-semibold mb-2">Confirmar Pedido</h3>
         <p className="text-sm text-muted-foreground mb-6">
           ¿Estás seguro de que deseas comprar{' '}
-          <span className="font-medium text-foreground">"{productTitle}"</span> con cantidad <span className="font-medium text-foreground">{quantity}</span> por un total de <span className="font-medium text-foreground">${safeTotalAmount.toLocaleString('es-CO')}</span>?
+          <span className="font-medium text-foreground">&quot;{productTitle}&quot;</span> con cantidad <span className="font-medium text-foreground">{quantity}</span> por un total de <span className="font-medium text-foreground">${safeTotalAmount.toLocaleString('es-CO')}</span>?
         </p>
         <div className="flex gap-3">
           <Button

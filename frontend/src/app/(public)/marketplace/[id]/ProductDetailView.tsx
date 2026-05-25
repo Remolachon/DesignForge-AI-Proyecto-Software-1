@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';

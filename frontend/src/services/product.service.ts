@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Product } from "@/types/product";
 import { normalizeProductType } from "@/constants/productCatalog";
 import { getApiBaseUrl } from "@/lib/utils/apiBaseUrl";

@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";

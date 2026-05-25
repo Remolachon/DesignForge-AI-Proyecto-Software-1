@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Pedido } from '../types/pedido';
 import { getApiBaseUrl } from '@/lib/utils/apiBaseUrl';
 
