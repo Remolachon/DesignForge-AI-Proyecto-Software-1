@@ -1,13 +1,9 @@
 import axios from "axios";
 import { supabaseClient } from "@/lib/supabase/supabaseClient";
+import { clearAuthSession } from "@/lib/utils/authSession";
+import { getApiBaseUrl } from "@/lib/utils/apiBaseUrl";
 
-const ENV_API_BASE_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "");
-const DEFAULT_PROD_API_BASE_URL = "https://designforge-ai-proyecto-software-1.onrender.com";
-const API_BASE_URL =
-  ENV_API_BASE_URL ||
-  (typeof window !== "undefined" && window.location.hostname === "localhost"
-    ? "http://localhost:8000"
-    : DEFAULT_PROD_API_BASE_URL);
+const API_BASE_URL = getApiBaseUrl();
 const REQUEST_TIMEOUT_MS = 15000;
 
 const getAuthApiUrl = () => {
@@ -231,6 +227,7 @@ export const syncRoleFromBackend = async (): Promise<string | null> => {
     }
     return role ?? null;
   } catch {
+    clearAuthSession();
     return null;
   }
 };

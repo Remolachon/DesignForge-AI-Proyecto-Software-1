@@ -55,12 +55,12 @@ function TimedOrderCard({ order, onClick }: { order: TimedOrder; onClick: () => 
     <button
       type="button"
       onClick={onClick}
-      className="w-full text-left p-2.5 rounded-lg border border-border bg-white hover:bg-muted/30 hover:shadow-sm transition"
+      className="w-full rounded-xl border border-border bg-card p-2.5 text-left text-foreground shadow-sm transition hover:-translate-y-0.5 hover:bg-muted/25"
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="text-xs font-semibold truncate">{order.title}</p>
-          <p className="text-[11px] text-muted-foreground truncate">{order.clientName || 'Cliente'}</p>
+        <div className="min-w-0 flex-1">
+          <p className="line-clamp-2 text-xs font-semibold leading-snug text-foreground">{order.title}</p>
+          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{order.clientName || 'Cliente'}</p>
           <p className="text-[11px] mt-1 inline-flex items-center gap-1 text-muted-foreground">
             <Clock className="w-3 h-3" /> {order.assignedHour}:00
           </p>
@@ -160,18 +160,43 @@ export default function FuncionarioCalendario() {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadOrders = async () => {
+    const controller = new AbortController();
+    let cancelled = false;
+
+    const loadOrders = async (isRetry = false) => {
       try {
-        const data = await funcionarioOrderService.getOrders();
+        if (!cancelled) {
+          setLoading(true);
+        }
+
+        const data = await funcionarioOrderService.getOrders(controller.signal);
+        if (cancelled || controller.signal.aborted) return;
         setOrders(data);
-      } catch (error: any) {
-        toast.error(error?.message || 'No se pudieron cargar los pedidos del calendario');
+      } catch (error: unknown) {
+        if (cancelled || controller.signal.aborted) return;
+
+        if (!isRetry) {
+          window.setTimeout(() => {
+            void loadOrders(true);
+          }, 450);
+          return;
+        }
+
+        const message = (error as { message?: string })?.message;
+        toast.error(message || 'No se pudo cargar el calendario en este momento');
       } finally {
-        setLoading(false);
+        if (!cancelled && !controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
-    loadOrders();
+    void loadOrders();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
   }, []);
 
   const today = new Date();

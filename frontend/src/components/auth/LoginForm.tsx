@@ -12,6 +12,7 @@ import { AuthShell } from "@/components/auth/AuthShell";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { getDashboardByRole, login, startGoogleAuth } from "@/services/auth.service";
 import { audioService } from "@/services/audio.service";
+import { sanitizeUserMessage } from "@/lib/utils/safeUserMessage";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
@@ -29,20 +30,21 @@ export default function LoginForm() {
 
     if (googleError) {
       localStorage.removeItem("google_auth_error");
-      setErrorMsg(googleError);
-      toast.error(googleError);
+      const cleanMessage = sanitizeUserMessage(googleError);
+      setErrorMsg(cleanMessage);
+      toast.error(cleanMessage);
     }
   }, []);
 
   const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
-  const extractBackendError = (error: unknown) => {
+  const extractBackendMessage = (error: unknown) => {
     const detail = (error as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
 
-    if (!detail) return "Ocurrió un error inesperado";
-    if (typeof detail === "string") return detail;
+    if (!detail) return "Paso algo inesperado";
+    if (typeof detail === "string") return sanitizeUserMessage(detail);
 
-    return "Ocurrió un error inesperado";
+    return "Paso algo inesperado";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,7 +85,7 @@ export default function LoginForm() {
 
       router.push(getDashboardByRole(res.role));
     } catch (error: unknown) {
-      const message = extractBackendError(error);
+      const message = extractBackendMessage(error);
       setErrorMsg(message);
       toast.error(message);
     } finally {
@@ -102,7 +104,7 @@ export default function LoginForm() {
 
       await startGoogleAuth("login");
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "No se pudo iniciar con Google";
+      const message = sanitizeUserMessage(error instanceof Error ? error.message : "No se pudo iniciar con Google");
       setErrorMsg(message);
       toast.error(message);
       setGoogleLoading(false);
@@ -151,7 +153,7 @@ export default function LoginForm() {
 
         <div className="flex items-center gap-3">
           <div className="flex-1 border-t border-border/60" />
-          <span className="px-3 text-xs uppercase tracking-[0.22em] text-muted-foreground bg-card/90">o continúa con</span>
+          <span className="bg-card/90 px-3 text-xs uppercase tracking-[0.22em] text-muted-foreground">o continúa con</span>
           <div className="flex-1 border-t border-border/60" />
         </div>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -8,8 +8,8 @@ import { Product, getProductTypeLabel } from '@/types/product';
 import { useMarketplaceBuy } from '@/components/marketplace/hooks/useMarketplaceBuy';
 import { BuyOrderModal } from '@/components/marketplace/modals/BuyOrderModal';
 import { ConfirmBuyModal } from '@/components/marketplace/modals/ConfirmBuyModal';
-import { ProductCarousel } from '@/components/multimedia/ProductCarousel';
-import { Star, ShoppingBag, Settings2, ShieldCheck, Truck, RefreshCcw, Leaf, MessageSquareText } from 'lucide-react';
+import { marketplaceCatalogService } from '@/services/marketplace-catalog.service';
+import { Star, ShoppingBag, Settings2, RefreshCcw, Leaf } from 'lucide-react';
 
 interface Props {
   initialProduct: Product;
@@ -21,8 +21,34 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
 
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  // Optional: Add state for image gallery if we had multiple images.
-  const [mainImage, setMainImage] = useState(initialProduct.imageUrl);
+  const [resolvedShape, setResolvedShape] = useState(initialProduct.productShape || null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const resolveShape = async () => {
+      if (initialProduct.productShape || !initialProduct.productShapeId) return;
+
+      try {
+        const shapes = await marketplaceCatalogService.getShapes();
+        const matchedShape = shapes.find((shape) => shape.id === initialProduct.productShapeId) || null;
+
+        if (!cancelled) {
+          setResolvedShape(matchedShape?.name || null);
+        }
+      } catch {
+        if (!cancelled) {
+          setResolvedShape(null);
+        }
+      }
+    };
+
+    void resolveShape();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [initialProduct.productShape, initialProduct.productShapeId]);
 
   const handleBuyClick = () => {
     const token = localStorage.getItem('token');
@@ -52,12 +78,22 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
     }
   };
 
-  // Mocking extra images for the gallery
-  const thumbnails = [
-    initialProduct.imageUrl,
-    // Add same image to demonstrate layout since we only have 1 image per product
-    initialProduct.imageUrl,
-    initialProduct.imageUrl,
+  const primaryMedia = useMemo(() => {
+    const media = initialProduct.media || [];
+    const mainMedia = media.find((item) => item.media_role === 'main');
+    return mainMedia || media[0] || null;
+  }, [initialProduct.media]);
+
+  const mediaCount = initialProduct.media?.length ?? 0;
+  const attributeCount = initialProduct.attributes?.length ?? 0;
+
+  const infoCards = [
+    { label: 'Tipo', value: getProductTypeLabel(initialProduct.productType) },
+    { label: 'Forma', value: resolvedShape || 'No tiene' },
+    { label: 'Stock', value: initialProduct.inStock ? `${initialProduct.stock} disponibles` : 'Agotado' },
+    { label: 'Medios', value: mediaCount ? `${mediaCount} archivo(s)` : 'No tiene' },
+    { label: 'Reseñas', value: initialProduct.reviews ? `${initialProduct.reviews}` : 'No tiene' },
+    { label: 'Atributos', value: attributeCount ? `${attributeCount} configurado(s)` : 'No tiene' },
   ];
 
   return (
@@ -77,9 +113,42 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
         {/* Product Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
 
-          {/* Left: Image Gallery */}
+          {/* Left: Main Media */}
           <div className="lg:col-span-7 w-full">
-            <ProductCarousel media={initialProduct.media || []} altText={initialProduct.title} />
+            <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-border bg-muted/30 shadow-sm">
+              {primaryMedia ? (
+                primaryMedia.media_kind === 'video' ? (
+                  <video
+                    src={primaryMedia.storage_path}
+                    className="h-full w-full object-cover"
+                    controls
+                    playsInline
+                  />
+                ) : (
+                  <Image
+                    src={primaryMedia.storage_path || initialProduct.imageUrl || ''}
+                    alt={initialProduct.title}
+                    fill
+                    unoptimized
+                    priority
+                    className="object-cover"
+                  />
+                )
+              ) : initialProduct.imageUrl ? (
+                <Image
+                  src={initialProduct.imageUrl}
+                  alt={initialProduct.title}
+                  fill
+                  unoptimized
+                  priority
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-muted text-sm text-muted-foreground">
+                  Sin vista previa
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Right: Product Information */}
@@ -136,6 +205,35 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
             <div className="prose prose-sm sm:prose-base dark:prose-invert text-muted-foreground leading-relaxed mb-8 lg:mb-10 max-w-lg">
               <p>{initialProduct.description}</p>
             </div>
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 mb-8">
+              {infoCards.map((item) => (
+                <div key={item.label} className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{item.label}</p>
+                  <p className="mt-1 text-sm font-medium text-foreground">{item.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {initialProduct.attributes.length > 0 ? (
+              <div className="mb-8 space-y-3 rounded-2xl border border-border bg-card p-5 shadow-sm">
+                <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Detalles configurables</h2>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {initialProduct.attributes.map((attribute) => (
+                    <div key={attribute.code} className="rounded-xl border border-border/70 bg-background p-3">
+                      <p className="text-xs text-muted-foreground">{attribute.label}</p>
+                      <p className="mt-1 text-sm font-medium text-foreground">
+                        {attribute.default_value?.trim() || attribute.placeholder?.trim() || 'No tiene'}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="mb-8 rounded-2xl border border-dashed border-border bg-card p-5 text-sm text-muted-foreground shadow-sm">
+                Este producto no tiene atributos configurados.
+              </div>
+            )}
 
             {/* Action Area */}
             <div className="flex flex-col gap-3 lg:gap-4 mt-auto p-5 lg:p-6 bg-muted/20 rounded-2xl border border-border/50">

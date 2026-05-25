@@ -44,7 +44,7 @@ export default function FuncionarioAdmDashboard() {
             </p>
           </div>
           <Link href="/funcionario/pedidos-pendientes">
-            <Button>Pedidos Pendientes</Button>
+            <Button>Pedidos pendientes</Button>
           </Link>
         </div>
 
@@ -57,7 +57,7 @@ export default function FuncionarioAdmDashboard() {
         </div>
 
         {/* ── ACCESOS RÁPIDOS (mismo bloque que el dashboard funcionario) ── */}
-        <section>
+        <section className="rounded-3xl border border-border/60 bg-card/90 p-5 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.55)] backdrop-blur-sm sm:p-6">
           <h2 className="mb-4 text-xl font-semibold">Accesos Rápidos</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <QuickActionCard
@@ -76,16 +76,16 @@ export default function FuncionarioAdmDashboard() {
             />
             <QuickActionCard
               href="/funcionario-adm/ventas"
-              icon={<TrendingUp className="h-5 w-5 text-white" />}
-              iconBg="bg-gradient-to-br from-blue-500 to-indigo-600"
+              icon={<TrendingUp className="h-5 w-5 text-primary" />}
+              iconBg="bg-primary/10"
               title="Ventas y Finanzas"
               description="Métricas de tu empresa"
             />
             {/* Acceso rápido exclusivo: navega a gestión de staff */}
             <QuickActionCard
               href="/funcionario-adm/staff"
-              icon={<Users className="h-5 w-5 text-white" />}
-              iconBg="bg-gradient-to-br from-violet-500 to-purple-700"
+              icon={<Users className="h-5 w-5 text-primary" />}
+              iconBg="bg-primary/10"
               title="Gestión de Staff"
               description="Administrar funcionarios"
             />
@@ -93,7 +93,7 @@ export default function FuncionarioAdmDashboard() {
         </section>
 
         {/* ── PEDIDOS URGENTES (mismo bloque que el dashboard funcionario) ── */}
-        <section>
+        <section className="rounded-3xl border border-border/60 bg-card/90 p-5 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.55)] backdrop-blur-sm sm:p-6">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-semibold">Pedidos Urgentes</h2>
             <Link href="/funcionario/pedidos">

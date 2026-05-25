@@ -66,6 +66,29 @@ const formatShapeAttributeLabel = (label: string, code: string) => {
   return label;
 };
 
+const getShapeAttributePlaceholder = (attribute: MarketplaceShapeAttribute, displayLabel: string) => {
+  const normalized = `${attribute.label} ${attribute.code}`.toLowerCase();
+
+  if (attribute.input_type === 'number') {
+    if (
+      normalized.includes('largo') ||
+      normalized.includes('ancho') ||
+      normalized.includes('alto') ||
+      normalized.includes('altura') ||
+      normalized.includes('profundidad') ||
+      normalized.includes('diametro') ||
+      normalized.includes('diámetro') ||
+      displayLabel.toLowerCase().includes('(cm)')
+    ) {
+      return 'Ej: 12';
+    }
+
+    return 'Ej: 1';
+  }
+
+  return attribute.placeholder || `Escribe ${displayLabel.toLowerCase()}`;
+};
+
 export default function Step5Confirm({
   productType,
   quantity,
@@ -329,7 +352,7 @@ export default function Step5Confirm({
                       <input
                         type={attribute.input_type === "number" ? "number" : "text"}
                         value={currentValue}
-                        placeholder={attribute.placeholder || `Escribe ${displayLabel.toLowerCase()}`}
+                        placeholder={getShapeAttributePlaceholder(attribute, displayLabel)}
                         onChange={(event) => handleChange(attribute.code, event.target.value)}
                         className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-accent focus:ring-2 focus:ring-accent/30"
                       />

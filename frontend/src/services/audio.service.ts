@@ -14,7 +14,7 @@ class AudioService {
     audio.preload = 'auto';
     audio.volume = volume;
     audio.addEventListener('error', () => {
-      console.warn(`AudioService: No se pudo cargar ${src}.`);
+      // El fallback de tono cubre navegadores/sistemas sin soporte de este archivo.
     });
     return audio;
   }

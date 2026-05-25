@@ -1,6 +1,7 @@
 import { AdminOrder, OrderStatus } from '@/types/order';
+import { getApiBaseUrl } from '@/lib/utils/apiBaseUrl';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = getApiBaseUrl();
 
 type DashboardOrder = {
   id: string;
@@ -56,6 +57,7 @@ export type OrderDetail = {
   clientName?: string | null;
   companyName?: string | null;
   productType?: string | null;
+  productId?: number | null;
   quantity: number;
   attributes: OrderAttribute[] | null;
 };
@@ -121,11 +123,14 @@ function toAdminOrder(order: DashboardOrder): AdminOrder {
 }
 
 export const funcionarioOrderService = {
-  async getOrders(): Promise<AdminOrder[]> {
+  async getOrders(signal?: AbortSignal): Promise<AdminOrder[]> {
     const response = await fetch(`${API_URL}/orders/dashboard`, {
+      cache: 'no-store',
       headers: getAuthHeaders(),
+      signal,
     });
 
+    if (response.status === 401) throw new Error('SESSION_EXPIRED');
     if (!response.ok) throw new Error('Error cargando pedidos');
 
     const data: DashboardResponse = await response.json();
@@ -152,6 +157,7 @@ export const funcionarioOrderService = {
       },
     );
 
+    if (response.status === 401) throw new Error('SESSION_EXPIRED');
     if (!response.ok) throw new Error('No se pudieron cargar los pedidos');
 
     return response.json();
@@ -176,6 +182,7 @@ export const funcionarioOrderService = {
       },
     );
 
+    if (response.status === 401) throw new Error('SESSION_EXPIRED');
     if (!response.ok) throw new Error('No se pudieron cargar los pedidos pendientes');
 
     return response.json();
@@ -223,6 +230,7 @@ export const funcionarioOrderService = {
       headers: getAuthHeaders(),
     });
 
+    if (response.status === 401) throw new Error('SESSION_EXPIRED');
     if (!response.ok) throw new Error('No se pudo cargar el detalle del pedido');
 
     return response.json() as Promise<OrderDetail>;

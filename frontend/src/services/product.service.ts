@@ -1,5 +1,6 @@
 import { Product } from "@/types/product";
 import { normalizeProductType } from "@/constants/productCatalog";
+import { getApiBaseUrl } from "@/lib/utils/apiBaseUrl";
 
 type ProductApiResponse = {
   id: number;
@@ -41,7 +42,7 @@ function toProduct(apiProduct: ProductApiResponse): Product {
 
 export class ProductService {
   static async getProducts(): Promise<Product[]> {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/`);
+    const res = await fetch(`${getApiBaseUrl()}/products/`);
 
     if (!res.ok) {
       throw new Error("Error fetching products");

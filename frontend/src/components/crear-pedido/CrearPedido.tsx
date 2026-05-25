@@ -20,6 +20,7 @@ import {
 
 import { toast } from "sonner";
 import { paymentService } from "@/services/payment.service";
+import { sanitizeUserMessage } from "@/lib/utils/safeUserMessage";
 
 import Step1ProductType from "@/components/crear-pedido/steps/Step1ProductType";
 import Step2Upload from "@/components/crear-pedido/steps/Step2Upload";
@@ -131,7 +132,7 @@ export default function CrearPedido() {
       toast.success("Pedido creado. Quedará pendiente hasta que una empresa lo acepte.");
       router.push("/cliente/pedidos");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Error al crear pedido";
+      const message = sanitizeUserMessage(error instanceof Error ? error.message : "No se pudo crear el pedido");
 
       if (message === "AUTH_REQUIRED" || message === "SESSION_EXPIRED") {
         localStorage.setItem("redirect_after_login", "/cliente/crear-pedido?resume=1");
@@ -140,7 +141,7 @@ export default function CrearPedido() {
         return;
       }
 
-      toast.error(message || "Error al crear pedido");
+      toast.error(message || "No se pudo crear el pedido");
     } finally {
       setLoading(false);
     }

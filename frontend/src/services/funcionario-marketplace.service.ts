@@ -1,8 +1,9 @@
 import { type ProductType } from '@/types/product';
 import { type MarketplaceProduct } from '@/types/marketplace';
 import { normalizeProductType } from '@/constants/productCatalog';
+import { getApiBaseUrl } from '@/lib/utils/apiBaseUrl';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = getApiBaseUrl();
 
 type AdminProductResponse = {
   id: number;

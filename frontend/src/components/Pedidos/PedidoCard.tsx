@@ -16,7 +16,7 @@ interface Props {
 function getStatusStyles(status: string) {
   switch (status) {
     case 'Pendiente':
-      return 'bg-slate-100 text-slate-700 dark:bg-slate-900/40 dark:text-slate-300';
+      return 'bg-slate-200 text-slate-900 dark:bg-slate-800 dark:text-slate-100';
     case 'Pendiente de pago':
       return 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400';
     case 'En diseño':
