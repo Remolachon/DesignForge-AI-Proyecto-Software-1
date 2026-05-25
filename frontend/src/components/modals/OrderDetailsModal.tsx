@@ -92,12 +92,12 @@ export function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModa
     const sourceMedia: ResolvedMedia[] =
       order.media && order.media.length > 0
         ? [...order.media]
-            .sort((a, b) => {
-              if (a.mediaRole === 'main') return -1;
-              if (b.mediaRole === 'main') return 1;
-              return (a.sortOrder || 0) - (b.sortOrder || 0);
-            })
-            .map((media) => ({ ...media, url: null }))
+          .sort((a, b) => {
+            if (a.mediaRole === 'main') return -1;
+            if (b.mediaRole === 'main') return 1;
+            return (a.sortOrder || 0) - (b.sortOrder || 0);
+          })
+          .map((media) => ({ ...media, url: null }))
         : order.image?.bucket && order.image?.path
           ? [{ bucket: order.image.bucket, path: order.image.path, url: null }]
           : [];
@@ -307,4 +307,5 @@ export function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModa
       </DialogContent>
     </Dialog>
   );
+}
 }

@@ -1,0 +1,11 @@
+Collecting numpy
+  Downloading numpy-2.4.6-cp313-cp313-win_amd64.whl.metadata (6.6 kB)
+Collecting opencv-python
+  Downloading opencv_python-4.13.0.92-cp37-abi3-win_amd64.whl.metadata (20 kB)
+Downloading numpy-2.4.6-cp313-cp313-win_amd64.whl (12.3 MB)
+   ---------------------------------------- 12.3/12.3 MB 47.2 MB/s  0:00:00
+Downloading opencv_python-4.13.0.92-cp37-abi3-win_amd64.whl (40.2 MB)
+   ---------------------------------------- 40.2/40.2 MB 63.8 MB/s  0:00:00
+Installing collected packages: numpy, opencv-python
+
+Successfully installed numpy-2.4.6 opencv-python-4.13.0.92

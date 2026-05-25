@@ -143,4 +143,5 @@ export function usePedidos() {
     totalPages,
     totalItems,
   };
+} };
 }
