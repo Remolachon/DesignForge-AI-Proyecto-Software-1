@@ -31,17 +31,23 @@ describe('Auth Service', () => {
     localStorage.clear();
     
     // Mock window.location para pruebas de redirección y hash
-    delete (window as any).location;
-    window.location = { 
-      ...originalLocation, 
-      origin: 'http://localhost',
-      href: '',
-      hash: ''
-    } as Location;
+    Object.defineProperty(window, 'location', {
+      value: { 
+        ...originalLocation, 
+        origin: 'http://localhost',
+        href: '',
+        hash: '',
+        assign: vi.fn()
+      },
+      writable: true,
+    });
   });
 
   afterEach(() => {
-    window.location = originalLocation;
+    Object.defineProperty(window, 'location', {
+      value: originalLocation,
+      writable: true,
+    });
   });
 
   describe('getDashboardByRole', () => {

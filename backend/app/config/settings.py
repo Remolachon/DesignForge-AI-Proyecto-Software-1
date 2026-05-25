@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     BREVO_API_KEY: str | None = None
     BREVO_EMAIL_FROM: str | None = None
     FRONTEND_URL: str | None = None
-    HF_TOKEN: str
+    HF_TOKEN: str = ""
     HF_SPACE_ID: str = "Dupan21/LukArt"
 
     # PayU Configuration

@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { Header } from '@/components/Header'; // Assuming Header is default exported, but we need to mock context
+import Header from '@/components/Header'; // Assuming Header is default exported, but we need to mock context
 import { vi, describe, test, expect, beforeEach } from 'vitest';
 import * as AuthContext from '@/context/AuthContext';
 
@@ -25,7 +25,6 @@ describe('Header Component', () => {
     // Configurar el mock para usuario no autenticado
     vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
       user: null,
-      token: null,
       loading: false,
       login: vi.fn(),
       register: vi.fn(),
@@ -49,7 +48,6 @@ describe('Header Component', () => {
         first_name: 'Test',
         last_name: 'User'
       },
-      token: 'fake-token',
       loading: false,
       login: vi.fn(),
       register: vi.fn(),
