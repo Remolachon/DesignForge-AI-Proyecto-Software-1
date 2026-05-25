@@ -1,8 +1,9 @@
 import { type MarketplaceProduct } from '@/types/marketplace';
 import { type ProductType } from '@/types/product';
 import { getCatalogImageByType, normalizeProductType } from '@/constants/productCatalog';
+import { getApiBaseUrl } from '@/lib/utils/apiBaseUrl';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = getApiBaseUrl();
 
 export type MarketplaceSavePayload = {
   name: string;

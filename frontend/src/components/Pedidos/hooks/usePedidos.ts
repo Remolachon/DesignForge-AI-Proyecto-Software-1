@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { redirectToLogin } from '@/lib/utils/authSession';
 import { Pedido, OrderStatus } from '../types/pedido';
 import { pedidosService } from '../services/pedidos.service';
 
@@ -19,6 +20,7 @@ function canonicalStatus(value: string): OrderStatus {
   const s = normalizeText(value);
 
   if (s === 'pendiente') return 'Pendiente';
+  if (s === 'pendiente de pago') return 'Pendiente';
   if (s === 'en diseno') return 'En diseño';
   if (s === 'en produccion') return 'En producción';
   if (s === 'listo para entregar') return 'Listo para entregar';
@@ -90,8 +92,13 @@ export function usePedidos() {
         setPedidos(normalizedItems);
         setTotalPages(Math.max(1, data.totalPages ?? 1));
         setTotalItems(data.totalItems ?? 0);
-      } catch (err: any) {
-        if (err?.name === 'AbortError' || controller.signal.aborted || !alive) return;
+      } catch (err: unknown) {
+        if (err instanceof Error && err.message === 'SESSION_EXPIRED') {
+          redirectToLogin(window.location.pathname + window.location.search);
+          return;
+        }
+
+        if ((err as { name?: string })?.name === 'AbortError' || controller.signal.aborted || !alive) return;
 
         setPedidos([]);
         setTotalPages(1);

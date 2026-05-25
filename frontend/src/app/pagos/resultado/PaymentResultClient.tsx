@@ -6,8 +6,9 @@ import { useSearchParams } from "next/navigation";
 
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
+import { getApiBaseUrl } from "@/lib/utils/apiBaseUrl";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = getApiBaseUrl();
 
 function parseOrderId(referenceCode: string | null): number | null {
   if (!referenceCode) return null;
@@ -77,7 +78,7 @@ export default function PaymentResultClient() {
       return {
         title: "Pago aprobado",
         description: "Tu pago fue aprobado. Tu pedido ya entró al flujo de producción en estado En diseño.",
-        badgeClass: "bg-green-100 text-green-800 border-green-200",
+        badgeClass: "bg-green-100 text-green-900 border-green-300 dark:bg-green-900/35 dark:text-green-200 dark:border-green-700",
       };
     }
 
@@ -85,7 +86,7 @@ export default function PaymentResultClient() {
       return {
         title: "Pago pendiente",
         description: "Tu pago no se confirmó todavía. El pedido seguirá en Pendiente de pago hasta que PayU lo apruebe.",
-        badgeClass: "bg-yellow-100 text-yellow-800 border-yellow-200",
+        badgeClass: "bg-yellow-100 text-yellow-900 border-yellow-300 dark:bg-yellow-900/35 dark:text-yellow-200 dark:border-yellow-700",
       };
     }
 
@@ -93,14 +94,14 @@ export default function PaymentResultClient() {
       return {
         title: "Pago expirado",
         description: "La sesión de pago expiró. Debes generar un nuevo intento de pago.",
-        badgeClass: "bg-orange-100 text-orange-800 border-orange-200",
+        badgeClass: "bg-orange-100 text-orange-900 border-orange-300 dark:bg-orange-900/35 dark:text-orange-200 dark:border-orange-700",
       };
     }
 
     return {
       title: "Resultado de pago recibido",
       description: "Recibimos la respuesta del gateway. Verifica el estado final en el dashboard.",
-      badgeClass: "bg-slate-100 text-slate-700 border-slate-200",
+      badgeClass: "bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-800/60 dark:text-slate-100 dark:border-slate-600",
     };
   }, [state]);
 
@@ -108,7 +109,7 @@ export default function PaymentResultClient() {
     <>
       <Header />
       <main className="max-w-3xl mx-auto px-4 py-10">
-        <div className="bg-white border border-border rounded-2xl shadow-sm p-6 md:p-8 space-y-5">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm md:p-8 space-y-5 text-foreground">
           <span className={`inline-flex px-3 py-1 text-sm rounded-full border ${ui.badgeClass}`}>
             {ui.title}
           </span>

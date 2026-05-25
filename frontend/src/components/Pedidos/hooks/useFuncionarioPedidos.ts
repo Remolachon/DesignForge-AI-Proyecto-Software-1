@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { redirectToLogin } from '@/lib/utils/authSession';
 import { funcionarioOrderService } from '@/services/funcionario-order.service';
 import { AdminOrder, OrderStatus } from '@/types/order';
 import {
@@ -60,9 +61,14 @@ export function useFuncionarioPedidos() {
                 setOrders(data.items ?? []);
                 setTotalPages(Math.max(1, data.totalPages ?? 1));
                 setTotalItems(data.totalItems ?? 0);
-            } catch (err: any) {
-                if (err?.name === 'AbortError' || cancelled || controller.signal.aborted) return;
-                toast.error(err?.message || 'No se pudieron cargar los pedidos');
+            } catch (err: unknown) {
+                if (err instanceof Error && err.message === 'SESSION_EXPIRED') {
+                    redirectToLogin(window.location.pathname + window.location.search);
+                    return;
+                }
+
+                if ((err as { name?: string })?.name === 'AbortError' || cancelled || controller.signal.aborted) return;
+                toast.error((err as { message?: string })?.message || 'No se pudieron cargar los pedidos');
                 setOrders([]);
                 setTotalPages(1);
                 setTotalItems(0);
@@ -99,8 +105,12 @@ export function useFuncionarioPedidos() {
             const updated = await funcionarioOrderService.updateStatus(orderId, newStatus);
             setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
             toast.success(`Pedido #${orderId} actualizado a "${updated.status}"`);
-        } catch (err: any) {
-            toast.error(err?.message || 'No se pudo actualizar el estado');
+        } catch (err: unknown) {
+            if (err instanceof Error && err.message === 'SESSION_EXPIRED') {
+                redirectToLogin(window.location.pathname + window.location.search);
+                return;
+            }
+            toast.error((err as { message?: string })?.message || 'No se pudo actualizar el estado');
         } finally {
             setPendingChange(null);
         }

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { completeGoogleAuth, getDashboardByRole } from "@/services/auth.service";
 import { audioService } from "@/services/audio.service";
+import { sanitizeUserMessage } from "@/lib/utils/safeUserMessage";
 
 export default function GoogleCallbackClient() {
   const router = useRouter();
@@ -26,7 +27,7 @@ export default function GoogleCallbackClient() {
     console.log("Google callback received", { currentPath, mode, codePresent: Boolean(code), error, hasFragment });
 
     if (error) {
-      const errorMessage = `No se pudo completar el inicio con Google: ${error}`;
+      const errorMessage = sanitizeUserMessage(`No se pudo completar el inicio con Google: ${error}`);
       localStorage.setItem("google_auth_error", errorMessage);
       toast.error(errorMessage);
       setStatus("error");
@@ -72,7 +73,7 @@ export default function GoogleCallbackClient() {
 
         console.error("finishOAuth error:", err);
         setStatus("error");
-        const errorMessage = "No se pudo completar el inicio con Google. Puedes reintentar desde el formulario.";
+        const errorMessage = sanitizeUserMessage("No se pudo completar el inicio con Google. Puedes reintentar desde el formulario.");
         setMessage(errorMessage);
         localStorage.setItem("google_auth_error", errorMessage);
         toast.error(errorMessage);

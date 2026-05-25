@@ -18,6 +18,7 @@ import {
   validatePhone,
   validateRequired,
 } from "@/lib/utils/validation";
+import { sanitizeUserMessage } from "@/lib/utils/safeUserMessage";
 
 type FormErrors = {
   firstName: string;
@@ -56,11 +57,12 @@ export default function RegisterForm() {
 
     if (googleError) {
       localStorage.removeItem("google_auth_error");
+      const cleanMessage = sanitizeUserMessage(googleError);
       setErrors((prev) => ({
         ...prev,
-        general: googleError,
+        general: cleanMessage,
       }));
-      toast.error(googleError);
+      toast.error(cleanMessage);
     }
   }, []);
 
@@ -124,14 +126,14 @@ export default function RegisterForm() {
 
         setErrors((prev) => ({
           ...prev,
-          general: detail,
+          general: sanitizeUserMessage(detail),
         }));
         return;
       }
 
       setErrors((prev) => ({
         ...prev,
-        general: "Ocurrió un error inesperado",
+        general: "Paso algo inesperado",
       }));
     } finally {
       setLoading(false);
@@ -145,7 +147,7 @@ export default function RegisterForm() {
     try {
       await startGoogleAuth("register");
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "No se pudo iniciar con Google";
+      const message = sanitizeUserMessage(error instanceof Error ? error.message : "No se pudo iniciar con Google");
       setErrors((prev) => ({ ...prev, general: message }));
       toast.error(message);
       setGoogleLoading(false);

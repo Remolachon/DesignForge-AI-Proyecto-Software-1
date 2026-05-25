@@ -51,8 +51,8 @@ export function OrderCard({ order }: OrderCardProps) {
 
       paymentService.submitToPayU(actionUrl, payload);
     } catch (error) {
-      console.error("Error al procesar el pago:", error);
-      alert("Error al procesar el pago");
+      console.error("No se pudo procesar el pago:", error);
+      alert("No se pudo procesar el pago");
       setPaying(false);
     }
   };

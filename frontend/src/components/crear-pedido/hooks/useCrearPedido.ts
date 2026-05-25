@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { ProductType } from "@/types/types";
 import { type MarketplaceShapeAttribute } from "@/services/marketplace-catalog.service";
+import { getApiBaseUrl } from "@/lib/utils/apiBaseUrl";
 
 type WizardStep = 1 | 2 | 3 | 4;
 
@@ -21,7 +22,7 @@ interface State {
 }
 
 const STORAGE_KEY = "crear-pedido";
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = getApiBaseUrl();
 
 const initialState: State = {
   currentStep: 1,
@@ -185,7 +186,7 @@ export function useCrearPedido({
 
       toast.success("Imagen subida correctamente");
     } catch (error) {
-      toast.error("Error subiendo imagen");
+      toast.error("No se pudo subir la imagen");
     } finally {
       setLoading(false);
     }

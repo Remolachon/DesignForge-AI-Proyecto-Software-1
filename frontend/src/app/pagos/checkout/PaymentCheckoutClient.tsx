@@ -7,8 +7,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { paymentService } from "@/services/payment.service";
+import { getApiBaseUrl } from "@/lib/utils/apiBaseUrl";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = getApiBaseUrl();
 
 type OrderDetail = {
   id: string;

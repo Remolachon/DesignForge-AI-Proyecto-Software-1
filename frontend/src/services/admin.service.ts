@@ -2,8 +2,9 @@ import axios from "axios";
 
 import { CompanyAdmin } from "@/types/company";
 import { AdminOrder } from "@/types/order";
+import { getApiBaseUrl } from "@/lib/utils/apiBaseUrl";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = getApiBaseUrl();
 
 function getAuthHeaders() {
   return {

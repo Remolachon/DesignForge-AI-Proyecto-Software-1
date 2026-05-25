@@ -1,6 +1,7 @@
 import axios from "axios";
+import { getApiBaseUrl } from "@/lib/utils/apiBaseUrl";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = getApiBaseUrl();
 
 function getAuthHeaders() {
   return {
@@ -25,6 +26,12 @@ export interface StaffMember {
 export async function fetchStaff(): Promise<StaffMember[]> {
   const response = await axios.get(`${API_URL}/staff/`, {
     headers: getAuthHeaders(),
+  }).catch((error) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      throw new Error('SESSION_EXPIRED');
+    }
+
+    throw error;
   });
   return response.data;
 }
@@ -34,13 +41,25 @@ export async function assignFuncionarioRole(userId: number): Promise<{ message: 
     `${API_URL}/staff/${userId}/assign`,
     {},
     { headers: getAuthHeaders() }
-  );
+  ).catch((error) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      throw new Error('SESSION_EXPIRED');
+    }
+
+    throw error;
+  });
   return response.data;
 }
 
 export async function revokeFuncionarioRole(userId: number): Promise<{ message: string; user_id: number }> {
   const response = await axios.delete(`${API_URL}/staff/${userId}/revoke`, {
     headers: getAuthHeaders(),
+  }).catch((error) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      throw new Error('SESSION_EXPIRED');
+    }
+
+    throw error;
   });
   return response.data;
 }
@@ -50,13 +69,25 @@ export async function inviteFuncionario(email: string): Promise<{ message: strin
     `${API_URL}/staff/invite`,
     { email },
     { headers: getAuthHeaders() }
-  );
+  ).catch((error) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      throw new Error('SESSION_EXPIRED');
+    }
+
+    throw error;
+  });
   return response.data;
 }
 
 export async function removeFuncionario(userId: number): Promise<{ message: string; user_id: number }> {
   const response = await axios.delete(`${API_URL}/staff/${userId}/remove`, {
     headers: getAuthHeaders(),
+  }).catch((error) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      throw new Error('SESSION_EXPIRED');
+    }
+
+    throw error;
   });
   return response.data;
 }

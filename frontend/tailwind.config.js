@@ -26,6 +26,10 @@ module.exports = {
 
         secondary: "var(--secondary)",
         "secondary-foreground": "var(--secondary-foreground)",
+        card: "var(--card)",
+        "card-foreground": "var(--card-foreground)",
+        popover: "var(--popover)",
+        "popover-foreground": "var(--popover-foreground)",
 
         accent: "var(--accent)",
         "accent-foreground": "var(--accent-foreground)",

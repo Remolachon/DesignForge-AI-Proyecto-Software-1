@@ -21,6 +21,10 @@
   /* Surfaces */
   --secondary: #EEF2F7;
   --secondary-foreground: #1E293B;
+  --card: #FFFFFF;
+  --card-foreground: #0F172A;
+  --popover: #FFFFFF;
+  --popover-foreground: #0F172A;
 
   /* Accent system */
   --accent: #3CF2D0;
@@ -71,6 +75,10 @@
   /* Surfaces */
   --secondary: #111C2D;
   --secondary-foreground: #E2E8F0;
+  --card: #0E1828;
+  --card-foreground: #F8FAFC;
+  --popover: #0E1828;
+  --popover-foreground: #F8FAFC;
 
   /* Accent */
   --accent: #3CF2D0;

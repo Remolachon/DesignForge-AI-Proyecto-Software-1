@@ -1,6 +1,7 @@
 import { BaseOrder, AdminOrder } from '@/types/order';
+import { getApiBaseUrl } from '@/lib/utils/apiBaseUrl';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = getApiBaseUrl();
 
 type DashboardRole = 'cliente' | 'funcionario';
 
@@ -30,11 +31,16 @@ export const dashboardService = {
     }
 
     const res = await fetch(`${API_URL}/orders/dashboard`, {
+      cache: 'no-store',
       headers: {
         Authorization: `Bearer ${token}`,
         'X-Dashboard-Role': role,
       },
     });
+
+    if (res.status === 401) {
+      throw new Error('SESSION_EXPIRED');
+    }
 
     if (!res.ok) {
       throw new Error('Error cargando dashboard');

@@ -20,6 +20,8 @@ import { funcionarioOrderService } from '@/services/funcionario-order.service';
 import { type AdminOrder } from '@/types/order';
 import { Eye, Search, Sparkles, CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PedidosPendientesLoading } from './PedidosPendientesLoading';
+import { redirectToLogin } from '@/lib/utils/authSession';
 
 const PAGE_SIZE = 10;
 
@@ -65,9 +67,13 @@ export default function FuncionarioPedidosPendientesPage() {
         setOrders(data.items ?? []);
         setTotalPages(Math.max(1, data.totalPages ?? 1));
         setTotalItems(data.totalItems ?? 0);
-      } catch (error: any) {
+      } catch (error: unknown) {
+        if (error instanceof Error && error.message === 'SESSION_EXPIRED') {
+          redirectToLogin(window.location.pathname + window.location.search);
+          return;
+        }
         if (cancelled || controller.signal.aborted) return;
-        toast.error(error?.message || 'No se pudieron cargar los pedidos pendientes');
+        toast.error((error as { message?: string })?.message || 'No se pudieron cargar los pedidos pendientes');
         setOrders([]);
         setTotalPages(1);
         setTotalItems(0);
@@ -93,8 +99,13 @@ export default function FuncionarioPedidosPendientesPage() {
       setOrders((prev) => prev.filter((order) => order.id !== orderId));
       setPendingAcceptOrder((prev) => (prev?.id === orderId ? null : prev));
       toast.success(`Pedido #${orderId} aceptado y asignado a ${updated.companyName || 'tu empresa'}`);
-    } catch (error: any) {
-      toast.error(error?.message || 'No se pudo aceptar el pedido');
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message === 'SESSION_EXPIRED') {
+        redirectToLogin(window.location.pathname + window.location.search);
+        return;
+      }
+      const message = error instanceof Error ? error.message : 'No se pudo aceptar el pedido';
+      toast.error(message || 'No se pudo aceptar el pedido');
     } finally {
       setAcceptingId(null);
     }
@@ -155,9 +166,7 @@ export default function FuncionarioPedidosPendientesPage() {
         </Card>
 
         {loading ? (
-          <div className="rounded-3xl border border-border bg-card/90 p-12 text-center text-sm text-muted-foreground shadow-sm">
-            Cargando pedidos pendientes...
-          </div>
+          <PedidosPendientesLoading />
         ) : orders.length === 0 ? (
           <Card className="border-dashed border-border bg-card/80 shadow-sm">
             <CardContent className="flex min-h-[260px] flex-col items-center justify-center px-6 py-12 text-center">

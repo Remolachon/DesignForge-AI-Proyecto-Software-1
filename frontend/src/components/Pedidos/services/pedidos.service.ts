@@ -1,6 +1,7 @@
 import { Pedido } from '../types/pedido';
+import { getApiBaseUrl } from '@/lib/utils/apiBaseUrl';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = getApiBaseUrl();
 
 type DashboardOrder = {
   id: string;
@@ -15,6 +16,7 @@ type DashboardOrder = {
     path: string;
   };
   clientName?: string | null;
+  companyName?: string | null;
 };
 
 type OrdersPageResponse = {
@@ -48,7 +50,8 @@ export const pedidosService = {
       headers: getAuthHeaders(),
     });
 
-    if (!res.ok) throw new Error('Error cargando pedidos');
+    if (res.status === 401) throw new Error('SESSION_EXPIRED');
+    if (!res.ok) throw new Error('No se pudieron cargar los pedidos');
 
     const data: DashboardOrder[] = await res.json();
 
@@ -56,7 +59,9 @@ export const pedidosService = {
       id: order.id,
       title: order.title,
       description: order.clientName ?? undefined,
-      status: order.status as Pedido['status'],
+      status: order.status?.trim().toLowerCase() === 'pendiente de pago' && !order.companyName
+        ? 'Pendiente'
+        : (order.status as Pedido['status']),
       price: order.price,
       imageUrl: order.imageUrl || '',
       image: order.image,
@@ -83,6 +88,7 @@ export const pedidosService = {
       signal,
     });
 
+    if (response.status === 401) throw new Error('SESSION_EXPIRED');
     if (!response.ok) throw new Error('No se pudieron cargar los pedidos');
 
     return response.json();
