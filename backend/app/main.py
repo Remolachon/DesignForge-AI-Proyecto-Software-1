@@ -46,7 +46,13 @@ app = FastAPI(
 
 origins = [
     "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:3002",
+    "http://localhost:3003",
     "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
+    "http://127.0.0.1:3002",
+    "http://127.0.0.1:3003",
     "https://design-forge-ai-proyecto-software-1-yizbuk3r1.vercel.app",
 ]
 
@@ -63,7 +69,7 @@ origins = list(dict.fromkeys(origins))
 
 allow_origin_regex = os.getenv(
     "CORS_ORIGIN_REGEX",
-    r"^https://.*\.vercel\.app$",
+    r"^(https://.*\.vercel\.app|http://localhost:\d+|http://127\.0\.0\.1:\d+)$",
 )
 
 allowed_origin_pattern = re.compile(allow_origin_regex)
