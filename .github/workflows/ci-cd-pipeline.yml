@@ -41,10 +41,11 @@ jobs:
       - name: 🧪 Ejecutar pruebas y validar 80% de cobertura
         env:
           TESTING: "true"
-          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL || 'sqlite:///./test.db' }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY || 'test-key' }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET || secrets.SECRET_KEY || 'test-secret-key' }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           pytest tests/ --cov=app --cov-fail-under=80
 

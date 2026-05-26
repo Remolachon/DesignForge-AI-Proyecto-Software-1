@@ -1,4 +1,5 @@
 import logging
+import os
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.pool import NullPool, StaticPool, QueuePool
@@ -6,24 +7,40 @@ from app.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
-# Configuración optimizada del engine
-# QueuePool: mejor para aplicaciones multi-threaded
-engine = create_engine(
-    settings.DATABASE_URL,
-    connect_args={"options": "-c timezone=America/Bogota"},
-    # Validar conexión antes de usar (previene conexiones muertas)
-    pool_pre_ping=True,
-    # Reciclar conexiones cada 30 min para evitar timeouts
-    pool_recycle=1800,
-    # Tamaño del pool
-    pool_size=10,
-    # Conexiones adicionales si se agotan las del pool
-    max_overflow=20,
-    # Timeout al obtener conexión del pool
-    pool_timeout=30,
-    # Logging de conexiones
-    echo_pool=False,
-)
+# Validar y obtener DATABASE_URL
+DATABASE_URL = settings.DATABASE_URL
+
+# Si no hay URL válida o estamos en testing, usar SQLite
+if not DATABASE_URL or not any(DATABASE_URL.startswith(prefix) for prefix in ["postgresql://", "mysql://", "sqlite:///"]):
+    logger.warning(f"URL de BD inválida o vacía. Usando SQLite para testing.")
+    DATABASE_URL = "sqlite:///./test.db"
+
+# Detectar si estamos en testing
+TESTING = os.getenv("TESTING", "false").lower() == "true"
+
+# Configuración del engine adaptada según el tipo de base de datos
+engine_config = {
+    "pool_pre_ping": True,
+    "echo_pool": False,
+}
+
+# Para PostgreSQL: usar QueuePool con configuración de pool
+if DATABASE_URL.startswith("postgresql://"):
+    engine_config.update({
+        "connect_args": {"options": "-c timezone=America/Bogota"},
+        "pool_recycle": 1800,
+        "pool_size": 10,
+        "max_overflow": 20,
+        "pool_timeout": 30,
+    })
+    logger.info("Usando PostgreSQL como BD")
+# Para SQLite: usar StaticPool para testing
+elif DATABASE_URL.startswith("sqlite://"):
+    engine_config["poolclass"] = StaticPool
+    logger.info("Usando SQLite como BD (testing)")
+
+# Crear engine con configuración adaptada
+engine = create_engine(DATABASE_URL, **engine_config)
 
 # Event listeners para logging de conexión
 @event.listens_for(engine, "connect")
