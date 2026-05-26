@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import Header from '@/components/Header'; // Assuming Header is default exported, but we need to mock context
+// Header import removed as it was unused
 import { vi, describe, test, expect, beforeEach } from 'vitest';
 import * as AuthContext from '@/context/AuthContext';
 

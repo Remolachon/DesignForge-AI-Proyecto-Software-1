@@ -62,10 +62,17 @@ class TestAuth:
         response = client.post("/auth/register", json={})
         assert response.status_code == 422
 
-    def test_login_wrong_credentials_returns_401(self, client):
+    from unittest.mock import patch
+
+    @patch("app.controllers.auth_controller.supabase.auth.sign_in_with_password")
+    def test_login_wrong_credentials_returns_401(self, mock_sign_in, client):
         """POST /auth/login con credenciales incorrectas debe devolver 401."""
         if client is None:
             pytest.skip("Activa el cliente cuando app.main esté disponible.")
+        
+        from supabase_auth.errors import AuthApiError
+        mock_sign_in.side_effect = AuthApiError("Credenciales incorrectas", 401, "invalid_credentials")
+        
         response = client.post(
             "/auth/login",
             json={"email": "noexiste@test.com", "password": "wrongpassword"},
