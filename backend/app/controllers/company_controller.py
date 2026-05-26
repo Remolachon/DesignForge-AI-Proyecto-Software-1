@@ -38,7 +38,8 @@ def _require_admin(db: Session, current_user):
     role_name = UserService.get_user_role_name(db, db_user.id)
 
     if role_name != "administrador":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado")
 
     return db_user
 
@@ -123,3 +124,4 @@ def delete_company(
 ):
     _require_admin(db, current_user)
     return CompanyService.delete_company(db, company_id)
+

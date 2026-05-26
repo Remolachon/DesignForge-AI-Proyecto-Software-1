@@ -4,7 +4,29 @@ import { useProductAttributes } from '@/hooks/useProductAttributes';
 import { useProducts } from '@/hooks/useProducts';
 import { ProductService } from '@/services/product.service';
 import { getStatusColor } from '@/lib/utils/statusColors';
+import { getApiBaseUrl } from '@/lib/utils/apiBaseUrl';
 
+describe('getApiBaseUrl', () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  afterAll(() => {
+    process.env = originalEnv;
+  });
+
+  test('returns env variable if set', () => {
+    process.env.NEXT_PUBLIC_API_URL = 'http://test-url.com/';
+    expect(getApiBaseUrl()).toBe('http://test-url.com');
+  });
+
+  test('returns default if env variable is not set', () => {
+    delete process.env.NEXT_PUBLIC_API_URL;
+    expect(getApiBaseUrl()).toBe('https://designforge-ai-proyecto-software-1.onrender.com');
+  });
+});
 vi.mock('@/services/product.service');
 
 describe('useProductAttributes Hook', () => {

@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, ForeignKey, 
 from sqlalchemy.orm import relationship
 from app.database.database import Base
 
+
 class User(Base):
     __tablename__ = "users"
 
@@ -15,6 +16,7 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     supabase_id = Column(String, unique=True)
 
-    company = relationship("Company", back_populates="users", foreign_keys=[company_id])
+    company = relationship(
+        "Company", back_populates="users", foreign_keys=[company_id])
     orders = relationship("Order", back_populates="user")
-    
+

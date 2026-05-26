@@ -16,3 +16,4 @@ class UserRole(Base):
 
     user = relationship("User")
     role = relationship("Role")
+

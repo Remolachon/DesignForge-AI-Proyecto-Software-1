@@ -224,7 +224,8 @@ def invite_funcionario(db: Session, email: str, company_id: int) -> dict:
         )
 
     # Asignar la empresa y el rol
-    UserService.promote_user_to_funcionario(db, target_user.id, company_id, commit=True)
+    UserService.promote_user_to_funcionario(
+        db, target_user.id, company_id, commit=True)
     logger.info(
         "Usuario %s (ID: %s) invitado como funcionario a la empresa %s",
         email,
@@ -288,3 +289,4 @@ def remove_funcionario_from_company(db: Session, target_user_id: int, company_id
     db.commit()
 
     return {"message": "Usuario removido de la empresa correctamente", "user_id": target_user_id}
+

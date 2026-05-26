@@ -145,7 +145,8 @@ class EmailService:
             }
 
         if not cls._is_enabled():
-            logger.warning("Correo no enviado porque la configuración de Brevo no está completa")
+            logger.warning(
+                "Correo no enviado porque la configuración de Brevo no está completa")
             return {
                 "status": "disabled",
                 "message": "La configuración de correo no está habilitada.",
@@ -391,3 +392,4 @@ class EmailService:
             cta_url=review_url or cls._frontend_url(),
         )
         return cls._send_message(recipient_email, subject, plain_text, html_body)
+

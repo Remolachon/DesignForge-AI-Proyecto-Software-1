@@ -68,12 +68,10 @@ export function RouteProgressBar() {
     if (currentRoute !== lastRouteRef.current) {
       lastRouteRef.current = currentRoute;
       if (!startedAtRef.current) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         start();
       }
       complete();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, searchParams]);
 
   useEffect(() => {
@@ -111,7 +109,6 @@ export function RouteProgressBar() {
       document.removeEventListener('click', handleClick, true);
       window.removeEventListener('popstate', handlePopState);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!visible) return null;

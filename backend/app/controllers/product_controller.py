@@ -22,6 +22,7 @@ from app.schemas.product_schema import (
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/products", tags=["Products"])
 
+
 @router.get("/")
 def get_products(db: Session = Depends(get_db)):
     try:
@@ -37,17 +38,19 @@ def get_products(db: Session = Depends(get_db)):
 def _get_funcionario_user_with_retry(db: Session, current_user):
     """Obtiene usuario funcionario con reintentos automáticos"""
     def _query():
-        db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
+        db_user = db.query(User).filter(
+            User.supabase_id == current_user.id).first()
 
         if not db_user:
-            raise HTTPException(status_code=404, detail="Usuario no existe en DB")
+            raise HTTPException(
+                status_code=404, detail="Usuario no existe en DB")
 
         role_name = UserService.get_user_role_name(db, db_user.id)
         if role_name not in ("funcionario", "funcionario_adm", "administrador"):
             raise HTTPException(status_code=403, detail="No autorizado")
 
         return db_user
-    
+
     try:
         return retry_on_connection_error(_query, max_retries=3)
     except OperationalError as e:
@@ -61,13 +64,15 @@ def _get_funcionario_user_with_retry(db: Session, current_user):
 def _get_db_user_with_retry(db: Session, current_user):
     """Obtiene usuario con reintentos automáticos"""
     def _query():
-        db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
+        db_user = db.query(User).filter(
+            User.supabase_id == current_user.id).first()
 
         if not db_user:
-            raise HTTPException(status_code=404, detail="Usuario no existe en DB")
+            raise HTTPException(
+                status_code=404, detail="Usuario no existe en DB")
 
         return db_user
-    
+
     try:
         return retry_on_connection_error(_query, max_retries=3)
     except OperationalError as e:
@@ -84,7 +89,7 @@ def get_admin_products(
     current_user=Depends(get_current_user),
 ):
     db_user = _get_db_user_with_retry(db, current_user)
-    
+
     try:
         role_name = UserService.get_user_role_name(db, db_user.id)
 
@@ -113,7 +118,7 @@ def get_admin_products_page(
     current_user=Depends(get_current_user),
 ):
     db_user = _get_db_user_with_retry(db, current_user)
-    
+
     try:
         role_name = UserService.get_user_role_name(db, db_user.id)
 
@@ -239,6 +244,7 @@ def logical_delete_product(
 
     return {"message": "Producto eliminado"}
 
+
 @router.post("/admin/{product_id}/media", response_model=FileAssetResponse)
 async def upload_product_media_endpoint(
     product_id: int,
@@ -278,7 +284,9 @@ async def upload_product_media_endpoint(
         )
     except Exception as exc:
         logger.error(f"FATAL ERROR in upload_product_media_endpoint: {exc}")
-        raise HTTPException(status_code=500, detail="Error interno al subir archivo")
+        raise HTTPException(
+            status_code=500, detail="Error interno al subir archivo")
+
 
 @router.get("/{product_id}/attributes", response_model=list[dict])
 def get_product_attributes(
@@ -324,3 +332,4 @@ def get_shape_attributes(
             status_code=503,
             detail="Servicio de base de datos temporalmente no disponible"
         )
+

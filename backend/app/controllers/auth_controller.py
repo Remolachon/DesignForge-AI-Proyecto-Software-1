@@ -97,7 +97,8 @@ def _build_auth_response(db: Session, db_user, access_token: str) -> AuthRespons
 def _send_welcome_email(email: str, first_name: str | None) -> None:
     result = EmailService.send_welcome_email(email, first_name)
     if result.get("status") == "error":
-        logger.warning("No se pudo enviar el correo de bienvenida: %s", result.get("error"))
+        logger.warning(
+            "No se pudo enviar el correo de bienvenida: %s", result.get("error"))
 
 
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
@@ -237,8 +238,10 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 @router.post("/google-oauth", response_model=AuthResponse)
 def google_oauth(payload: GoogleOAuthRequest, db: Session = Depends(get_db)):
     try:
-        logger.debug("/google-oauth called", extra={"access_token_present": bool(payload.access_token)})
-        token_payload = GoogleOAuthProvider.verify_supabase_token(payload.access_token)
+        logger.debug("/google-oauth called",
+                     extra={"access_token_present": bool(payload.access_token)})
+        token_payload = GoogleOAuthProvider.verify_supabase_token(
+            payload.access_token)
 
         if not token_payload:
             raise HTTPException(
@@ -323,3 +326,4 @@ def logout() -> None:
         supabase.auth.sign_out()
     except OperationalError:
         raise _service_unavailable()
+

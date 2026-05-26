@@ -25,11 +25,13 @@ def _get_db_user(db: Session, current_user):
     Obtiene el usuario de la BD con reintentos automáticos.
     """
     def _query_user():
-        db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
+        db_user = db.query(User).filter(
+            User.supabase_id == current_user.id).first()
         if not db_user:
-            raise HTTPException(status_code=404, detail="Usuario no existe en DB")
+            raise HTTPException(
+                status_code=404, detail="Usuario no existe en DB")
         return db_user
-    
+
     try:
         return retry_on_connection_error(
             _query_user,
@@ -99,7 +101,7 @@ def get_notifications(
     Obtiene notificaciones del usuario actual con reintentos automáticos.
     """
     db_user = _get_db_user(db, current_user)
-    
+
     try:
         return InteractionService.list_user_notifications(db=db, user_id=db_user.id)
     except OperationalError as e:
@@ -135,3 +137,4 @@ def mark_notification_as_read(
             status_code=503,
             detail="Servicio de base de datos temporalmente no disponible"
         )
+

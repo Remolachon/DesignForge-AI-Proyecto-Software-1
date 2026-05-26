@@ -16,7 +16,7 @@ class OrderItem(Base):
     order_date = Column(DateTime, server_default=func.now())
     product_type_id = Column(Integer, ForeignKey("product_types.id"))
     current_stage_id = Column(Integer, ForeignKey("production_stages.id"))
-    
+
     current_stage = relationship(
         "ProductionStage",
         foreign_keys=[current_stage_id]
@@ -25,4 +25,6 @@ class OrderItem(Base):
     product = relationship("Product")
     order = relationship("Order", back_populates="items")
     assets = relationship("FileAsset", back_populates="order_item")
-    attributes = relationship("OrderItemAttribute", back_populates="order_item", cascade="all, delete-orphan")
+    attributes = relationship(
+        "OrderItemAttribute", back_populates="order_item", cascade="all, delete-orphan")
+

@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Text, Numeric, Boolean, ForeignK
 from sqlalchemy.orm import relationship
 from app.database.database import Base
 
+
 class Product(Base):
     __tablename__ = "products"
 
@@ -18,4 +19,6 @@ class Product(Base):
 
     company = relationship("Company")
     product_shape = relationship("ProductShape", back_populates="products")
-    file_assets = relationship("FileAsset", back_populates="product", cascade="all, delete-orphan")
+    file_assets = relationship(
+        "FileAsset", back_populates="product", cascade="all, delete-orphan")
+

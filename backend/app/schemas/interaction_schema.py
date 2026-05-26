@@ -36,3 +36,4 @@ class NotificationResponse(BaseModel):
 class NotificationsResponse(BaseModel):
     items: list[NotificationResponse]
     unreadCount: int
+

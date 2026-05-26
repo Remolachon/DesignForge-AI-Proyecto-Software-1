@@ -149,3 +149,4 @@ class UserService:
             return "cliente"
 
         return role.name
+

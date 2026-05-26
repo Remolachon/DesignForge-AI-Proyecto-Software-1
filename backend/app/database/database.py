@@ -43,17 +43,22 @@ elif DATABASE_URL.startswith("sqlite://"):
 engine = create_engine(DATABASE_URL, **engine_config)
 
 # Event listeners para logging de conexión
+
+
 @event.listens_for(engine, "connect")
 def receive_connect(dbapi_conn, connection_record):
     logger.debug("Conexión a BD establecida")
+
 
 @event.listens_for(engine, "close")
 def receive_close(dbapi_conn, connection_record):
     logger.debug("Conexión a BD cerrada")
 
+
 @event.listens_for(engine, "detach")
 def receive_detach(dbapi_conn, connection_record):
     logger.debug("Conexión a BD desprendida")
+
 
 SessionLocal = sessionmaker(
     autocommit=False,
@@ -62,6 +67,7 @@ SessionLocal = sessionmaker(
 )
 
 Base = declarative_base()
+
 
 def get_db():
     """
@@ -78,6 +84,7 @@ def get_db():
     finally:
         db.close()
 
+
 async def check_db_connection():
     """
     Verifica que la conexión a la BD está disponible.
@@ -92,3 +99,4 @@ async def check_db_connection():
     except Exception as e:
         logger.error(f"Error al verificar conexión a BD: {e}")
         return False
+

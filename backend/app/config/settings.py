@@ -6,7 +6,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 BACKEND_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 
 
-
 class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(
@@ -41,3 +40,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+

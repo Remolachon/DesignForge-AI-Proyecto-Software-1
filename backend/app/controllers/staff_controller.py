@@ -27,7 +27,8 @@ def _require_funcionario_adm(db: Session, current_user) -> tuple[User, int]:
     Retorna (db_user, company_id).
     """
     def _query():
-        db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
+        db_user = db.query(User).filter(
+            User.supabase_id == current_user.id).first()
         if not db_user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -167,3 +168,4 @@ def remove_staff(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Servicio de base de datos temporalmente no disponible",
         )
+

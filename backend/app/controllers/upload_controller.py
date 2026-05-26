@@ -5,6 +5,7 @@ from app.config.settings import settings
 
 router = APIRouter(tags=["Upload"])
 
+
 @router.post("/upload-image")
 async def upload_image(file: UploadFile = File(...)):
     try:
@@ -76,3 +77,4 @@ async def upload_product_image(file: UploadFile = File(...)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error al subir imagen de producto",
         )
+

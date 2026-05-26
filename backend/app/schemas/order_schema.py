@@ -122,3 +122,4 @@ class UpdateOrderStatusRequest(BaseModel):
 class UpdateOrderStatusResponse(BaseModel):
     message: str
     order: DashboardOrder
+

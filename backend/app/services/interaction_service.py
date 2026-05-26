@@ -31,7 +31,8 @@ class InteractionService:
         user = review.user
         user_name = "Cliente"
         if user:
-            user_name = f"{user.first_name} {user.last_name}".strip() or user.email or "Cliente"
+            user_name = f"{user.first_name} {user.last_name}".strip(
+            ) or user.email or "Cliente"
 
         created_at = review.created_at or InteractionService._now_local()
 
@@ -64,7 +65,8 @@ class InteractionService:
         if rating < 0 or rating > 5:
             raise ValueError("La valoración debe estar entre 0 y 5")
 
-        product = db.query(Product).filter(Product.id == product_id, Product.is_active == True).first()
+        product = db.query(Product).filter(
+            Product.id == product_id, Product.is_active == True).first()
         if not product:
             raise ValueError("Producto no encontrado")
 
@@ -74,7 +76,8 @@ class InteractionService:
             .first()
         )
         if not delivered_stage:
-            raise ValueError("Solo puedes valorar productos de pedidos entregados")
+            raise ValueError(
+                "Solo puedes valorar productos de pedidos entregados")
 
         has_delivered_order = (
             db.query(Order.id)
@@ -86,14 +89,16 @@ class InteractionService:
         )
 
         if not has_delivered_order:
-            raise ValueError("Solo puedes valorar productos de pedidos entregados")
+            raise ValueError(
+                "Solo puedes valorar productos de pedidos entregados")
 
         # Crear una nueva review siempre que el pedido del producto ya esté entregado
         review = Review(
             product_id=product_id,
             user_id=user_id,
             rating=rating,
-            comment=comment.strip() if isinstance(comment, str) and comment.strip() else None,
+            comment=comment.strip() if isinstance(
+                comment, str) and comment.strip() else None,
             created_at=InteractionService._now_local(),
         )
         db.add(review)
@@ -183,3 +188,4 @@ class InteractionService:
         db.flush()
         db.refresh(notification)
         return InteractionService._serialize_notification(notification)
+

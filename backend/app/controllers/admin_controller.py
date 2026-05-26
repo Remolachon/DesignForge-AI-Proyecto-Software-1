@@ -22,17 +22,20 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 def _require_admin_with_retry(db: Session, current_user):
     """Verifica permisos de administrador con reintentos automáticos"""
     def _query():
-        db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
+        db_user = db.query(User).filter(
+            User.supabase_id == current_user.id).first()
 
         if not db_user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no existe en DB")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no existe en DB")
 
         role_name = UserService.get_user_role_name(db, db_user.id)
         if role_name != "administrador":
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado")
 
         return db_user
-    
+
     try:
         return retry_on_connection_error(_query, max_retries=3)
     except OperationalError as e:
@@ -51,7 +54,8 @@ def get_admin_dashboard(
     _require_admin_with_retry(db, current_user)
 
     try:
-        order_data = OrderService.get_dashboard_data(db=db, user_id=0, role_name="administrador")
+        order_data = OrderService.get_dashboard_data(
+            db=db, user_id=0, role_name="administrador")
         recent_orders = order_data["orders"][:3]
         company_counts = CompanyService.get_admin_company_counts(db)
         client_role = db.query(Role).filter(Role.name == "cliente").first()
@@ -105,7 +109,7 @@ def get_admin_orders_page(
     current_user=Depends(get_current_user),
 ):
     _require_admin_with_retry(db, current_user)
-    
+
     try:
         return OrderService.get_admin_orders_page(
             db=db,
@@ -120,3 +124,4 @@ def get_admin_orders_page(
             status_code=503,
             detail="Servicio de base de datos temporalmente no disponible"
         )
+

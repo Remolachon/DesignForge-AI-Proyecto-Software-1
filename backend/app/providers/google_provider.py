@@ -20,7 +20,8 @@ class GoogleOAuthProvider:
 
             payload_b64 = parts[1]
             padding = "=" * (-len(payload_b64) % 4)
-            payload_bytes = base64.urlsafe_b64decode((payload_b64 + padding).encode("utf-8"))
+            payload_bytes = base64.urlsafe_b64decode(
+                (payload_b64 + padding).encode("utf-8"))
             return json.loads(payload_bytes.decode("utf-8"))
         except Exception as e:
             print(f"Error decoding JWT payload: {e}", flush=True)
@@ -53,7 +54,6 @@ class GoogleOAuthProvider:
         Extrae información del usuario del payload del token de Supabase.
         """
         user_metadata = token_payload.get("user_metadata", {})
-
 
         first_name = (
             user_metadata.get("first_name")
@@ -88,7 +88,7 @@ class GoogleOAuthProvider:
 
         if not last_name:
             last_name = token_payload.get("family_name") or ""
-        
+
         return {
             "supabase_id": token_payload.get("sub"),
             "email": (token_payload.get("email") or user_metadata.get("email") or "").strip().lower(),
@@ -97,3 +97,4 @@ class GoogleOAuthProvider:
             "phone": user_metadata.get("phone"),
             "avatar_url": user_metadata.get("avatar_url"),
         }
+

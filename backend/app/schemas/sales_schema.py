@@ -48,3 +48,4 @@ class TransactionItemSchema(BaseModel):
 class TransactionsListSchema(BaseModel):
     total: int
     items: list[TransactionItemSchema]
+

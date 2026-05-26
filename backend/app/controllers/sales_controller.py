@@ -28,7 +28,8 @@ from app.services.sales_service import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin/sales", tags=["Admin - Ventas"])
-funcionario_router = APIRouter(prefix="/funcionario/sales", tags=["Funcionario - Ventas"])
+funcionario_router = APIRouter(
+    prefix="/funcionario/sales", tags=["Funcionario - Ventas"])
 
 
 # ─── Auth helpers ─────────────────────────────────────────────────────────────
@@ -36,9 +37,11 @@ funcionario_router = APIRouter(prefix="/funcionario/sales", tags=["Funcionario -
 def _require_admin(db: Session, current_user) -> User:
     """Verifica que el usuario autenticado tenga rol de administrador."""
     def _query():
-        db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
+        db_user = db.query(User).filter(
+            User.supabase_id == current_user.id).first()
         if not db_user:
-            raise HTTPException(status_code=404, detail="Usuario no existe en DB")
+            raise HTTPException(
+                status_code=404, detail="Usuario no existe en DB")
         role_name = UserService.get_user_role_name(db, db_user.id)
         if role_name != "administrador":
             raise HTTPException(status_code=403, detail="No autorizado")
@@ -60,9 +63,11 @@ def _require_funcionario(db: Session, current_user) -> tuple[User, int]:
     Retorna (db_user, company_id).
     """
     def _query():
-        db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
+        db_user = db.query(User).filter(
+            User.supabase_id == current_user.id).first()
         if not db_user:
-            raise HTTPException(status_code=404, detail="Usuario no existe en DB")
+            raise HTTPException(
+                status_code=404, detail="Usuario no existe en DB")
         role_name = UserService.get_user_role_name(db, db_user.id)
         if role_name != "funcionario_adm":
             raise HTTPException(status_code=403, detail="No autorizado")
@@ -87,7 +92,8 @@ def _require_funcionario(db: Session, current_user) -> tuple[User, int]:
 
 @router.get("/summary", response_model=SalesSummarySchema)
 def get_summary(
-    filter: TimeFilter = Query(TimeFilter.month, description="Período de tiempo"),
+    filter: TimeFilter = Query(
+        TimeFilter.month, description="Período de tiempo"),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
@@ -105,7 +111,8 @@ def get_summary(
 
 @router.get("/chart", response_model=SalesChartSchema)
 def get_chart(
-    filter: TimeFilter = Query(TimeFilter.month, description="Período de tiempo"),
+    filter: TimeFilter = Query(
+        TimeFilter.month, description="Período de tiempo"),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
@@ -123,9 +130,12 @@ def get_chart(
 
 @router.get("/transactions", response_model=TransactionsListSchema)
 def get_transactions(
-    filter: TimeFilter = Query(TimeFilter.month, description="Período de tiempo"),
-    status: Optional[str] = Query(None, description="Filtrar por estado (approved, pending, etc.)"),
-    limit: int = Query(20, ge=1, le=100, description="Número de resultados por página"),
+    filter: TimeFilter = Query(
+        TimeFilter.month, description="Período de tiempo"),
+    status: Optional[str] = Query(
+        None, description="Filtrar por estado (approved, pending, etc.)"),
+    limit: int = Query(
+        20, ge=1, le=100, description="Número de resultados por página"),
     offset: int = Query(0, ge=0, description="Desplazamiento para paginación"),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
@@ -146,7 +156,8 @@ def get_transactions(
 
 @funcionario_router.get("/summary", response_model=SalesSummarySchema)
 def get_company_summary(
-    filter: TimeFilter = Query(TimeFilter.month, description="Período de tiempo"),
+    filter: TimeFilter = Query(
+        TimeFilter.month, description="Período de tiempo"),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
@@ -164,7 +175,8 @@ def get_company_summary(
 
 @funcionario_router.get("/chart", response_model=SalesChartSchema)
 def get_company_chart(
-    filter: TimeFilter = Query(TimeFilter.month, description="Período de tiempo"),
+    filter: TimeFilter = Query(
+        TimeFilter.month, description="Período de tiempo"),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
@@ -182,7 +194,8 @@ def get_company_chart(
 
 @funcionario_router.get("/transactions", response_model=TransactionsListSchema)
 def get_company_transactions(
-    filter: TimeFilter = Query(TimeFilter.month, description="Período de tiempo"),
+    filter: TimeFilter = Query(
+        TimeFilter.month, description="Período de tiempo"),
     status: Optional[str] = Query(None, description="Filtrar por estado"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
@@ -199,3 +212,4 @@ def get_company_transactions(
             status_code=503,
             detail="Servicio de base de datos temporalmente no disponible",
         )
+

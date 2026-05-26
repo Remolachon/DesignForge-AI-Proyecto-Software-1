@@ -4,6 +4,7 @@ from app.providers.supabase_provider import get_user_from_token
 
 security = HTTPBearer()
 
+
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
 
@@ -16,3 +17,4 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         )
 
     return user
+

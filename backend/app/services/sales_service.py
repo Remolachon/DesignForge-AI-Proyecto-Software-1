@@ -62,7 +62,8 @@ def get_all_time_summary(db: Session) -> dict:
         approved_row = db.execute(approved_sql).fetchone()
         total_ganancias = float(approved_row.ventas_aprobadas or 0) * 0.30
 
-    ticket_promedio = total_ventas / total_transacciones if total_transacciones > 0 else 0.0
+    ticket_promedio = total_ventas / \
+        total_transacciones if total_transacciones > 0 else 0.0
     tasa_aprobacion = (
         (transacciones_aprobadas / total_transacciones * 100)
         if total_transacciones > 0
@@ -91,7 +92,8 @@ def _get_date_range(filter: TimeFilter) -> tuple[datetime, datetime]:
     elif filter == TimeFilter.month:
         start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     else:  # year
-        start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        start = now.replace(month=1, day=1, hour=0,
+                            minute=0, second=0, microsecond=0)
     return start, now
 
 
@@ -134,7 +136,8 @@ def get_sales_summary(db: Session, filter: TimeFilter) -> SalesSummarySchema:
           AND t.transaction_date <= :end
     """)
 
-    profit_row = db.execute(profit_sql, {"start": start, "end": end}).fetchone()
+    profit_row = db.execute(
+        profit_sql, {"start": start, "end": end}).fetchone()
     total_ganancias = float(profit_row.total_ganancias or 0)
 
     # Fallback: si la ganancia real es <= 0, usar 30% sobre ventas aprobadas
@@ -147,10 +150,12 @@ def get_sales_summary(db: Session, filter: TimeFilter) -> SalesSummarySchema:
               AND t.transaction_date >= :start
               AND t.transaction_date <= :end
         """)
-        approved_row = db.execute(approved_sql, {"start": start, "end": end}).fetchone()
+        approved_row = db.execute(
+            approved_sql, {"start": start, "end": end}).fetchone()
         total_ganancias = float(approved_row.ventas_aprobadas or 0) * 0.30
 
-    ticket_promedio = total_ventas / total_transacciones if total_transacciones > 0 else 0.0
+    ticket_promedio = total_ventas / \
+        total_transacciones if total_transacciones > 0 else 0.0
     tasa_aprobacion = (
         (transacciones_aprobadas / total_transacciones * 100)
         if total_transacciones > 0
@@ -256,7 +261,8 @@ def get_transactions_list(
     start, end = _get_date_range(filter)
 
     status_clause = ""
-    params: dict = {"start": start, "end": end, "limit": limit, "offset": offset}
+    params: dict = {"start": start, "end": end,
+                    "limit": limit, "offset": offset}
 
     if status and status.strip():
         status_clause = "AND t.status = :status"
@@ -297,7 +303,8 @@ def get_transactions_list(
           {status_clause}
     """)
 
-    count_params = {k: v for k, v in params.items() if k not in ("limit", "offset")}
+    count_params = {k: v for k,
+                    v in params.items() if k not in ("limit", "offset")}
     total = int(db.execute(count_sql, count_params).scalar() or 0)
     rows = db.execute(list_sql, params).fetchall()
 
@@ -349,7 +356,8 @@ def get_company_sales_summary(db: Session, filter: TimeFilter, company_id: int) 
           AND t.transaction_date >= :start
           AND t.transaction_date <= :end
     """)
-    row = db.execute(summary_sql, {"company_id": company_id, "start": start, "end": end}).fetchone()
+    row = db.execute(
+        summary_sql, {"company_id": company_id, "start": start, "end": end}).fetchone()
 
     total_ventas = float(row.total_ventas or 0)
     total_transacciones = int(row.total_transacciones or 0)
@@ -357,9 +365,11 @@ def get_company_sales_summary(db: Session, filter: TimeFilter, company_id: int) 
 
     total_ganancias = 0.0
 
-    ticket_promedio = total_ventas / total_transacciones if total_transacciones > 0 else 0.0
+    ticket_promedio = total_ventas / \
+        total_transacciones if total_transacciones > 0 else 0.0
     tasa_aprobacion = (
-        (transacciones_aprobadas / total_transacciones * 100) if total_transacciones > 0 else 0.0
+        (transacciones_aprobadas / total_transacciones *
+         100) if total_transacciones > 0 else 0.0
     )
 
     return SalesSummarySchema(
@@ -402,7 +412,8 @@ def get_company_sales_chart(db: Session, filter: TimeFilter, company_id: int) ->
         ORDER BY period ASC
     """)
 
-    rows = db.execute(chart_sql, {"company_id": company_id, "start": start, "end": end}).fetchall()
+    rows = db.execute(
+        chart_sql, {"company_id": company_id, "start": start, "end": end}).fetchall()
 
     data_points: list[ChartDataPointSchema] = []
     for row in rows:
@@ -419,7 +430,8 @@ def get_company_sales_chart(db: Session, filter: TimeFilter, company_id: int) ->
             label = period.strftime("%b %Y")
 
         data_points.append(
-            ChartDataPointSchema(label=label, ventas=ventas, ganancias=ganancias, transacciones=transacciones)
+            ChartDataPointSchema(label=label, ventas=ventas,
+                                 ganancias=ganancias, transacciones=transacciones)
         )
 
     return SalesChartSchema(filter=filter, data=data_points)
@@ -493,7 +505,8 @@ def get_company_transactions_list(
           {status_clause}
     """)
 
-    count_params = {k: v for k, v in params.items() if k not in ("limit", "offset")}
+    count_params = {k: v for k,
+                    v in params.items() if k not in ("limit", "offset")}
     total = int(db.execute(count_sql, count_params).scalar() or 0)
     rows = db.execute(list_sql, params).fetchall()
 
@@ -520,3 +533,4 @@ def get_company_transactions_list(
         )
 
     return TransactionsListSchema(total=total, items=items)
+

@@ -12,6 +12,7 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "coverage/**"
   ]),
   {
     rules: {
@@ -23,6 +24,12 @@ const eslintConfig = defineConfig([
       "@next/next/no-html-link-for-pages": "warn",
       "react-hooks/set-state-in-effect": "warn",
       "react/no-unescaped-entities": "warn"
+    }
+  },
+  {
+    files: ["**/*.test.ts", "**/*.test.tsx"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off"
     }
   }
 ]);

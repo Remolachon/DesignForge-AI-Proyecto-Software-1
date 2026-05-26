@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class CompanyCreateRequest(BaseModel):
@@ -30,8 +30,7 @@ class CompanyResponse(BaseModel):
     created_by_user_id: int
     new_role: str | None = None  # Rol asignado al crear la empresa
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CompanyAdminResponse(BaseModel):
@@ -48,9 +47,9 @@ class CompanyAdminResponse(BaseModel):
     created_by_user_id: int
     created_by_user_name: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CompanyAdminActionRequest(BaseModel):
     status: str
+

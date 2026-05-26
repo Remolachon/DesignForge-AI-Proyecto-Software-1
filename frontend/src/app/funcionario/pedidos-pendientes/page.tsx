@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable @next/next/no-img-element, @typescript-eslint/no-explicit-any */
 
 import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
