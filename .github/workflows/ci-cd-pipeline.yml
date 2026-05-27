@@ -143,7 +143,7 @@ jobs:
         run: npm install -g vercel@latest
 
       - name: ⚙️ Pull configuración de Vercel
-        working-directory: frontend
+        working-directory: .
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -151,7 +151,7 @@ jobs:
         run: vercel pull --yes --environment=production --token=$VERCEL_TOKEN
 
       - name: 🏗️ Build en Vercel
-        working-directory: frontend
+        working-directory: .
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -159,7 +159,7 @@ jobs:
         run: vercel build --prod --token=$VERCEL_TOKEN
 
       - name: 🚀 Deploy a producción en Vercel
-        working-directory: frontend
+        working-directory: .
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
