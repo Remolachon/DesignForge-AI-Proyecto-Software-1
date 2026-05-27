@@ -625,8 +625,7 @@ class ProductService:
             raise ValueError("Error al subir el archivo a Storage")
 
         from app.config.settings import settings
-        public_url = f"{
-    settings.SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{file_path}"
+        public_url = f"{settings.SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{file_path}"
 
         new_asset = FileAsset(
             bucket_name=bucket_name,

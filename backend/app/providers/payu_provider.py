@@ -74,8 +74,7 @@ class PayUProvider:
         """
         try:
             # Generar referencia única para esta orden
-            reference_code = f"ORDER-{order_id}-{
-    datetime.now().strftime('%Y%m%d%H%M%S')}"
+            reference_code = f"ORDER-{order_id}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
             # Formatear valores monetarios (2 decimales)
             amount = float(total_amount or 0)

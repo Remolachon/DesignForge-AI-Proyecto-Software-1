@@ -328,8 +328,7 @@ class EmailService:
                 <p style=\"margin:0;font-size:16px;line-height:1.7;\">Ya puedes revisar el estado del pedido desde tu panel. Cuando quede habilitado para pago, verás la opción allí mismo.</p>  # noqa: E501
             """,
             cta_label="Ver mis pedidos",
-            cta_url=f"{
-    cls._frontend_url()}/cliente/pedidos" if cls._frontend_url() else None,
+            cta_url=f"{cls._frontend_url()}/cliente/pedidos" if cls._frontend_url() else None,
         )
         return cls._send_message(
             recipient_email, subject, plain_text, html_body)
@@ -386,8 +385,7 @@ class EmailService:
         )
         review_url = None
         if cls._frontend_url() and product_id is not None:
-            review_url = f"{
-    cls._frontend_url()}/marketplace/{product_id}?review=1"
+            review_url = f"{cls._frontend_url()}/marketplace/{product_id}?review=1"
 
         html_body = cls._wrap_html(
             title=subject,

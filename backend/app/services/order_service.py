@@ -1093,8 +1093,7 @@ class OrderService:
                 notification = Notification(
                     user_id=user.id,
                     title="Tu pedido fue aceptado",
-                    message=f"Tu pedido #{
-    order.id} fue aceptado por {company_name}. Ya puedes revisarlo y pagarlo desde tus pedidos.",
+                    message=f"Tu pedido #{order.id} fue aceptado por {company_name}. Ya puedes revisarlo y pagarlo desde tus pedidos.",
                     type="custom-order-accepted",
                     is_read=False,
                     link_url="/cliente/pedidos",

@@ -52,6 +52,12 @@ jobs:
   test-frontend:
     name: ⚛️ Test & Coverage Frontend (80%)
     runs-on: ubuntu-latest
+
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_KEY }}
+      NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+
     defaults:
       run:
         working-directory: frontend
@@ -81,8 +87,6 @@ jobs:
         run: npm run test:coverage
 
       - name: 🏗️ Build de verificación
-        env:
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
         run: npm run build
 
   # ==========================================
@@ -120,6 +124,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test-frontend, deploy-backend] # DEPENDE DE TESTS FRONTEND Y DEPLOY BACKEND
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_KEY }}
+      NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
     steps:
       - name: ⬇️ Checkout código
         uses: actions/checkout@v4

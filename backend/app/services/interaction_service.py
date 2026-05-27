@@ -187,8 +187,7 @@ class InteractionService:
         )
         db.add(notification)
         db.flush()
-        notification.link_url = f"/marketplace/{product_id}?review=1&notification={
-    notification.id}"
+        notification.link_url = f"/marketplace/{product_id}?review=1&notification={notification.id}"
         db.flush()
         db.refresh(notification)
         return InteractionService._serialize_notification(notification)
