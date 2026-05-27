@@ -11,8 +11,7 @@ logger = logging.getLogger(__name__)
 DATABASE_URL = settings.DATABASE_URL
 
 # Si no hay URL válida o estamos en testing, usar SQLite
-if not DATABASE_URL or not any(DATABASE_URL.startswith(prefix) for prefix in [
-                               "postgresql://", "mysql://", "sqlite:///"]):
+if not DATABASE_URL:
     logger.warning(f"URL de BD inválida o vacía. Usando SQLite para testing.")
     DATABASE_URL = "sqlite:///./test.db"
 
@@ -26,7 +25,7 @@ engine_config = {
 }
 
 # Para PostgreSQL: usar QueuePool con configuración de pool
-if DATABASE_URL.startswith("postgresql://"):
+if DATABASE_URL.startswith("postgresql"):
     engine_config.update({
         "connect_args": {"options": "-c timezone=America/Bogota"},
         "pool_recycle": 1800,
