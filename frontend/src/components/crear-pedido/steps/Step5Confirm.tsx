@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { CheckCircle, Sparkles } from "lucide-react";

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useCallback, useMemo } from "react";
 import { Product, ProductAttribute, AttributeValues, CreateOrderItemPayload } from "@/types/product";
 

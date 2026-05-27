@@ -31,7 +31,8 @@ class InteractionService:
         user = review.user
         user_name = "Cliente"
         if user:
-            user_name = f"{user.first_name} {user.last_name}".strip() or user.email or "Cliente"
+            user_name = f"{user.first_name} {user.last_name}".strip(
+            ) or user.email or "Cliente"
 
         created_at = review.created_at or InteractionService._now_local()
 
@@ -60,11 +61,13 @@ class InteractionService:
         }
 
     @staticmethod
-    def create_review(db: Session, user_id: int, product_id: int, rating: int, comment: str | None = None) -> dict:
+    def create_review(db: Session, user_id: int, product_id: int,
+                      rating: int, comment: str | None = None) -> dict:
         if rating < 0 or rating > 5:
             raise ValueError("La valoración debe estar entre 0 y 5")
 
-        product = db.query(Product).filter(Product.id == product_id, Product.is_active == True).first()
+        product = db.query(Product).filter(
+            Product.id == product_id, Product.is_active is True).first()
         if not product:
             raise ValueError("Producto no encontrado")
 
@@ -74,7 +77,8 @@ class InteractionService:
             .first()
         )
         if not delivered_stage:
-            raise ValueError("Solo puedes valorar productos de pedidos entregados")
+            raise ValueError(
+                "Solo puedes valorar productos de pedidos entregados")
 
         has_delivered_order = (
             db.query(Order.id)
@@ -86,14 +90,17 @@ class InteractionService:
         )
 
         if not has_delivered_order:
-            raise ValueError("Solo puedes valorar productos de pedidos entregados")
+            raise ValueError(
+                "Solo puedes valorar productos de pedidos entregados")
 
-        # Crear una nueva review siempre que el pedido del producto ya esté entregado
+        # Crear una nueva review siempre que el pedido del producto ya esté
+        # entregado
         review = Review(
             product_id=product_id,
             user_id=user_id,
             rating=rating,
-            comment=comment.strip() if isinstance(comment, str) and comment.strip() else None,
+            comment=comment.strip() if isinstance(
+                comment, str) and comment.strip() else None,
             created_at=InteractionService._now_local(),
         )
         db.add(review)
@@ -122,14 +129,14 @@ class InteractionService:
         notifications = (
             db.query(Notification)
             .filter(Notification.user_id == user_id)
-            .filter(Notification.is_read == False)
+            .filter(Notification.is_read is False)
             .order_by(Notification.created_at.desc(), Notification.id.desc())
             .limit(10)
             .all()
         )
         unread_count = (
             db.query(Notification)
-            .filter(Notification.user_id == user_id, Notification.is_read == False)
+            .filter(Notification.user_id == user_id, Notification.is_read is False)
             .count()
         )
 
@@ -139,7 +146,8 @@ class InteractionService:
         }
 
     @staticmethod
-    def mark_notification_as_read(db: Session, user_id: int, notification_id: int) -> dict:
+    def mark_notification_as_read(
+        db: Session, user_id: int, notification_id: int) -> dict:
         notification = (
             db.query(Notification)
             .filter(Notification.id == notification_id, Notification.user_id == user_id)

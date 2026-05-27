@@ -31,6 +31,7 @@ class ProductAttributeSchema(BaseModel):
     default_value: str | None = None
     sort_order: int
 
+
 class ProductResponse(BaseModel):
     id: int
     title: str

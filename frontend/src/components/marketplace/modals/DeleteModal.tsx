@@ -18,7 +18,7 @@ export function DeleteModal({ productName, onConfirm, onCancel, loading = false 
                 <h3 className="text-lg font-semibold mb-2">Eliminar producto</h3>
                 <p className="text-sm text-muted-foreground mb-6">
                     ¿Estás seguro de que deseas eliminar{' '}
-                    <span className="font-medium text-foreground">"{productName}"</span>?
+                    <span className="font-medium text-foreground">&quot;{productName}&quot;</span>?
                     Esta acción no se puede deshacer.
                 </p>
                 <div className="flex gap-3">

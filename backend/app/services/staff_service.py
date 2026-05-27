@@ -17,7 +17,8 @@ ROLE_FUNCIONARIO_NAME = "funcionario"
 ROLE_FUNCIONARIO_ADM_NAME = "funcionario_adm"
 
 
-def get_company_staff(db: Session, company_id: int, current_user_id: int) -> list[dict]:
+def get_company_staff(db: Session, company_id: int,
+                      current_user_id: int) -> list[dict]:
     """
     Retorna todos los usuarios de la empresa que tienen rol 'funcionario',
     excluyendo al usuario actual (administrador).
@@ -68,7 +69,8 @@ def _get_funcionario_role(db: Session) -> Role:
     return role
 
 
-def _get_user_in_company(db: Session, target_user_id: int, company_id: int) -> User:
+def _get_user_in_company(db: Session, target_user_id: int,
+                         company_id: int) -> User:
     """Valida que el usuario exista y pertenezca a la empresa. Lanza 404/403 si no."""
     target_user = db.query(User).filter(User.id == target_user_id).first()
     if target_user is None:
@@ -84,7 +86,8 @@ def _get_user_in_company(db: Session, target_user_id: int, company_id: int) -> U
     return target_user
 
 
-def assign_funcionario_role(db: Session, target_user_id: int, company_id: int) -> dict:
+def assign_funcionario_role(
+    db: Session, target_user_id: int, company_id: int) -> dict:
     """
     Asigna el rol 'funcionario' al usuario indicado dentro de la empresa.
     Si ya tiene una fila en user_roles para ese rol, la reactiva.
@@ -140,10 +143,12 @@ def assign_funcionario_role(db: Session, target_user_id: int, company_id: int) -
             detail="No se pudo asignar el rol al usuario",
         )
 
-    return {"message": "Rol 'funcionario' asignado correctamente", "user_id": target_user_id}
+    return {"message": "Rol 'funcionario' asignado correctamente",
+        "user_id": target_user_id}
 
 
-def revoke_funcionario_role(db: Session, target_user_id: int, company_id: int) -> dict:
+def revoke_funcionario_role(
+    db: Session, target_user_id: int, company_id: int) -> dict:
     """
     Revoca (desactiva) el rol 'funcionario' del usuario indicado dentro de la empresa.
     """
@@ -187,7 +192,8 @@ def revoke_funcionario_role(db: Session, target_user_id: int, company_id: int) -
     db.add(notification)
     db.commit()
 
-    return {"message": "Rol 'funcionario' revocado correctamente", "user_id": target_user_id}
+    return {"message": "Rol 'funcionario' revocado correctamente",
+        "user_id": target_user_id}
 
 
 def invite_funcionario(db: Session, email: str, company_id: int) -> dict:
@@ -199,7 +205,7 @@ def invite_funcionario(db: Session, email: str, company_id: int) -> dict:
     if target_user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="No se encontró un usuario con ese correo electrónico. Asegúrate de que ya esté registrado en LukArt."
+            detail="No se encontró un usuario con ese correo electrónico. Asegúrate de que ya esté registrado en LukArt."  # noqa: E501
         )
 
     if target_user.company_id is not None:
@@ -224,7 +230,8 @@ def invite_funcionario(db: Session, email: str, company_id: int) -> dict:
         )
 
     # Asignar la empresa y el rol
-    UserService.promote_user_to_funcionario(db, target_user.id, company_id, commit=True)
+    UserService.promote_user_to_funcionario(
+        db, target_user.id, company_id, commit=True)
     logger.info(
         "Usuario %s (ID: %s) invitado como funcionario a la empresa %s",
         email,
@@ -247,10 +254,12 @@ def invite_funcionario(db: Session, email: str, company_id: int) -> dict:
     db.add(notification)
     db.commit()
 
-    return {"message": "Usuario invitado correctamente", "user_id": target_user.id}
+    return {"message": "Usuario invitado correctamente",
+        "user_id": target_user.id}
 
 
-def remove_funcionario_from_company(db: Session, target_user_id: int, company_id: int) -> dict:
+def remove_funcionario_from_company(
+    db: Session, target_user_id: int, company_id: int) -> dict:
     """
     Elimina completamente a un funcionario de la empresa.
     Establece su company_id a NULL y su rol activo pasa a ser 'cliente'.
@@ -262,7 +271,8 @@ def remove_funcionario_from_company(db: Session, target_user_id: int, company_id
     # Desvincular de la empresa
     UserService.set_user_company(db, target_user_id, None, commit=False)
 
-    # Restablecer su rol a cliente (esto desactiva 'funcionario' o 'funcionario_adm' que tuviera activos)
+    # Restablecer su rol a cliente (esto desactiva 'funcionario' o
+    # 'funcionario_adm' que tuviera activos)
     UserService.set_user_role(db, target_user_id, "cliente", commit=False)
 
     company = db.query(Company).filter(Company.id == company_id).first()
@@ -287,4 +297,5 @@ def remove_funcionario_from_company(db: Session, target_user_id: int, company_id
     db.add(notification)
     db.commit()
 
-    return {"message": "Usuario removido de la empresa correctamente", "user_id": target_user_id}
+    return {"message": "Usuario removido de la empresa correctamente",
+        "user_id": target_user_id}

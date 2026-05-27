@@ -6,7 +6,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 BACKEND_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 
 
-
 class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(
@@ -14,15 +13,15 @@ class Settings(BaseSettings):
         extra="allow"  # permite variables extras en .env
     )
 
-    DATABASE_URL: str
-    SUPABASE_URL: str
-    SUPABASE_KEY: str
+    DATABASE_URL: str = "sqlite:///./test.db"  # Fallback para testing
+    SUPABASE_URL: str = ""
+    SUPABASE_KEY: str = ""
 
     JWT_SECRET: str | None = None
     BREVO_API_KEY: str | None = None
     BREVO_EMAIL_FROM: str | None = None
     FRONTEND_URL: str | None = None
-    HF_TOKEN: str
+    HF_TOKEN: str = ""
     HF_SPACE_ID: str = "Dupan21/LukArt"
 
     # PayU Configuration

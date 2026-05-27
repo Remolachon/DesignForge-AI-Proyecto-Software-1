@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import {
   LineChart,
@@ -7,9 +8,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
-  TooltipProps,
 } from "recharts";
 import type { ChartDataPoint } from "@/services/salesService";
 

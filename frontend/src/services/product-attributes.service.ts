@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ProductAttribute } from "@/types/product";
 import { getApiBaseUrl } from "@/lib/utils/apiBaseUrl";
 

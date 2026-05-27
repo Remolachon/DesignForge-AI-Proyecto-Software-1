@@ -57,7 +57,8 @@ class CompanyService:
                 detail="El NIT ya existe",
             )
 
-        existing_email = db.query(Company).filter(Company.email == email).first()
+        existing_email = db.query(Company).filter(
+            Company.email == email).first()
         if existing_email:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -84,8 +85,10 @@ class CompanyService:
 
             # Aplicar rol y empresa al creador usando el UserService
             # (el trigger de DB también lo hace, pero no desactiva el rol previo)
-            UserService.set_user_company(db, created_by_user.id, company.id, commit=False)
-            UserService.set_user_role(db, created_by_user.id, "funcionario_adm", commit=False)
+            UserService.set_user_company(
+                db, created_by_user.id, company.id, commit=False)
+            UserService.set_user_role(
+                db, created_by_user.id, "funcionario_adm", commit=False)
             db.commit()
 
             return company
@@ -110,7 +113,8 @@ class CompanyService:
                 detail="Empresa no encontrada",
             )
 
-        normalized_status = CompanyService._normalize_required(status_value).upper()
+        normalized_status = CompanyService._normalize_required(
+            status_value).upper()
         previous_status = (company.status or "").upper()
         was_active = bool(company.is_active)
 
@@ -121,8 +125,10 @@ class CompanyService:
         elif normalized_status in {"REJECTED", "INACTIVE", "DELETED"}:
             company.is_active = False
 
-        if normalized_status == "APPROVED" and (previous_status != "APPROVED" or not was_active):
-            creator = db.query(User).filter(User.id == company.created_by_user_id).first()
+        if normalized_status == "APPROVED" and (
+            previous_status != "APPROVED" or not was_active):
+            creator = db.query(User).filter(
+                User.id == company.created_by_user_id).first()
 
             if creator is None:
                 raise HTTPException(
@@ -161,7 +167,8 @@ class CompanyService:
                 detail="Empresa no encontrada",
             )
 
-        creator = db.query(User).filter(User.id == company.created_by_user_id).first()
+        creator = db.query(User).filter(
+            User.id == company.created_by_user_id).first()
         if creator is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -178,7 +185,8 @@ class CompanyService:
         return company
 
     @staticmethod
-    def get_admin_companies(db: Session, filter_status: str | None = None) -> list[CompanyAdminResponse]:
+    def get_admin_companies(db: Session, filter_status: str |
+                            None = None) -> list[CompanyAdminResponse]:
         query = (
             db.query(Company, User.first_name, User.last_name)
             .join(User, Company.created_by_user_id == User.id)
@@ -191,11 +199,13 @@ class CompanyService:
         elif normalized == "rejected":
             query = query.filter(Company.status == "REJECTED")
         elif normalized == "active":
-            query = query.filter(Company.is_active == True, Company.status == "APPROVED")
+            query = query.filter(Company.is_active is True,
+                                 Company.status == "APPROVED")
         elif normalized == "inactive":
             query = query.filter(
                 or_(
-                    and_(Company.status == "APPROVED", Company.is_active == False),
+                    and_(Company.status == "APPROVED",
+                         Company.is_active is False),
                     Company.status == "INACTIVE",
                 )
             )
@@ -227,11 +237,13 @@ class CompanyService:
     def get_admin_company_counts(db: Session) -> dict[str, int]:
         total = db.query(Company).count()
         pending = db.query(Company).filter(Company.status == "PENDING").count()
-        rejected = db.query(Company).filter(Company.status == "REJECTED").count()
-        active = db.query(Company).filter(Company.status == "APPROVED", Company.is_active == True).count()
+        rejected = db.query(Company).filter(
+            Company.status == "REJECTED").count()
+        active = db.query(Company).filter(Company.status ==
+                                          "APPROVED", Company.is_active is True).count()
         inactive = db.query(Company).filter(
             or_(
-                and_(Company.status == "APPROVED", Company.is_active == False),
+                and_(Company.status == "APPROVED", Company.is_active is False),
                 Company.status == "INACTIVE",
             )
         ).count()

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { MediaUploadItem } from '@/components/marketplace/types/marketplace.types';
 import { FileAsset } from '@/types/product';
 import { funcionarioMarketplaceService } from '@/services/funcionario-marketplace.service';

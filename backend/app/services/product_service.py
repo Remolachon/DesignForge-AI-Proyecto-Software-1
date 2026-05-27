@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from datetime import datetime, timedelta
-from app.schemas.product_schema import ProductResponse, AdminProductResponse, AdminProductUpsertRequest, FileAssetResponse
+from app.schemas.product_schema import ProductResponse, AdminProductResponse, AdminProductUpsertRequest, FileAssetResponse  # noqa: E501
 from app.models.product import Product
 from app.models.product_type import ProductType
 from app.models.product_shape import ProductShape
@@ -13,11 +13,13 @@ from app.models.file_assets import FileAsset
 
 SUPABASE_PUBLIC_URL = "https://ttfwjexqplbbcfdfhxsg.supabase.co/storage/v1/object/public"
 
+
 class ProductService:
 
     @staticmethod
     def _ensure_product_attribute_values_table(db: Session) -> None:
-        ProductAttributeValue.__table__.create(bind=db.get_bind(), checkfirst=True)
+        ProductAttributeValue.__table__.create(
+            bind=db.get_bind(), checkfirst=True)
 
     @staticmethod
     def _upsert_product_attribute_values(
@@ -28,7 +30,8 @@ class ProductService:
     ) -> None:
         ProductService._ensure_product_attribute_values_table(db)
 
-        db.query(ProductAttributeValue).filter(ProductAttributeValue.product_id == product_id).delete(synchronize_session=False)
+        db.query(ProductAttributeValue).filter(
+            ProductAttributeValue.product_id == product_id).delete(synchronize_session=False)
 
         normalized_values = {
             str(code).strip(): str(value).strip()
@@ -64,7 +67,8 @@ class ProductService:
         return (value or "").strip().lower().replace("-", " ")
 
     @staticmethod
-    def _resolve_product_type(db: Session, product_type: str) -> ProductType | None:
+    def _resolve_product_type(
+        db: Session, product_type: str) -> ProductType | None:
         target = ProductService._normalize_type_name(product_type)
 
         all_types = db.query(ProductType).all()
@@ -75,7 +79,8 @@ class ProductService:
         return None
 
     @staticmethod
-    def _resolve_product_shape(db: Session, product_shape: str) -> ProductShape | None:
+    def _resolve_product_shape(
+        db: Session, product_shape: str) -> ProductShape | None:
         target = ProductService._normalize_type_name(product_shape)
 
         all_shapes = db.query(ProductShape).all()
@@ -86,7 +91,8 @@ class ProductService:
         return None
 
     @staticmethod
-    def _build_public_image(storage_path: str | None, bucket_name: str | None = None) -> str | None:
+    def _build_public_image(storage_path: str | None,
+                            bucket_name: str | None = None) -> str | None:
         if not storage_path:
             return None
         if storage_path.startswith("http"):
@@ -95,17 +101,20 @@ class ProductService:
         return f"{SUPABASE_PUBLIC_URL}/{bucket}/{storage_path}"
 
     @staticmethod
-    def _serialize_admin_product(row, file_assets=None, attributes=None) -> AdminProductResponse:
+    def _serialize_admin_product(
+        row, file_assets=None, attributes=None) -> AdminProductResponse:
         file_assets = file_assets or []
         attributes = attributes or []
         media_responses = []
         image_url = None
 
         # sort assets by sort_order
-        file_assets.sort(key=lambda x: x.sort_order if x.sort_order is not None else 0)
+        file_assets.sort(
+            key=lambda x: x.sort_order if x.sort_order is not None else 0)
 
         for a in file_assets:
-            url = ProductService._build_public_image(a.storage_path, a.bucket_name)
+            url = ProductService._build_public_image(
+                a.storage_path, a.bucket_name)
             if url:
                 media_responses.append(FileAssetResponse(
                     id=a.id,
@@ -129,7 +138,7 @@ class ProductService:
 
         if not image_url and media_responses:
             image_url = media_responses[0].storage_path
-            
+
         # Legacy single image fallback from query if media is empty
         if not image_url and hasattr(row, 'storage_path') and row.storage_path:
             image_url = ProductService._build_public_image(row.storage_path)
@@ -181,8 +190,8 @@ class ProductService:
             .outerjoin(ProductShape, Product.product_shape_id == ProductShape.id)
             .outerjoin(Inventory, Product.id == Inventory.product_id)
             .outerjoin(Review, Product.id == Review.product_id)
-            .filter(Product.is_active == True)
-            .filter(Product.is_public == True)
+            .filter(Product.is_active is True)
+            .filter(Product.is_public is True)
             .group_by(
                 Product.id,
                 Product.company_id,
@@ -195,15 +204,18 @@ class ProductService:
         )
 
         product_ids = [r.id for r in results]
-        assets = db.query(FileAsset).filter(FileAsset.product_id.in_(product_ids), FileAsset.is_active == True).all()
+        assets = db.query(FileAsset).filter(FileAsset.product_id.in_(
+            product_ids), FileAsset.is_active is True).all()
         assets_map = {pid: [] for pid in product_ids}
         for a in assets:
             assets_map[a.product_id].append(a)
 
         products = []
         for row in results:
-            admin_resp = ProductService._serialize_admin_product(row, assets_map.get(row.id, []))
-            product_attributes = ProductService.get_product_attributes(db, row.id)
+            admin_resp = ProductService._serialize_admin_product(
+                row, assets_map.get(row.id, []))
+            product_attributes = ProductService.get_product_attributes(
+                db, row.id)
             products.append(ProductResponse(
                 id=admin_resp.id,
                 title=admin_resp.name,
@@ -243,7 +255,7 @@ class ProductService:
             .outerjoin(ProductShape, Product.product_shape_id == ProductShape.id)
             .outerjoin(Inventory, Product.id == Inventory.product_id)
             .outerjoin(Review, Product.id == Review.product_id)
-            .filter(Product.is_active == True)
+            .filter(Product.is_active is True)
         )
 
         if company_id is not None:
@@ -257,9 +269,10 @@ class ProductService:
             ProductShape.name,
             Inventory.quantity,
         ).all()
-        
+
         product_ids = [r.id for r in rows]
-        assets = db.query(FileAsset).filter(FileAsset.product_id.in_(product_ids), FileAsset.is_active == True).all()
+        assets = db.query(FileAsset).filter(FileAsset.product_id.in_(
+            product_ids), FileAsset.is_active is True).all()
         assets_map = {pid: [] for pid in product_ids}
         for a in assets:
             assets_map[a.product_id].append(a)
@@ -274,7 +287,8 @@ class ProductService:
         ]
 
     @staticmethod
-    def get_admin_products_page(db: Session, company_id: int | None = None, page: int = 1, page_size: int = 20, search: str | None = None):
+    def get_admin_products_page(db: Session, company_id: int | None = None,
+                                page: int = 1, page_size: int = 20, search: str | None = None):
         query = (
             db.query(
                 Product.id,
@@ -302,13 +316,16 @@ class ProductService:
 
         if search:
             term = f"%{search.strip()}%"
-            query = query.filter((Product.name.ilike(term)) | (Product.description.ilike(term)))
+            query = query.filter((Product.name.ilike(term))
+                                 | (Product.description.ilike(term)))
 
-        query = query.filter(Product.is_active == True)
+        query = query.filter(Product.is_active is True)
 
         count_q = db.query(func.count(func.distinct(Product.id)))
-        count_q = count_q.join(ProductType, Product.product_type_id == ProductType.id)
-        count_q = count_q.outerjoin(Inventory, Product.id == Inventory.product_id)
+        count_q = count_q.join(
+            ProductType, Product.product_type_id == ProductType.id)
+        count_q = count_q.outerjoin(
+            Inventory, Product.id == Inventory.product_id)
         count_q = count_q.outerjoin(Review, Product.id == Review.product_id)
 
         if company_id is not None:
@@ -316,9 +333,10 @@ class ProductService:
 
         if search:
             term = f"%{search.strip()}%"
-            count_q = count_q.filter((Product.name.ilike(term)) | (Product.description.ilike(term)))
+            count_q = count_q.filter((Product.name.ilike(term)) | (
+                Product.description.ilike(term)))
 
-        count_q = count_q.filter(Product.is_active == True)
+        count_q = count_q.filter(Product.is_active is True)
 
         total = int(count_q.scalar() or 0)
         safe_page = max(1, page)
@@ -338,9 +356,10 @@ class ProductService:
             .limit(safe_page_size)
             .all()
         )
-        
+
         product_ids = [r.id for r in rows]
-        assets = db.query(FileAsset).filter(FileAsset.product_id.in_(product_ids), FileAsset.is_active == True).all()
+        assets = db.query(FileAsset).filter(FileAsset.product_id.in_(
+            product_ids), FileAsset.is_active is True).all()
         assets_map = {pid: [] for pid in product_ids}
         for a in assets:
             assets_map[a.product_id].append(a)
@@ -369,13 +388,15 @@ class ProductService:
         company_id: int,
         created_by_user_id: int,
     ):
-        product_type = ProductService._resolve_product_type(db, payload.productType)
+        product_type = ProductService._resolve_product_type(
+            db, payload.productType)
         if not product_type:
             raise ValueError("Tipo de producto inválido")
 
         product_shape = None
         if payload.productShape:
-            product_shape = ProductService._resolve_product_shape(db, payload.productShape)
+            product_shape = ProductService._resolve_product_shape(
+                db, payload.productShape)
             if not product_shape:
                 raise ValueError("Shape de producto inválido")
         else:
@@ -405,7 +426,8 @@ class ProductService:
             )
             db.add(product_asset)
 
-        inventory = Inventory(product_id=product.id, quantity=max(0, payload.stock))
+        inventory = Inventory(product_id=product.id,
+                              quantity=max(0, payload.stock))
         db.add(inventory)
 
         shape_attributes = (
@@ -414,7 +436,8 @@ class ProductService:
             .order_by(ProductAttribute.sort_order.asc(), ProductAttribute.id.asc())
             .all()
         )
-        ProductService._upsert_product_attribute_values(db, product.id, shape_attributes, payload.shapeAttributes)
+        ProductService._upsert_product_attribute_values(
+            db, product.id, shape_attributes, payload.shapeAttributes)
 
         db.commit()
 
@@ -434,18 +457,21 @@ class ProductService:
     ):
         product_query = db.query(Product).filter(Product.id == product_id)
         if company_id is not None:
-            product_query = product_query.filter(Product.company_id == company_id)
+            product_query = product_query.filter(
+                Product.company_id == company_id)
 
         product = product_query.first()
         if not product or not product.is_active:
             raise ValueError("Producto no encontrado")
 
-        product_type = ProductService._resolve_product_type(db, payload.productType)
+        product_type = ProductService._resolve_product_type(
+            db, payload.productType)
         if not product_type:
             raise ValueError("Tipo de producto inválido")
 
         if payload.productShape:
-            product_shape = ProductService._resolve_product_shape(db, payload.productShape)
+            product_shape = ProductService._resolve_product_shape(
+                db, payload.productShape)
             if not product_shape:
                 raise ValueError("Shape de producto inválido")
             product.product_shape_id = product_shape.id
@@ -454,7 +480,8 @@ class ProductService:
 
         product_shape = None
         if product.product_shape_id:
-            product_shape = db.query(ProductShape).filter(ProductShape.id == product.product_shape_id).first()
+            product_shape = db.query(ProductShape).filter(
+                ProductShape.id == product.product_shape_id).first()
             if not product_shape:
                 raise ValueError("Shape de producto inválido")
 
@@ -474,11 +501,12 @@ class ProductService:
 
         if payload.imageStoragePath:
             # We don't necessarily delete the rest, just the legacy main image maybe
-            # However with the new architecture, frontend might not send imageStoragePath anymore
+            # However with the new architecture, frontend might not send
+            # imageStoragePath anymore
             db.query(FileAsset).filter(
                 FileAsset.product_id == product.id,
                 FileAsset.file_type == "product_main",
-                FileAsset.is_active == True,
+                FileAsset.is_active is True,
             ).update({"is_active": False}, synchronize_session=False)
 
             new_asset = FileAsset(
@@ -490,14 +518,17 @@ class ProductService:
             )
             db.add(new_asset)
 
-        inventory = db.query(Inventory).filter(Inventory.product_id == product.id).first()
+        inventory = db.query(Inventory).filter(
+            Inventory.product_id == product.id).first()
         if not inventory:
-            inventory = Inventory(product_id=product.id, quantity=max(0, payload.stock))
+            inventory = Inventory(product_id=product.id,
+                                  quantity=max(0, payload.stock))
             db.add(inventory)
         else:
             inventory.quantity = max(0, payload.stock)
 
-        ProductService._upsert_product_attribute_values(db, product.id, active_shape_attributes, payload.shapeAttributes)
+        ProductService._upsert_product_attribute_values(
+            db, product.id, active_shape_attributes, payload.shapeAttributes)
 
         db.commit()
 
@@ -517,7 +548,8 @@ class ProductService:
     ):
         product_query = db.query(Product).filter(Product.id == product_id)
         if company_id is not None:
-            product_query = product_query.filter(Product.company_id == company_id)
+            product_query = product_query.filter(
+                Product.company_id == company_id)
 
         product = product_query.first()
         if not product or not product.is_active:
@@ -541,7 +573,8 @@ class ProductService:
     ):
         product_query = db.query(Product).filter(Product.id == product_id)
         if company_id is not None:
-            product_query = product_query.filter(Product.company_id == company_id)
+            product_query = product_query.filter(
+                Product.company_id == company_id)
 
         product = product_query.first()
         if not product:
@@ -565,7 +598,8 @@ class ProductService:
     ) -> FileAssetResponse:
         product_query = db.query(Product).filter(Product.id == product_id)
         if company_id:
-            product_query = product_query.filter(Product.company_id == company_id)
+            product_query = product_query.filter(
+                Product.company_id == company_id)
 
         product = product_query.first()
         if not product or not product.is_active:
@@ -589,7 +623,7 @@ class ProductService:
         except Exception as e:
             print("ERROR UPLOAD PRODUCT MEDIA:", e)
             raise ValueError("Error al subir el archivo a Storage")
-        
+
         from app.config.settings import settings
         public_url = f"{settings.SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{file_path}"
 
@@ -676,7 +710,8 @@ class ProductService:
 
     @staticmethod
     def get_shape_attributes(db: Session, shape_id: int):
-        shape = db.query(ProductShape).filter(ProductShape.id == shape_id).first()
+        shape = db.query(ProductShape).filter(
+            ProductShape.id == shape_id).first()
         if not shape:
             raise ValueError("Shape no encontrado")
 

@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { ProductType } from "@/types/types";
 import { getCatalogImageByType } from "@/constants/productCatalog";

@@ -26,7 +26,7 @@ def get_me(
         def _get_user():
             user = UserService.get_user_by_supabase_id(db, current_user.id)
             return user
-        
+
         user = retry_on_connection_error(
             _get_user,
             max_retries=3,
@@ -67,7 +67,8 @@ def get_my_role(
         def _query():
             user = UserService.get_user_by_supabase_id(db, current_user.id)
             if user is None:
-                raise HTTPException(status_code=404, detail="Usuario no encontrado")
+                raise HTTPException(
+                    status_code=404, detail="Usuario no encontrado")
             role = UserService.get_user_role_name(db, user.id)
             return {"role": role, "company_id": user.company_id}
 

@@ -27,7 +27,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
 
-def _send_order_created_email(db: Session, db_user: User, order: Order, payment_url: str | None) -> None:
+def _send_order_created_email(
+    db: Session, db_user: User, order: Order, payment_url: str | None) -> None:
     try:
         role_name = UserService.get_user_role_name(db, db_user.id)
         order_detail = OrderService.get_order_detail(
@@ -43,23 +44,28 @@ def _send_order_created_email(db: Session, db_user: User, order: Order, payment_
             order_id=order.id,
             order_name=order_detail.get("title") or "tu pedido",
             quantity=int(order_detail.get("quantity") or 1),
-            total_amount=float(order_detail.get("price") or order.total_amount or 0),
+            total_amount=float(order_detail.get("price")
+                               or order.total_amount or 0),
             payment_url=payment_url,
         )
         if result.get("status") == "error":
-            logger.warning("No se pudo enviar el correo de pedido creado: %s", result.get("error"))
+            logger.warning(
+                "No se pudo enviar el correo de pedido creado: %s", result.get("error"))
     except Exception as exc:
-        logger.warning("No se pudo preparar el correo de pedido creado: %s", exc)
+        logger.warning(
+            "No se pudo preparar el correo de pedido creado: %s", exc)
 
 
 def _get_db_user_with_retry(db: Session, current_user):
     """Obtiene usuario con reintentos automáticos en errores de conexión"""
     def _query():
-        db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
+        db_user = db.query(User).filter(
+            User.supabase_id == current_user.id).first()
         if not db_user:
-            raise HTTPException(status_code=404, detail="Usuario no existe en DB")
+            raise HTTPException(
+                status_code=404, detail="Usuario no existe en DB")
         return db_user
-    
+
     try:
         return retry_on_connection_error(_query, max_retries=3)
     except OperationalError as e:
@@ -74,7 +80,7 @@ def _get_db_user_with_retry(db: Session, current_user):
 def create_order(
     data: CreateOrderRequest,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user=Depends(get_current_user)
 ):
     db_user = _get_db_user_with_retry(db, current_user)
 
@@ -102,7 +108,7 @@ def create_order(
 def create_marketplace_order(
     data: CreateMarketplaceOrderRequest,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user=Depends(get_current_user)
 ):
     """
     Endpoint para crear órdenes desde el marketplace.
@@ -124,7 +130,8 @@ def create_marketplace_order(
         payment_result = OrderService.generate_payment_url(db, order.id)
 
         if payment_result.get("status") == "error":
-            raise HTTPException(status_code=400, detail=payment_result.get("error", "Error generando URL de pago"))
+            raise HTTPException(status_code=400, detail=payment_result.get(
+                "error", "Error generando URL de pago"))
 
         _send_order_created_email(
             db=db,
@@ -146,7 +153,8 @@ def create_marketplace_order(
         raise HTTPException(status_code=400, detail=str(e))
     except OperationalError as e:
         logger.error(f"Error de BD al crear marketplace order: {e}")
-        raise HTTPException(status_code=503, detail="Servicio de base de datos temporalmente no disponible")
+        raise HTTPException(
+            status_code=503, detail="Servicio de base de datos temporalmente no disponible")
 
 
 @router.get("/dashboard", response_model=DashboardResponse)
@@ -159,7 +167,8 @@ def get_dashboard_data(
 
     try:
         role_name = UserService.get_user_role_name(db, db_user.id)
-        requested_role = (request.headers.get("X-Dashboard-Role") or "").strip().lower()
+        requested_role = (request.headers.get(
+            "X-Dashboard-Role") or "").strip().lower()
         dashboard_role = role_name
 
         if requested_role == "cliente":
@@ -302,7 +311,8 @@ def accept_pending_custom_order(
         if role_name not in {"funcionario", "funcionario_adm"}:
             raise HTTPException(status_code=403, detail="No autorizado")
         if not db_user.company_id:
-            raise HTTPException(status_code=400, detail="No tienes una empresa asignada")
+            raise HTTPException(
+                status_code=400, detail="No tienes una empresa asignada")
 
         updated_order = OrderService.accept_pending_custom_order(
             db=db,
@@ -380,7 +390,8 @@ def get_order_detail(
     )
 
     if not order_detail:
-        raise HTTPException(status_code=404, detail="Pedido no encontrado o sin permiso")
+        raise HTTPException(
+            status_code=404, detail="Pedido no encontrado o sin permiso")
 
     return order_detail
 
@@ -395,7 +406,8 @@ def get_payment_url(
     Genera la URL de pago de PayU para una orden pendiente.
     Solo el dueño de la orden puede acceder.
     """
-    db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
+    db_user = db.query(User).filter(
+        User.supabase_id == current_user.id).first()
 
     if not db_user:
         raise HTTPException(status_code=404, detail="Usuario no existe en DB")
@@ -405,12 +417,14 @@ def get_payment_url(
         raise HTTPException(status_code=404, detail="Orden no encontrada")
 
     if order.user_id != db_user.id:
-        raise HTTPException(status_code=403, detail="No tienes permiso para acceder a esta orden")
+        raise HTTPException(
+            status_code=403, detail="No tienes permiso para acceder a esta orden")
 
     result = OrderService.generate_payment_url(db, order_id)
 
     if result.get("status") == "error":
-        raise HTTPException(status_code=400, detail=result.get("error", "Error generando URL de pago"))
+        raise HTTPException(status_code=400, detail=result.get(
+            "error", "Error generando URL de pago"))
 
     return result
 
@@ -427,7 +441,8 @@ def get_payment_status(
     Obtiene el estado de pago de una orden.
     Solo el dueño de la orden o un funcionario pueden acceder.
     """
-    db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
+    db_user = db.query(User).filter(
+        User.supabase_id == current_user.id).first()
 
     if not db_user:
         raise HTTPException(status_code=404, detail="Usuario no existe en DB")
@@ -437,7 +452,8 @@ def get_payment_status(
         raise HTTPException(status_code=404, detail="Orden no encontrada")
 
     role_name = UserService.get_user_role_name(db, db_user.id)
-    if order.user_id != db_user.id and role_name not in {"funcionario", "funcionario_adm"}:
+    if order.user_id != db_user.id and role_name not in {
+        "funcionario", "funcionario_adm"}:
         raise HTTPException(status_code=403, detail="No tienes permiso")
 
     return OrderService.get_order_payment_status(db, order_id)

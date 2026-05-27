@@ -55,7 +55,7 @@ export default function TerminosYCondiciones() {
                 <ul className="list-disc list-inside mt-2 space-y-1 text-sm text-muted-foreground">
                   <li>Pueden existir ligeras variaciones entre el render digital y el producto final.</li>
                   <li>Los tiempos de fabricación son estimados y pueden variar según la complejidad.</li>
-                  <li>No se aceptan devoluciones por "cambio de opinión" en productos personalizados.</li>
+                  <li>No se aceptan devoluciones por &quot;cambio de opinión&quot; en productos personalizados.</li>
                 </ul>
               </div>
             </section>

@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
-import app.models
+import app.models as models
 from app.controllers.user_controller import router as user_router
 from app.controllers.auth_controller import router as auth_router
 from app.controllers.admin_controller import router as admin_router
@@ -21,20 +21,22 @@ from app.database.database import check_db_connection
 
 logger = logging.getLogger(__name__)
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
     logger.info("🚀 Iniciando servidor...")
-    
+
     # Verificar conexión a BD
     db_available = await check_db_connection()
     if not db_available:
-        logger.warning("⚠️  Advertencia: No se pudo verificar conexión a BD al iniciar")
+        logger.warning(
+            "⚠️  Advertencia: No se pudo verificar conexión a BD al iniciar")
     else:
         logger.info("✅ Conexión a BD verificada")
-    
+
     yield
-    
+
     # Shutdown
     logger.info("🛑 Deteniendo servidor...")
 
@@ -62,7 +64,8 @@ if frontend_url:
 
 extra_origins = os.getenv("CORS_ORIGINS", "")
 if extra_origins:
-    origins.extend([origin.strip().rstrip("/") for origin in extra_origins.split(",") if origin.strip()])
+    origins.extend([origin.strip().rstrip("/")
+                   for origin in extra_origins.split(",") if origin.strip()])
 
 # Deduplicate while preserving order
 origins = list(dict.fromkeys(origins))
@@ -139,7 +142,7 @@ async def health_check():
     Incluye estado de la conexión a BD.
     """
     db_available = await check_db_connection()
-    
+
     return {
         "status": "healthy" if db_available else "degraded",
         "database": "connected" if db_available else "disconnected",

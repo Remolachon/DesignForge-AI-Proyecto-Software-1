@@ -15,6 +15,7 @@ FILE_TYPE_VALUES = (
     "payment_receipt",
 )
 
+
 class FileAsset(Base):
     __tablename__ = "file_assets"
 
@@ -35,11 +36,13 @@ class FileAsset(Base):
     sort_order = Column(SmallInteger, nullable=True)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=True)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=True)
-    order_item_id = Column(Integer, ForeignKey("order_items.id"), nullable=True)
+    order_item_id = Column(Integer, ForeignKey(
+        "order_items.id"), nullable=True)
     transaction_id = Column(Integer, nullable=True)
     uploaded_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at = Column(DateTime(timezone=True),
+                        server_default=func.now(), onupdate=func.now())
     is_active = Column(Boolean, default=True)
     generation_prompt = Column(String, nullable=True)
     generation_version = Column(SmallInteger, nullable=True)
@@ -53,6 +56,6 @@ class FileAsset(Base):
     processing_status = Column(String, nullable=True)
     visibility = Column(String, nullable=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    
+
     order_item = relationship("OrderItem", back_populates="assets")
     product = relationship("Product", back_populates="file_assets")

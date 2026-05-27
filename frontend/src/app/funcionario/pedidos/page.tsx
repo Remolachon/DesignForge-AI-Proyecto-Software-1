@@ -58,7 +58,7 @@ export default function FuncionarioPedidosPage() {
                 {debouncedSearch && (
                   <>
                     {' '}
-                    con el término "<span className="font-medium">{debouncedSearch}</span>"
+                    con el término &quot;<span className="font-medium">{debouncedSearch}</span>&quot;
                   </>
                 )}
               </p>

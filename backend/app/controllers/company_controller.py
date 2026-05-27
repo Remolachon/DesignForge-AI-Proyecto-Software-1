@@ -38,12 +38,14 @@ def _require_admin(db: Session, current_user):
     role_name = UserService.get_user_role_name(db, db_user.id)
 
     if role_name != "administrador":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado")
 
     return db_user
 
 
-@router.post("", response_model=CompanyResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=CompanyResponse,
+             status_code=status.HTTP_201_CREATED)
 def create_company(
     payload: CompanyCreateRequest,
     db: Session = Depends(get_db),
@@ -57,7 +59,8 @@ def create_company(
         created_by_user=db_user,
     )
 
-    # Obtener el rol recién asignado para que el frontend pueda actualizar localStorage
+    # Obtener el rol recién asignado para que el frontend pueda actualizar
+    # localStorage
     new_role = UserService.get_user_role_name(db, db_user.id)
 
     return CompanyResponse(

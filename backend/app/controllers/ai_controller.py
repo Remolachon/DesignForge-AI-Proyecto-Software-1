@@ -110,7 +110,9 @@ STYLE_CONFIG: dict[str, dict] = {
 # Supabase helpers
 # ═════════════════════════════════════════════════════════
 
-def upload_image_bytes(image_bytes: bytes, path: str, content_type: str = "image/png") -> str:
+
+def upload_image_bytes(image_bytes: bytes, path: str,
+                       content_type: str = "image/png") -> str:
     """Upload bytes to Supabase and return a signed URL."""
     supabase_admin.storage.from_(BUCKET).upload(
         path=path,
@@ -154,7 +156,15 @@ def prepare_source_image(
         arr = np.array(rgba, dtype=np.uint8)
         rgb, alpha = arr[:, :, :3], arr[:, :, 3]
         if (alpha < 250).mean() > 0.02:
-            bg = (255, 255, 255, 255) if rgb.mean() < 140 else (18, 18, 18, 255)
+            bg = (
+    255,
+    255,
+    255,
+    255) if rgb.mean() < 140 else (
+        18,
+        18,
+        18,
+         255)
         else:
             h, w = rgb.shape[:2]
             s = max(4, int(min(h, w) * 0.08))
@@ -162,7 +172,8 @@ def prepare_source_image(
                 rgb[:s, :s].reshape(-1, 3), rgb[:s, -s:].reshape(-1, 3),
                 rgb[-s:, :s].reshape(-1, 3), rgb[-s:, -s:].reshape(-1, 3),
             ])
-            bg_rgb = tuple(int(x) for x in np.clip(np.median(corners, axis=0), 0, 255))
+            bg_rgb = tuple(int(x)
+                           for x in np.clip(np.median(corners, axis=0), 0, 255))
             bg = (*bg_rgb, 255)
 
     canvas = Image.new("RGBA", (size, size), bg)
@@ -173,14 +184,17 @@ def prepare_source_image(
     rgb_canvas = ImageEnhance.Sharpness(rgb_canvas).enhance(1.12)
     rgb_canvas = ImageEnhance.Contrast(rgb_canvas).enhance(1.04)
 
-    arr_final = np.clip(np.array(rgb_canvas, dtype=np.uint8), 0, 255).astype(np.uint8)
+    arr_final = np.clip(np.array(rgb_canvas, dtype=np.uint8),
+                        0, 255).astype(np.uint8)
     result = Image.fromarray(arr_final, mode="RGB")
-    print(f"[IA LOG]: Imagen preparada - Modo: {result.mode}, Tamaño: {result.size}, BG: {bg[:3]}")
+    print(
+        f"[IA LOG]: Imagen preparada - Modo: {result.mode}, Tamaño: {result.size}, BG: {bg[:3]}")
     return result
 
 # ═════════════════════════════════════════════════════════
 # Stable Diffusion img2img
 # ═════════════════════════════════════════════════════════
+
 
 async def call_sd_img2img(pil_img: Image.Image, style: str) -> Image.Image:
     cfg = STYLE_CONFIG[style]
@@ -191,18 +205,22 @@ async def call_sd_img2img(pil_img: Image.Image, style: str) -> Image.Image:
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
             if pil_img.mode != "RGB":
                 pil_img = pil_img.convert("RGB")
-            arr = np.clip(np.array(pil_img, dtype=np.uint8), 0, 255).astype(np.uint8)
-            Image.fromarray(arr, mode="RGB").save(tmp, format="PNG", compress_level=6)
+            arr = np.clip(np.array(pil_img, dtype=np.uint8),
+                          0, 255).astype(np.uint8)
+            Image.fromarray(arr, mode="RGB").save(
+                tmp, format="PNG", compress_level=6)
             tmp_path = tmp.name
 
         print(f"[IA LOG]: PNG guardado — {tmp_path}")
-        print(f"[IA LOG]: Conectando a Space '{HF_SPACE_ID}' para estilo '{style}'...")
+        print(
+            f"[IA LOG]: Conectando a Space '{HF_SPACE_ID}' para estilo '{style}'...")
 
         # 2. Inferencia en thread separado (no bloquea FastAPI)
         def run_prediction():
             # Sin token: el Space es público
             # Sin kwargs extra: compatibilidad con versiones antiguas de gradio_client
-            # Crear cliente intentando incluir token si está presente (soporta espacios privados)
+            # Crear cliente intentando incluir token si está presente (soporta
+            # espacios privados)
             client = None
             if HF_TOKEN:
                 try:
@@ -215,14 +233,15 @@ async def call_sd_img2img(pil_img: Image.Image, style: str) -> Image.Image:
             else:
                 client = Client(HF_SPACE_ID)
 
-            print(f"[IA LOG]: Enviando — strength={cfg['strength']}, guidance={cfg['guidance_scale']}, steps={cfg['steps']}")
+            print(
+                f"[IA LOG]: Enviando — strength={cfg['strength']}, guidance={cfg['guidance_scale']}, steps={cfg['steps']}")  # noqa: E501
             return client.predict(
                 image=handle_file(tmp_path),
                 prompt=cfg["prompt"],
                 negative_prompt=cfg["negative_prompt"],
                 strength=float(cfg["strength"]),
                 guidance_scale=float(cfg["guidance_scale"]),
-                steps=int(cfg["steps"]), 
+                steps=int(cfg["steps"]),
                 api_name="/predict",
             )
 
@@ -232,23 +251,27 @@ async def call_sd_img2img(pil_img: Image.Image, style: str) -> Image.Image:
         print(f"[IA LOG]: Space respondió → {result}")
 
         if not result or not os.path.exists(result):
-            raise RuntimeError("El Space no devolvió una ruta de imagen válida")
+            raise RuntimeError(
+                "El Space no devolvió una ruta de imagen válida")
 
         # 3. Leer resultado en memoria ANTES de limpiar temporales
         generated = Image.open(result).convert("RGB")
         generated.load()  # Forzar carga completa en memoria
-        print(f"[IA LOG]: Imagen generada exitosamente — Tamaño: {generated.size}")
+        print(
+            f"[IA LOG]: Imagen generada exitosamente — Tamaño: {generated.size}")
         return generated
 
     finally:
         # Limpieza del temporal (Windows necesita que nadie más lo use)
         if tmp_path and os.path.exists(tmp_path):
             try:
-                await asyncio.sleep(1.0)  # Dar tiempo a Gradio a soltar el archivo
+                # Dar tiempo a Gradio a soltar el archivo
+                await asyncio.sleep(1.0)
                 os.remove(tmp_path)
                 print(f"[IA LOG]: Temporal eliminado")
             except Exception as e:
                 print(f"[IA LOG WARNING]: No se pudo eliminar temporal: {e}")
+
 
 async def _download_image(url: str) -> Image.Image:
     async with httpx.AsyncClient(timeout=30) as client:
@@ -305,7 +328,8 @@ def logo_mask(logo: Image.Image) -> np.ndarray:
 def fit_logo(image: Image.Image, max_w: int, max_h: int) -> Image.Image:
     image = image.convert("RGBA")
     ratio = min(max_w / image.width, max_h / image.height)
-    nw, nh = max(1, int(image.width * ratio)), max(1, int(image.height * ratio))
+    nw, nh = max(1, int(image.width * ratio)
+                 ), max(1, int(image.height * ratio))
     return image.resize((nw, nh), Image.Resampling.LANCZOS)
 
 
@@ -353,7 +377,8 @@ def _canvas(h: int, w: int) -> np.ndarray:
     arr = np.full((h, w, 3), (210, 205, 195), dtype=np.int16)
     arr = np.clip(arr + rng.integers(-14, 14, (w,), dtype=np.int16), 0, 255)
     arr = np.clip(arr + rng.integers(-9, 9, (h, 1, 3), dtype=np.int16), 0, 255)
-    arr = np.clip(arr + rng.integers(-6, 6, (h, w, 3), dtype=np.int16), 0, 255).astype(np.uint8)
+    arr = np.clip(arr + rng.integers(-6, 6, (h, w, 3),
+                  dtype=np.int16), 0, 255).astype(np.uint8)
     return cv2.GaussianBlur(arr, (3, 3), 0.4)
 
 
@@ -441,20 +466,23 @@ def _fallback_bordado(image: Image.Image) -> Image.Image:
     detail = detail * (1.0 - edge_alpha * 0.18) + darker * (edge_alpha * 0.18)
 
     # Sombra de hilo suave
-    shadow_mask_small = cv2.GaussianBlur(msk.astype(np.float32) / 255.0, (0, 0), 1.8)
+    shadow_mask_small = cv2.GaussianBlur(
+        msk.astype(np.float32) / 255.0, (0, 0), 1.8)
     shadow_mask = np.zeros((S, S), dtype=np.float32)
     shadow_mask[ly:ly + lh, lx:lx + lw] = shadow_mask_small
     bg -= shadow_mask[..., None] * np.array([2.0, 2.0, 2.2], dtype=np.float32)
 
     # Composición final
-    alpha = (cv2.GaussianBlur(msk, (3, 3), 0).astype(np.float32) / 255.0)[..., None]
+    alpha = (cv2.GaussianBlur(msk, (3, 3), 0).astype(
+        np.float32) / 255.0)[..., None]
     roi = bg[ly:ly + lh, lx:lx + lw]
     roi = roi * (1.0 - alpha) + detail * alpha
     bg[ly:ly + lh, lx:lx + lw] = roi
 
     # Un poco más de relieve fino, sin parche
     micro = cv2.GaussianBlur(msk.astype(np.float32) / 255.0, (0, 0), 0.9)
-    bg[ly:ly + lh, lx:lx + lw] += micro[..., None] * np.array([2.0, 1.5, 1.2], dtype=np.float32)
+    bg[ly:ly + lh, lx:lx + lw] += micro[..., None] * \
+        np.array([2.0, 1.5, 1.2], dtype=np.float32)
 
     return Image.fromarray(np.clip(bg, 0, 255).astype(np.uint8), mode="RGB")
 
@@ -555,7 +583,8 @@ def _fallback_acrilico(image: Image.Image) -> Image.Image:
     ring_color = np.clip(ring_color * 0.65 + 255 * 0.18, 0, 255)
 
     # Sombras muy suaves sobre la pared
-    shadow = cv2.GaussianBlur(np.roll(full_mask, 10, axis=0).astype(np.float32) / 255.0, (0, 0), 18)
+    shadow = cv2.GaussianBlur(
+        np.roll(full_mask, 10, axis=0).astype(np.float32) / 255.0, (0, 0), 18)
     bg -= shadow[..., None] * np.array([10, 9, 8], np.float32)
 
     # Línea acrílica translúcida
@@ -600,7 +629,8 @@ async def generate_product_preview(
     style: str = Query(..., description="bordado | neon_flex | acrilico"),
 ):
     if style not in STYLE_CONFIG:
-        raise HTTPException(400, f"Estilo no válido. Opciones: {list(STYLE_CONFIG)}")
+        raise HTTPException(
+            400, f"Estilo no válido. Opciones: {list(STYLE_CONFIG)}")
 
     try:
         contents = await file.read()
@@ -622,7 +652,8 @@ async def generate_product_preview(
             try:
                 preview = await asyncio.wait_for(call_sd_img2img(prepared, style), timeout=MAX_TOTAL_SECONDS)
             except Exception as exc:
-                print(f"[IA WARNING]: Fallback local activado para estilo '{style}' por error remoto: {exc}")
+                print(
+                    f"[IA WARNING]: Fallback local activado para estilo '{style}' por error remoto: {exc}")
 
         if preview is None:
             preview = generate_fallback(prepared, style)
@@ -630,7 +661,7 @@ async def generate_product_preview(
         # 3. Guardar resultado final en Supabase
         out_path = f"{COMPANY_ID}/previews/{uuid4()}.png"
         final_url = upload_image_bytes(pil_to_png_bytes(preview), out_path)
-        
+
         return {
             "status": "FALLBACK_SUCCESS",
             "preview_url": final_url,

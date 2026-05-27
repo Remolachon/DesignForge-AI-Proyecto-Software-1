@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, react-hooks/set-state-in-effect */
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';

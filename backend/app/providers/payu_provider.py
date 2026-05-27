@@ -14,7 +14,7 @@ class PayUProvider:
     # URLs de PayU Sandbox
     BASE_URL_SANDBOX = "https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/"
     API_URL_SANDBOX = "https://sandbox.api.payulatam.com/payments-api/4.0/service.json"
-    
+
     # URLs de PayU Producción
     BASE_URL_PRODUCTION = "https://checkout.payulatam.com/ppp-web-gateway-payu/"
     API_URL_PRODUCTION = "https://api.payulatam.com/payments-api/4.0/service.json"
@@ -27,11 +27,12 @@ class PayUProvider:
         self.sandbox_mode = settings.PAYU_SANDBOX_MODE
         self.webhook_url = settings.PAYU_WEBHOOK_URL
         self.response_url = settings.PAYU_RESPONSE_URL
-        
+
         self.base_url = self.BASE_URL_SANDBOX if self.sandbox_mode else self.BASE_URL_PRODUCTION
         self.api_url = self.API_URL_SANDBOX if self.sandbox_mode else self.API_URL_PRODUCTION
 
-    def _generate_signature(self, merchant_id: str, reference_code: str, amount: str, currency: str, api_key: str) -> str:
+    def _generate_signature(self, merchant_id: str, reference_code: str,
+                            amount: str, currency: str, api_key: str) -> str:
         """
         Genera la firma MD5 necesaria para PayU WebCheckout.
         Formato: MD5(apiKey~merchantId~referenceCode~amount~currency)
@@ -40,12 +41,13 @@ class PayUProvider:
         signature = hashlib.md5(signature_string.encode()).hexdigest()
         return signature
 
-    def _generate_payment_signature(self, api_key: str, merchant_id: str, transaction_id: str, state: str, response_code_pol: str, reference_code: str, amount: str, currency: str) -> str:
+    def _generate_payment_signature(self, api_key: str, merchant_id: str, transaction_id: str,
+                                    state: str, response_code_pol: str, reference_code: str, amount: str, currency: str) -> str:  # noqa: E501
         """
         Genera la firma para validar las respuestas de PayU.
         Formato: MD5(apiKey~merchantId~transactionId~state~responseCodePol~referenceCode~amount~currency)
         """
-        signature_string = f"{api_key}~{merchant_id}~{transaction_id}~{state}~{response_code_pol}~{reference_code}~{amount}~{currency}"
+        signature_string = f"{api_key}~{merchant_id}~{transaction_id}~{state}~{response_code_pol}~{reference_code}~{amount}~{currency}"  # noqa: E501
         signature = hashlib.md5(signature_string.encode()).hexdigest()
         return signature
 
@@ -60,20 +62,20 @@ class PayUProvider:
     ) -> dict:
         """
         Genera la URL de pago para WebCheckout de PayU.
-        
+
         Args:
             order_id: ID de la orden
             user_email: Email del cliente
             total_amount: Monto total a pagar
             buyer_name: Nombre del comprador
-            
+
         Returns:
             dict con payment_url y payment_reference
         """
         try:
             # Generar referencia única para esta orden
             reference_code = f"ORDER-{order_id}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
-            
+
             # Formatear valores monetarios (2 decimales)
             amount = float(total_amount or 0)
             if amount <= 0:
@@ -91,7 +93,7 @@ class PayUProvider:
             tax_str = f"{estimated_tax:.2f}"
             tax_return_base_str = f"{estimated_base:.2f}"
             currency = "COP"
-            
+
             # Generar firma
             signature = self._generate_signature(
                 self.merchant_id,
@@ -100,7 +102,7 @@ class PayUProvider:
                 currency,
                 self.api_key
             )
-            
+
             # Construir parámetros para WebCheckout
             params = {
                 "merchantId": self.merchant_id,
@@ -126,10 +128,10 @@ class PayUProvider:
                 "extra1": str(order_id),  # Pasar el order_id en extra1
                 "extra2": "LukArt_Order",
             }
-            
+
             # Generar URL completa con parámetros
             payment_url = f"{self.base_url}?{urlencode(params)}"
-            
+
             return {
                 "payment_url": payment_url,
                 "payment_action_url": self.base_url,
@@ -143,14 +145,15 @@ class PayUProvider:
                 "status": "error"
             }
 
-    def validate_webhook_signature(self, signature: str, merchant_id: str, transaction_id: str, state: str, response_code_pol: str, reference_code: str, amount: str, currency: str) -> bool:
+    def validate_webhook_signature(self, signature: str, merchant_id: str, transaction_id: str,
+                                   state: str, response_code_pol: str, reference_code: str, amount: str, currency: str) -> bool:  # noqa: E501
         """
         Valida la firma del webhook recibido de PayU.
-        
+
         Args:
             signature: Firma recibida del webhook
             ... otros parámetros de la transacción
-            
+
         Returns:
             True si la firma es válida, False en caso contrario
         """
@@ -165,7 +168,7 @@ class PayUProvider:
                 amount,
                 currency
             )
-            
+
             return signature.lower() == expected_signature.lower()
         except Exception as e:
             print(f"Error validating webhook signature: {str(e)}")
@@ -174,10 +177,10 @@ class PayUProvider:
     def parse_webhook_data(self, webhook_data: dict) -> dict:
         """
         Procesa los datos del webhook de PayU y extrae la información relevante.
-        
+
         Args:
             webhook_data: Diccionario con los datos del webhook
-            
+
         Returns:
             dict con la información procesada
         """
@@ -202,7 +205,7 @@ class PayUProvider:
     def get_payment_status(state_pol: str) -> str:
         """
         Convierte el estado de PayU (statePol) a nuestro estado interno.
-        
+
         Estados de PayU:
         - 1: Pendiente
         - 2: Aprobada
@@ -225,7 +228,7 @@ class PayUProvider:
     def is_payment_approved(response_code: str, state_pol: str) -> bool:
         """
         Determina si el pago fue aprobado.
-        
+
         Un pago es aprobado cuando:
         - response_code == "APPROVED" o response_code == "00"
         - state_pol == "2"

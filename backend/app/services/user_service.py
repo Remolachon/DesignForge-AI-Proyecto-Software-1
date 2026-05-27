@@ -20,7 +20,8 @@ class UserService:
     @staticmethod
     def get_user_by_email(db: Session, email: str) -> User | None:
         normalized_email = UserService._normalize_email(email)
-        return db.query(User).filter(User.email.ilike(normalized_email)).first()
+        return db.query(User).filter(
+            User.email.ilike(normalized_email)).first()
 
     @staticmethod
     def create_user(
@@ -68,7 +69,8 @@ class UserService:
         return db.query(Role).filter(Role.name == role_name).first()
 
     @staticmethod
-    def set_user_role(db: Session, user_id: int, role_name: str, commit: bool = True) -> None:
+    def set_user_role(db: Session, user_id: int, role_name: str,
+                      commit: bool = True) -> None:
         role = UserService.get_role_by_name(db, role_name)
 
         if role is None:
@@ -79,7 +81,7 @@ class UserService:
 
         active_roles = db.query(UserRole).filter(
             UserRole.user_id == user_id,
-            UserRole.is_active == True,
+            UserRole.is_active is True,
         ).all()
 
         existing = None
@@ -108,7 +110,8 @@ class UserService:
             db.commit()
 
     @staticmethod
-    def set_user_company(db: Session, user_id: int, company_id: int | None, commit: bool = True) -> None:
+    def set_user_company(db: Session, user_id: int,
+                         company_id: int | None, commit: bool = True) -> None:
         user = db.query(User).filter(User.id == user_id).first()
 
         if user is None:
@@ -125,7 +128,8 @@ class UserService:
             db.commit()
 
     @staticmethod
-    def promote_user_to_funcionario(db: Session, user_id: int, company_id: int, commit: bool = True) -> None:
+    def promote_user_to_funcionario(
+        db: Session, user_id: int, company_id: int, commit: bool = True) -> None:
         UserService.set_user_company(db, user_id, company_id, commit=False)
         UserService.set_user_role(db, user_id, "funcionario", commit=False)
 
@@ -137,7 +141,7 @@ class UserService:
     def get_user_role_name(db: Session, user_id: int) -> str:
         user_role = db.query(UserRole).filter(
             UserRole.user_id == user_id,
-            UserRole.is_active == True
+            UserRole.is_active is True
         ).first()
 
         if user_role is None:

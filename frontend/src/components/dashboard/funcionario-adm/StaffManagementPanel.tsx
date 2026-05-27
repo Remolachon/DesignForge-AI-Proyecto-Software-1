@@ -64,11 +64,11 @@ function StatusBadge({ active }: { active: boolean }) {
     <span
       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
         active
-          ? 'bg-green-100 text-green-700 ring-1 ring-green-300'
-          : 'bg-red-100 text-red-600 ring-1 ring-red-300'
+          ? 'bg-green-100 text-green-700 ring-1 ring-green-300 dark:bg-green-900/40 dark:text-green-400 dark:ring-green-900/60'
+          : 'bg-red-100 text-red-600 ring-1 ring-red-300 dark:bg-red-900/40 dark:text-red-400 dark:ring-red-900/60'
       }`}
     >
-      <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-green-500' : 'bg-red-500'}`} />
+      <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-green-500 dark:bg-green-400' : 'bg-red-500 dark:bg-red-400'}`} />
       {active ? 'Activo' : 'Inactivo'}
     </span>
   );

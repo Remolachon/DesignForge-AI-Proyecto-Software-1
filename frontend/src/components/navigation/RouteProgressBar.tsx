@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Progress } from '@/components/ui/progress';
 
@@ -15,7 +15,7 @@ export function RouteProgressBar() {
   const didMountRef = useRef(false);
   const lastRouteRef = useRef(`${pathname}?${searchParams.toString()}`);
 
-  const clearTimers = () => {
+  const clearTimers = useCallback(() => {
     if (progressTimerRef.current) {
       window.clearInterval(progressTimerRef.current);
       progressTimerRef.current = null;
@@ -24,9 +24,17 @@ export function RouteProgressBar() {
       window.clearTimeout(safetyTimerRef.current);
       safetyTimerRef.current = null;
     }
-  };
+  }, []);
 
-  const start = () => {
+  const complete = useCallback(() => {
+    clearTimers();
+    setValue(100);
+    setVisible(false);
+    setValue(0);
+    startedAtRef.current = null;
+  }, [clearTimers]);
+
+  const start = useCallback(() => {
     clearTimers();
     startedAtRef.current = Date.now();
     setVisible(true);
@@ -46,15 +54,7 @@ export function RouteProgressBar() {
         complete();
       }
     }, 8000);
-  };
-
-  const complete = () => {
-    clearTimers();
-    setValue(100);
-    setVisible(false);
-    setValue(0);
-    startedAtRef.current = null;
-  };
+  }, [clearTimers, complete]);
 
   useEffect(() => {
     const currentRoute = `${pathname}?${searchParams.toString()}`;

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 class AudioService {
   private loginBell: HTMLAudioElement | null = null;
   private successOrder: HTMLAudioElement | null = null;

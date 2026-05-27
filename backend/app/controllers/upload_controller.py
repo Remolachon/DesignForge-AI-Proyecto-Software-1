@@ -5,6 +5,7 @@ from app.config.settings import settings
 
 router = APIRouter(tags=["Upload"])
 
+
 @router.post("/upload-image")
 async def upload_image(file: UploadFile = File(...)):
     try:

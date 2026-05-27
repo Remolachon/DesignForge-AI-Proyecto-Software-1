@@ -25,11 +25,13 @@ def _get_db_user(db: Session, current_user):
     Obtiene el usuario de la BD con reintentos automáticos.
     """
     def _query_user():
-        db_user = db.query(User).filter(User.supabase_id == current_user.id).first()
+        db_user = db.query(User).filter(
+            User.supabase_id == current_user.id).first()
         if not db_user:
-            raise HTTPException(status_code=404, detail="Usuario no existe en DB")
+            raise HTTPException(
+                status_code=404, detail="Usuario no existe en DB")
         return db_user
-    
+
     try:
         return retry_on_connection_error(
             _query_user,
@@ -45,13 +47,15 @@ def _get_db_user(db: Session, current_user):
         )
 
 
-@router.get("/products/{product_id}/reviews", response_model=ProductReviewsResponse)
+@router.get("/products/{product_id}/reviews",
+            response_model=ProductReviewsResponse)
 def get_product_reviews(
     product_id: int,
     db: Session = Depends(get_db),
 ):
     try:
-        return InteractionService.list_product_reviews(db=db, product_id=product_id)
+        return InteractionService.list_product_reviews(
+            db=db, product_id=product_id)
     except OperationalError as e:
         logger.error(f"Error de BD al obtener reviews: {e}")
         raise HTTPException(
@@ -99,9 +103,10 @@ def get_notifications(
     Obtiene notificaciones del usuario actual con reintentos automáticos.
     """
     db_user = _get_db_user(db, current_user)
-    
+
     try:
-        return InteractionService.list_user_notifications(db=db, user_id=db_user.id)
+        return InteractionService.list_user_notifications(
+            db=db, user_id=db_user.id)
     except OperationalError as e:
         logger.error(f"Error de BD al obtener notificaciones: {e}")
         raise HTTPException(
@@ -110,7 +115,8 @@ def get_notifications(
         )
 
 
-@router.patch("/notifications/{notification_id}/read", response_model=NotificationResponse)
+@router.patch("/notifications/{notification_id}/read",
+              response_model=NotificationResponse)
 def mark_notification_as_read(
     notification_id: int,
     db: Session = Depends(get_db),

@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String
 from app.database.database import Base
 
+
 class ProductionStage(Base):
     __tablename__ = "production_stages"
 

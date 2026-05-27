@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { useRef, useState } from "react";
 import { Upload, Image as ImageIcon } from "lucide-react";
