@@ -16,4 +16,3 @@ class ProductAttributeValue(Base):
         UniqueConstraint("product_id", "attribute_code",
                          name="uq_product_attribute_value_code"),
     )
-

@@ -27,7 +27,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
 
-def _send_order_created_email(db: Session, db_user: User, order: Order, payment_url: str | None) -> None:
+def _send_order_created_email(
+    db: Session, db_user: User, order: Order, payment_url: str | None) -> None:
     try:
         role_name = UserService.get_user_role_name(db, db_user.id)
         order_detail = OrderService.get_order_detail(
@@ -451,7 +452,8 @@ def get_payment_status(
         raise HTTPException(status_code=404, detail="Orden no encontrada")
 
     role_name = UserService.get_user_role_name(db, db_user.id)
-    if order.user_id != db_user.id and role_name not in {"funcionario", "funcionario_adm"}:
+    if order.user_id != db_user.id and role_name not in {
+        "funcionario", "funcionario_adm"}:
         raise HTTPException(status_code=403, detail="No tienes permiso")
 
     return OrderService.get_order_payment_status(db, order_id)
@@ -520,4 +522,3 @@ async def payu_response_sync(
             "status": "error",
             "message": f"Error procesando retorno de pago: {str(e)}"
         }
-

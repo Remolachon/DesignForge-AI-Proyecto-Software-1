@@ -71,7 +71,8 @@ class TestAuth:
             pytest.skip("Activa el cliente cuando app.main esté disponible.")
         
         from supabase_auth.errors import AuthApiError
-        mock_sign_in.side_effect = AuthApiError("Credenciales incorrectas", 401, "invalid_credentials")
+        mock_sign_in.side_effect = AuthApiError(
+    "Credenciales incorrectas", 401, "invalid_credentials")
         
         response = client.post(
             "/auth/login",

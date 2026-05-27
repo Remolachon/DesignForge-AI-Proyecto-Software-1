@@ -32,7 +32,7 @@ funcionario_router = APIRouter(
     prefix="/funcionario/sales", tags=["Funcionario - Ventas"])
 
 
-# ─── Auth helpers ─────────────────────────────────────────────────────────────
+# ─── Auth helpers ───────────────────────────────────────────────────────
 
 def _require_admin(db: Session, current_user) -> User:
     """Verifica que el usuario autenticado tenga rol de administrador."""
@@ -88,7 +88,7 @@ def _require_funcionario(db: Session, current_user) -> tuple[User, int]:
         )
 
 
-# ─── Admin endpoints ──────────────────────────────────────────────────────────
+# ─── Admin endpoints ────────────────────────────────────────────────────
 
 @router.get("/summary", response_model=SalesSummarySchema)
 def get_summary(
@@ -205,11 +205,11 @@ def get_company_transactions(
     """Lista paginada de transacciones de la empresa del funcionario autenticado."""
     _, company_id = _require_funcionario(db, current_user)
     try:
-        return get_company_transactions_list(db, filter, company_id, status, limit, offset)
+        return get_company_transactions_list(
+            db, filter, company_id, status, limit, offset)
     except OperationalError as e:
         logger.error(f"Error de BD en /funcionario/sales/transactions: {e}")
         raise HTTPException(
             status_code=503,
             detail="Servicio de base de datos temporalmente no disponible",
         )
-

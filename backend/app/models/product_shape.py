@@ -13,4 +13,3 @@ class ProductShape(Base):
     attributes = relationship(
         "ProductAttribute", back_populates="product_shape")
     products = relationship("Product", back_populates="product_shape")
-

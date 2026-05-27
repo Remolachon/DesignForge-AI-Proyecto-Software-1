@@ -18,7 +18,7 @@ router = APIRouter(prefix="/staff", tags=["Funcionario ADM - Staff"])
 ROLE_REQUIRED = "funcionario_adm"
 
 
-# ─── Auth helper ──────────────────────────────────────────────────────────────
+# ─── Auth helper ────────────────────────────────────────────────────────
 
 def _require_funcionario_adm(db: Session, current_user) -> tuple[User, int]:
     """
@@ -60,7 +60,7 @@ def _require_funcionario_adm(db: Session, current_user) -> tuple[User, int]:
         )
 
 
-# ─── Endpoints ────────────────────────────────────────────────────────────────
+# ─── Endpoints ──────────────────────────────────────────────────────────
 
 @router.get("/")
 def list_staff(
@@ -71,7 +71,8 @@ def list_staff(
     db_user, company_id = _require_funcionario_adm(db, current_user)
 
     try:
-        return staff_service.get_company_staff(db, company_id, current_user_id=db_user.id)
+        return staff_service.get_company_staff(
+            db, company_id, current_user_id=db_user.id)
     except OperationalError as e:
         logger.error("Error de BD en GET /staff/: %s", e)
         raise HTTPException(
@@ -159,7 +160,8 @@ def remove_staff(
     _, company_id = _require_funcionario_adm(db, current_user)
 
     try:
-        return staff_service.remove_funcionario_from_company(db, user_id, company_id)
+        return staff_service.remove_funcionario_from_company(
+            db, user_id, company_id)
     except HTTPException:
         raise
     except OperationalError as e:
@@ -168,4 +170,3 @@ def remove_staff(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Servicio de base de datos temporalmente no disponible",
         )
-

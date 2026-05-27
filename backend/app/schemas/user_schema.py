@@ -36,4 +36,3 @@ class UserResponse(BaseModel):
     company_id: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
-

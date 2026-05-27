@@ -87,7 +87,8 @@ class EmailService:
         }
 
     @classmethod
-    def _wrap_html(cls, title: str, heading: str, body_html: str, cta_label: str | None = None, cta_url: str | None = None) -> str:
+    def _wrap_html(cls, title: str, heading: str, body_html: str,
+                   cta_label: str | None = None, cta_url: str | None = None) -> str:
         brand = escape(cls._brand_name())
         safe_title = escape(title)
         safe_heading = escape(heading)
@@ -96,7 +97,7 @@ class EmailService:
             cta_button = f'''
                 <tr>
                     <td style="padding-top: 28px;">
-                        <a href="{escape(cta_url)}" style="display:inline-block;background:#0f172a;color:#ffffff;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:999px;">{escape(cta_label)}</a>
+                        <a href="{escape(cta_url)}" style="display:inline-block;background:#0f172a;color:#ffffff;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:999px;">{escape(cta_label)}</a>  # noqa: E501
                     </td>
                 </tr>
             '''
@@ -109,10 +110,10 @@ class EmailService:
     <title>{safe_title}</title>
   </head>
   <body style=\"margin:0;padding:0;background:#f5f7fb;font-family:Arial,Helvetica,sans-serif;color:#0f172a;\">
-    <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"background:#f5f7fb;padding:32px 16px;\">
+    <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"background:#f5f7fb;padding:32px 16px;\">  # noqa: E501
       <tr>
         <td align=\"center\">
-          <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"max-width:640px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(15,23,42,0.08);\">
+          <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"max-width:640px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(15,23,42,0.08);\">  # noqa: E501
             <tr>
               <td style=\"padding:28px 32px;background:linear-gradient(135deg,#0f172a,#1e293b);color:#ffffff;\">
                 <div style=\"font-size:14px;letter-spacing:0.08em;text-transform:uppercase;opacity:0.85;\">{brand}</div>
@@ -136,7 +137,8 @@ class EmailService:
 </html>"""
 
     @classmethod
-    def _send_message(cls, recipient_email: str | None, subject: str, plain_text: str, html_body: str) -> dict:
+    def _send_message(cls, recipient_email: str | None,
+                      subject: str, plain_text: str, html_body: str) -> dict:
         normalized_recipient = cls._normalize_recipient(recipient_email)
         if not normalized_recipient:
             return {
@@ -204,7 +206,7 @@ class EmailService:
                 logger.error("Error de autenticación Brevo")
                 return {
                     "status": "error",
-                    "error": "Brevo rechazó la autenticación. Verifica que BREVO_API_KEY sea válida y que el remitente esté configurado.",
+                    "error": "Brevo rechazó la autenticación. Verifica que BREVO_API_KEY sea válida y que el remitente esté configurado.",  # noqa: E501
                 }
 
             logger.error(
@@ -225,12 +227,13 @@ class EmailService:
             }
 
     @classmethod
-    def send_welcome_email(cls, recipient_email: str, first_name: str | None = None) -> dict:
+    def send_welcome_email(cls, recipient_email: str,
+                           first_name: str | None = None) -> dict:
         safe_name = cls._safe_text(first_name, "cliente")
         subject = "Bienvenido a nuestra plataforma"
         plain_text = (
             f"Hola {safe_name}:\n\n"
-            "Gracias por registrarte en DesignForge AI. Tu cuenta ya está activa y puedes comenzar a explorar nuestros servicios, crear pedidos y revisar el estado de tus compras desde tu panel.\n\n"
+            "Gracias por registrarte en DesignForge AI. Tu cuenta ya está activa y puedes comenzar a explorar nuestros servicios, crear pedidos y revisar el estado de tus compras desde tu panel.\n\n"  # noqa: E501
             "Si detectas alguna actividad que no reconozcas, responde a este correo para ayudarte de inmediato.\n\n"
             f"Equipo de {cls._brand_name()}"
         )
@@ -239,13 +242,14 @@ class EmailService:
             heading="Tu cuenta ha sido creada con éxito",
             body_html=f"""
                 <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Hola {escape(safe_name)},</p>
-                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Gracias por registrarte en DesignForge AI. Tu cuenta ya está activa y puedes comenzar a explorar nuestros servicios, crear pedidos y revisar tus compras desde tu panel.</p>
-                <p style=\"margin:0;font-size:16px;line-height:1.7;\">Si detectas alguna actividad que no reconozcas, responde a este correo y te ayudaremos de inmediato.</p>
+                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Gracias por registrarte en DesignForge AI. Tu cuenta ya está activa y puedes comenzar a explorar nuestros servicios, crear pedidos y revisar tus compras desde tu panel.</p>  # noqa: E501
+                <p style=\"margin:0;font-size:16px;line-height:1.7;\">Si detectas alguna actividad que no reconozcas, responde a este correo y te ayudaremos de inmediato.</p>  # noqa: E501
             """,
             cta_label="Ir a mi cuenta",
             cta_url=cls._frontend_url(),
         )
-        return cls._send_message(recipient_email, subject, plain_text, html_body)
+        return cls._send_message(
+            recipient_email, subject, plain_text, html_body)
 
     @classmethod
     def send_order_created_email(
@@ -277,23 +281,24 @@ class EmailService:
             heading=f"Pedido #{order_id} registrado",
             body_html=f"""
                 <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Hola {escape(safe_name)},</p>
-                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Confirmamos la recepción de tu pedido <strong>#{order_id}</strong> para <strong>{escape(safe_order_name)}</strong>.</p>
-                <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"margin:24px 0;border-collapse:collapse;\">
+                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Confirmamos la recepción de tu pedido <strong>#{order_id}</strong> para <strong>{escape(safe_order_name)}</strong>.</p>  # noqa: E501
+                <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"margin:24px 0;border-collapse:collapse;\">  # noqa: E501
                   <tr>
                     <td style=\"padding:12px 0;border-bottom:1px solid #e2e8f0;color:#64748b;\">Cantidad</td>
-                    <td style=\"padding:12px 0;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:700;\">{safe_quantity}</td>
+                    <td style=\"padding:12px 0;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:700;\">{safe_quantity}</td>  # noqa: E501
                   </tr>
                   <tr>
                     <td style=\"padding:12px 0;border-bottom:1px solid #e2e8f0;color:#64748b;\">Valor total</td>
-                    <td style=\"padding:12px 0;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:700;\">{safe_total}</td>
+                    <td style=\"padding:12px 0;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:700;\">{safe_total}</td>  # noqa: E501
                   </tr>
                 </table>
-                <p style=\"margin:0;font-size:16px;line-height:1.7;\">Tu solicitud ya fue registrada y el proceso de pago está disponible para continuar con la compra.</p>
+                <p style=\"margin:0;font-size:16px;line-height:1.7;\">Tu solicitud ya fue registrada y el proceso de pago está disponible para continuar con la compra.</p>  # noqa: E501
             """,
             cta_label="Continuar al pago",
             cta_url=payment_link,
         )
-        return cls._send_message(recipient_email, subject, plain_text, html_body)
+        return cls._send_message(
+            recipient_email, subject, plain_text, html_body)
 
     @classmethod
     def send_order_accepted_email(
@@ -319,13 +324,15 @@ class EmailService:
             heading="Tu pedido ya fue asignado",
             body_html=f"""
                 <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Hola {escape(safe_name)},</p>
-                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Tu pedido <strong>#{order_id}</strong> ({escape(safe_order)}) fue aceptado por <strong>{escape(safe_company)}</strong>.</p>
-                <p style=\"margin:0;font-size:16px;line-height:1.7;\">Ya puedes revisar el estado del pedido desde tu panel. Cuando quede habilitado para pago, verás la opción allí mismo.</p>
+                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Tu pedido <strong>#{order_id}</strong> ({escape(safe_order)}) fue aceptado por <strong>{escape(safe_company)}</strong>.</p>  # noqa: E501
+                <p style=\"margin:0;font-size:16px;line-height:1.7;\">Ya puedes revisar el estado del pedido desde tu panel. Cuando quede habilitado para pago, verás la opción allí mismo.</p>  # noqa: E501
             """,
             cta_label="Ver mis pedidos",
-            cta_url=f"{cls._frontend_url()}/cliente/pedidos" if cls._frontend_url() else None,
+            cta_url=f"{
+    cls._frontend_url()}/cliente/pedidos" if cls._frontend_url() else None,
         )
-        return cls._send_message(recipient_email, subject, plain_text, html_body)
+        return cls._send_message(
+            recipient_email, subject, plain_text, html_body)
 
     @classmethod
     def send_payment_confirmed_email(
@@ -352,11 +359,12 @@ class EmailService:
             heading=f"Pago confirmado de tu pedido #{order_id}",
             body_html=f"""
                 <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Hola {escape(safe_name)},</p>
-                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Tu pago para el pedido <strong>#{order_id}</strong> de <strong>{escape(safe_order_name)}</strong> fue confirmado correctamente.</p>
-                <p style=\"margin:0;font-size:16px;line-height:1.7;\"><strong>Valor aprobado:</strong> {escape(safe_total)}</p>
+                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Tu pago para el pedido <strong>#{order_id}</strong> de <strong>{escape(safe_order_name)}</strong> fue confirmado correctamente.</p>  # noqa: E501
+                <p style=\"margin:0;font-size:16px;line-height:1.7;\"><strong>Valor aprobado:</strong> {escape(safe_total)}</p>  # noqa: E501
             """,
         )
-        return cls._send_message(recipient_email, subject, plain_text, html_body)
+        return cls._send_message(
+            recipient_email, subject, plain_text, html_body)
 
     @classmethod
     def send_order_delivered_email(
@@ -378,18 +386,19 @@ class EmailService:
         )
         review_url = None
         if cls._frontend_url() and product_id is not None:
-            review_url = f"{cls._frontend_url()}/marketplace/{product_id}?review=1"
+            review_url = f"{
+    cls._frontend_url()}/marketplace/{product_id}?review=1"
 
         html_body = cls._wrap_html(
             title=subject,
             heading=f"Pedido #{order_id} entregado",
             body_html=f"""
                 <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Hola {escape(safe_name)},</p>
-                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Tu pedido <strong>#{order_id}</strong> de <strong>{escape(safe_order_name)}</strong> ya fue entregado.</p>
-                <p style=\"margin:0;font-size:16px;line-height:1.7;\">Si deseas compartir tu experiencia, puedes dejar una valoración desde tu panel.</p>
+                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Tu pedido <strong>#{order_id}</strong> de <strong>{escape(safe_order_name)}</strong> ya fue entregado.</p>  # noqa: E501
+                <p style=\"margin:0;font-size:16px;line-height:1.7;\">Si deseas compartir tu experiencia, puedes dejar una valoración desde tu panel.</p>  # noqa: E501
             """,
             cta_label="Dejar valoración",
             cta_url=review_url or cls._frontend_url(),
         )
-        return cls._send_message(recipient_email, subject, plain_text, html_body)
-
+        return cls._send_message(
+            recipient_email, subject, plain_text, html_body)

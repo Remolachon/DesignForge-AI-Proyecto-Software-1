@@ -81,4 +81,3 @@ def get_my_role(
             status_code=503,
             detail="Servicio de base de datos temporalmente no disponible"
         )
-

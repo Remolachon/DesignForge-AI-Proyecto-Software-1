@@ -8,4 +8,3 @@ class Inventory(Base):
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey("products.id"), unique=True)
     quantity = Column(Integer, nullable=False)
-

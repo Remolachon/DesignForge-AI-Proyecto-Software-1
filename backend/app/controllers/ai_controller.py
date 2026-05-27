@@ -111,7 +111,8 @@ STYLE_CONFIG: dict[str, dict] = {
 # ═════════════════════════════════════════════════════════
 
 
-def upload_image_bytes(image_bytes: bytes, path: str, content_type: str = "image/png") -> str:
+def upload_image_bytes(image_bytes: bytes, path: str,
+                       content_type: str = "image/png") -> str:
     """Upload bytes to Supabase and return a signed URL."""
     supabase_admin.storage.from_(BUCKET).upload(
         path=path,
@@ -155,7 +156,15 @@ def prepare_source_image(
         arr = np.array(rgba, dtype=np.uint8)
         rgb, alpha = arr[:, :, :3], arr[:, :, 3]
         if (alpha < 250).mean() > 0.02:
-            bg = (255, 255, 255, 255) if rgb.mean() < 140 else (18, 18, 18, 255)
+            bg = (
+    255,
+    255,
+    255,
+    255) if rgb.mean() < 140 else (
+        18,
+        18,
+        18,
+         255)
         else:
             h, w = rgb.shape[:2]
             s = max(4, int(min(h, w) * 0.08))
@@ -210,7 +219,8 @@ async def call_sd_img2img(pil_img: Image.Image, style: str) -> Image.Image:
         def run_prediction():
             # Sin token: el Space es público
             # Sin kwargs extra: compatibilidad con versiones antiguas de gradio_client
-            # Crear cliente intentando incluir token si está presente (soporta espacios privados)
+            # Crear cliente intentando incluir token si está presente (soporta
+            # espacios privados)
             client = None
             if HF_TOKEN:
                 try:
@@ -224,7 +234,7 @@ async def call_sd_img2img(pil_img: Image.Image, style: str) -> Image.Image:
                 client = Client(HF_SPACE_ID)
 
             print(
-                f"[IA LOG]: Enviando — strength={cfg['strength']}, guidance={cfg['guidance_scale']}, steps={cfg['steps']}")
+                f"[IA LOG]: Enviando — strength={cfg['strength']}, guidance={cfg['guidance_scale']}, steps={cfg['steps']}")  # noqa: E501
             return client.predict(
                 image=handle_file(tmp_path),
                 prompt=cfg["prompt"],
@@ -665,4 +675,3 @@ async def generate_product_preview(
     except Exception as e:
         print(f"[AI CRITICAL ERROR]: {str(e)}")
         raise HTTPException(500, f"Error al generar la vista previa: {str(e)}")
-

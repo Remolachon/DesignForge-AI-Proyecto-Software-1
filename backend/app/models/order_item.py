@@ -27,4 +27,3 @@ class OrderItem(Base):
     assets = relationship("FileAsset", back_populates="order_item")
     attributes = relationship(
         "OrderItemAttribute", back_populates="order_item", cascade="all, delete-orphan")
-

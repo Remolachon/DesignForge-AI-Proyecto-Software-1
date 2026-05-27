@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
-import app.models
+import app.models as models
 from app.controllers.user_controller import router as user_router
 from app.controllers.auth_controller import router as auth_router
 from app.controllers.admin_controller import router as admin_router
@@ -142,4 +142,3 @@ async def health_check():
         "database": "connected" if db_available else "disconnected",
     }
     return {"message": "API running"}
-

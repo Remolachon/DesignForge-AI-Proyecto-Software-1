@@ -81,4 +81,3 @@ class AdminProductUpsertRequest(BaseModel):
 
 class AdminProductVisibilityRequest(BaseModel):
     is_public: bool
-

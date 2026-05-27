@@ -35,4 +35,3 @@ class Transaction(Base):
     # Relationships
     order = relationship("Order", backref="transactions")
     user = relationship("User", backref="transactions")
-

@@ -125,7 +125,8 @@ class CompanyService:
         elif normalized_status in {"REJECTED", "INACTIVE", "DELETED"}:
             company.is_active = False
 
-        if normalized_status == "APPROVED" and (previous_status != "APPROVED" or not was_active):
+        if normalized_status == "APPROVED" and (
+            previous_status != "APPROVED" or not was_active):
             creator = db.query(User).filter(
                 User.id == company.created_by_user_id).first()
 
@@ -184,7 +185,8 @@ class CompanyService:
         return company
 
     @staticmethod
-    def get_admin_companies(db: Session, filter_status: str | None = None) -> list[CompanyAdminResponse]:
+    def get_admin_companies(db: Session, filter_status: str |
+                            None = None) -> list[CompanyAdminResponse]:
         query = (
             db.query(Company, User.first_name, User.last_name)
             .join(User, Company.created_by_user_id == User.id)
@@ -197,13 +199,13 @@ class CompanyService:
         elif normalized == "rejected":
             query = query.filter(Company.status == "REJECTED")
         elif normalized == "active":
-            query = query.filter(Company.is_active == True,
+            query = query.filter(Company.is_active is True,
                                  Company.status == "APPROVED")
         elif normalized == "inactive":
             query = query.filter(
                 or_(
                     and_(Company.status == "APPROVED",
-                         Company.is_active == False),
+                         Company.is_active is False),
                     Company.status == "INACTIVE",
                 )
             )
@@ -238,10 +240,10 @@ class CompanyService:
         rejected = db.query(Company).filter(
             Company.status == "REJECTED").count()
         active = db.query(Company).filter(Company.status ==
-                                          "APPROVED", Company.is_active == True).count()
+                                          "APPROVED", Company.is_active is True).count()
         inactive = db.query(Company).filter(
             or_(
-                and_(Company.status == "APPROVED", Company.is_active == False),
+                and_(Company.status == "APPROVED", Company.is_active is False),
                 Company.status == "INACTIVE",
             )
         ).count()
@@ -253,4 +255,3 @@ class CompanyService:
             "active": active,
             "inactive": inactive,
         }
-

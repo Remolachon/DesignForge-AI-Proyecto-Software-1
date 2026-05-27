@@ -47,13 +47,15 @@ def _get_db_user(db: Session, current_user):
         )
 
 
-@router.get("/products/{product_id}/reviews", response_model=ProductReviewsResponse)
+@router.get("/products/{product_id}/reviews",
+            response_model=ProductReviewsResponse)
 def get_product_reviews(
     product_id: int,
     db: Session = Depends(get_db),
 ):
     try:
-        return InteractionService.list_product_reviews(db=db, product_id=product_id)
+        return InteractionService.list_product_reviews(
+            db=db, product_id=product_id)
     except OperationalError as e:
         logger.error(f"Error de BD al obtener reviews: {e}")
         raise HTTPException(
@@ -103,7 +105,8 @@ def get_notifications(
     db_user = _get_db_user(db, current_user)
 
     try:
-        return InteractionService.list_user_notifications(db=db, user_id=db_user.id)
+        return InteractionService.list_user_notifications(
+            db=db, user_id=db_user.id)
     except OperationalError as e:
         logger.error(f"Error de BD al obtener notificaciones: {e}")
         raise HTTPException(
@@ -112,7 +115,8 @@ def get_notifications(
         )
 
 
-@router.patch("/notifications/{notification_id}/read", response_model=NotificationResponse)
+@router.patch("/notifications/{notification_id}/read",
+              response_model=NotificationResponse)
 def mark_notification_as_read(
     notification_id: int,
     db: Session = Depends(get_db),
@@ -137,4 +141,3 @@ def mark_notification_as_read(
             status_code=503,
             detail="Servicio de base de datos temporalmente no disponible"
         )
-

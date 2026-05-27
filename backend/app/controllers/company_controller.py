@@ -44,7 +44,8 @@ def _require_admin(db: Session, current_user):
     return db_user
 
 
-@router.post("", response_model=CompanyResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=CompanyResponse,
+             status_code=status.HTTP_201_CREATED)
 def create_company(
     payload: CompanyCreateRequest,
     db: Session = Depends(get_db),
@@ -58,7 +59,8 @@ def create_company(
         created_by_user=db_user,
     )
 
-    # Obtener el rol recién asignado para que el frontend pueda actualizar localStorage
+    # Obtener el rol recién asignado para que el frontend pueda actualizar
+    # localStorage
     new_role = UserService.get_user_role_name(db, db_user.id)
 
     return CompanyResponse(
@@ -124,4 +126,3 @@ def delete_company(
 ):
     _require_admin(db, current_user)
     return CompanyService.delete_company(db, company_id)
-

@@ -16,5 +16,9 @@ os.environ.setdefault("JWT_SECRET", "test-secret-key")
 
 def pytest_configure(config):
     """Registra marcadores personalizados."""
-    config.addinivalue_line("markers", "integration: pruebas de integración (requieren BD)")
-    config.addinivalue_line("markers", "unit: pruebas unitarias sin dependencias externas")
+    config.addinivalue_line(
+    "markers",
+     "integration: pruebas de integración (requieren BD)")
+    config.addinivalue_line(
+    "markers",
+     "unit: pruebas unitarias sin dependencias externas")

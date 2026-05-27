@@ -11,7 +11,8 @@ logger = logging.getLogger(__name__)
 DATABASE_URL = settings.DATABASE_URL
 
 # Si no hay URL válida o estamos en testing, usar SQLite
-if not DATABASE_URL or not any(DATABASE_URL.startswith(prefix) for prefix in ["postgresql://", "mysql://", "sqlite:///"]):
+if not DATABASE_URL or not any(DATABASE_URL.startswith(prefix) for prefix in [
+                               "postgresql://", "mysql://", "sqlite:///"]):
     logger.warning(f"URL de BD inválida o vacía. Usando SQLite para testing.")
     DATABASE_URL = "sqlite:///./test.db"
 
@@ -93,10 +94,9 @@ async def check_db_connection():
     try:
         with engine.connect() as conn:
             # usar text() para compatibilidad con SQLAlchemy
-            result = conn.execute(text("SELECT 1"))
+            conn.execute(text("SELECT 1"))
             logger.info("Conexión a BD verificada exitosamente")
             return True
     except Exception as e:
         logger.error(f"Error al verificar conexión a BD: {e}")
         return False
-

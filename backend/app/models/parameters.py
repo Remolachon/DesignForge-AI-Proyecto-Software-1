@@ -11,4 +11,3 @@ class Parameters(Base):
     height = Column(Integer, nullable=False)
     width = Column(Integer, nullable=False)
     material = Column(String, nullable=False)
-

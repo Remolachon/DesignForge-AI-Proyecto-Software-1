@@ -85,7 +85,8 @@ def _link_google_account(
         db.refresh(db_user)
 
 
-def _build_auth_response(db: Session, db_user, access_token: str) -> AuthResponse:
+def _build_auth_response(db: Session, db_user,
+                         access_token: str) -> AuthResponse:
     return AuthResponse(
         access_token=access_token,
         first_name=db_user.first_name,
@@ -101,7 +102,8 @@ def _send_welcome_email(email: str, first_name: str | None) -> None:
             "No se pudo enviar el correo de bienvenida: %s", result.get("error"))
 
 
-@router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=AuthResponse,
+             status_code=status.HTTP_201_CREATED)
 def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     if not payload.first_name.strip() or not payload.last_name.strip():
         raise HTTPException(
@@ -312,7 +314,7 @@ def google_oauth(payload: GoogleOAuthRequest, db: Session = Depends(get_db)):
     except HTTPException:
         # Re-raise HTTPExceptions so FastAPI handles them normally
         raise
-    except Exception as e:
+    except Exception:
         logger.exception("unexpected error in /google-oauth")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -326,4 +328,3 @@ def logout() -> None:
         supabase.auth.sign_out()
     except OperationalError:
         raise _service_unavailable()
-

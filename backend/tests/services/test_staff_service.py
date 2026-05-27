@@ -88,7 +88,8 @@ def test_assign_funcionario_role_new(mock_get_role, mock_get_user, mock_db):
 
 @patch("app.services.staff_service._get_user_in_company")
 @patch("app.services.staff_service._get_funcionario_role")
-def test_assign_funcionario_role_integrity_error(mock_get_role, mock_get_user, mock_db):
+def test_assign_funcionario_role_integrity_error(
+    mock_get_role, mock_get_user, mock_db):
     mock_get_user.return_value = User(id=1, company_id=10)
     mock_get_role.return_value = Role(id=2, name=ROLE_FUNCIONARIO_NAME)
     mock_db.query.return_value.filter.return_value.first.return_value = None
@@ -106,7 +107,8 @@ def test_assign_funcionario_role_integrity_error(mock_get_role, mock_get_user, m
 
 @patch("app.services.staff_service._get_user_in_company")
 @patch("app.services.staff_service._get_funcionario_role")
-def test_revoke_funcionario_role_success(mock_get_role, mock_get_user, mock_db):
+def test_revoke_funcionario_role_success(
+    mock_get_role, mock_get_user, mock_db):
     mock_get_user.return_value = User(id=1, company_id=10)
     mock_get_role.return_value = Role(id=2, name=ROLE_FUNCIONARIO_NAME)
     
@@ -121,7 +123,7 @@ def test_revoke_funcionario_role_success(mock_get_role, mock_get_user, mock_db):
     result = revoke_funcionario_role(mock_db, target_user_id=1, company_id=10)
     
     assert result["message"] == "Rol 'funcionario' revocado correctamente"
-    assert mock_user_role.is_active == False
+    assert mock_user_role.is_active is False
     mock_db.commit.assert_called()
 
 # --- Tests para invite_funcionario ---
@@ -137,7 +139,10 @@ def test_invite_funcionario_success(mock_promote, mock_get_role_name, mock_db):
         Company(id=10, name="LukArt Inc") # Para la compañía
     ]
     
-    result = invite_funcionario(mock_db, email="test@lukart.com", company_id=10)
+    result = invite_funcionario(
+    mock_db,
+    email="test@lukart.com",
+     company_id=10)
     
     assert result["message"] == "Usuario invitado correctamente"
     mock_promote.assert_called_once_with(mock_db, 1, 10, commit=True)
@@ -155,11 +160,15 @@ def test_invite_funcionario_already_in_same_company(mock_db):
 @patch("app.services.staff_service._get_user_in_company")
 @patch("app.services.user_service.UserService.set_user_company")
 @patch("app.services.user_service.UserService.set_user_role")
-def test_remove_funcionario_from_company(mock_set_role, mock_set_company, mock_get_user, mock_db):
-    mock_get_user.return_value = User(id=1, email="test@lukart.com", company_id=10)
-    mock_db.query.return_value.filter.return_value.first.return_value = Company(id=10, name="LukArt Inc")
+def test_remove_funcionario_from_company(
+    mock_set_role, mock_set_company, mock_get_user, mock_db):
+    mock_get_user.return_value = User(
+    id=1, email="test@lukart.com", company_id=10)
+    mock_db.query.return_value.filter.return_value.first.return_value = Company(
+        id=10, name="LukArt Inc")
     
-    result = remove_funcionario_from_company(mock_db, target_user_id=1, company_id=10)
+    result = remove_funcionario_from_company(
+    mock_db, target_user_id=1, company_id=10)
     
     assert result["message"] == "Usuario removido de la empresa correctamente"
     mock_set_company.assert_called_once_with(mock_db, 1, None, commit=False)
@@ -180,10 +189,70 @@ def test_get_company_staff(mock_db):
     mock_row.assigned_at = None
     
     # Configurar el mock encadenado
-    mock_db.query.return_value.join.return_value.join.return_value.filter.return_value.all.return_value = [mock_row]
+    mock_db.query.return_value.join.return_value.join.return_value.filter.return_value.all.return_value = [
+        mock_row]
     
     result = get_company_staff(mock_db, company_id=10, current_user_id=1)
     
     assert len(result) == 1
     assert result[0]["first_name"] == "Juan"
     assert result[0]["email"] == "juan@lukart.com"
+
+@patch("app.services.staff_service._get_user_in_company")
+@patch("app.services.staff_service._get_funcionario_role")
+def test_assign_funcionario_role_existing(
+    mock_get_role, mock_get_user, mock_db):
+    mock_get_user.return_value = User(id=1, company_id=10)
+    mock_get_role.return_value = Role(id=2, name=ROLE_FUNCIONARIO_NAME)
+    
+    existing_ur = UserRole(user_id=1, role_id=2, is_active=False)
+    mock_db.query.return_value.filter.return_value.first.side_effect = [
+        existing_ur,  # existing UserRole
+        Company(id=10, name="LukArt Inc") # company
+    ]
+    
+    result = assign_funcionario_role(mock_db, target_user_id=1, company_id=10)
+    assert existing_ur.is_active is True
+    assert result["message"] == "Rol 'funcionario' asignado correctamente"
+
+@patch("app.services.staff_service._get_user_in_company")
+@patch("app.services.staff_service._get_funcionario_role")
+def test_revoke_funcionario_role_not_found(
+    mock_get_role, mock_get_user, mock_db):
+    mock_get_user.return_value = User(id=1, company_id=10)
+    mock_get_role.return_value = Role(id=2, name=ROLE_FUNCIONARIO_NAME)
+    mock_db.query.return_value.filter.return_value.first.return_value = None
+    
+    with pytest.raises(HTTPException) as exc_info:
+        revoke_funcionario_role(mock_db, target_user_id=1, company_id=10)
+    assert exc_info.value.status_code == 404
+    assert "El usuario no tiene el rol" in exc_info.value.detail
+
+def test_invite_funcionario_user_not_found(mock_db):
+    mock_db.query.return_value.filter.return_value.first.return_value = None
+    with pytest.raises(HTTPException) as exc_info:
+        invite_funcionario(
+    mock_db,
+    email="nonexistent@lukart.com",
+     company_id=10)
+    assert exc_info.value.status_code == 404
+
+def test_invite_funcionario_already_in_other_company(mock_db):
+    mock_user = User(id=1, email="test@lukart.com", company_id=99)
+    mock_db.query.return_value.filter.return_value.first.return_value = mock_user
+    
+    with pytest.raises(HTTPException) as exc_info:
+        invite_funcionario(mock_db, email="test@lukart.com", company_id=10)
+    assert exc_info.value.status_code == 400
+    assert "El usuario ya pertenece a otra empresa." in exc_info.value.detail
+
+@patch("app.services.user_service.UserService.get_user_role_name")
+def test_invite_funcionario_forbidden_admin(mock_get_role_name, mock_db):
+    mock_user = User(id=1, email="admin@lukart.com", company_id=None)
+    mock_db.query.return_value.filter.return_value.first.return_value = mock_user
+    mock_get_role_name.return_value = "administrador"
+    
+    with pytest.raises(HTTPException) as exc_info:
+        invite_funcionario(mock_db, email="admin@lukart.com", company_id=10)
+    assert exc_info.value.status_code == 403
+    assert "No se puede invitar a un administrador global." in exc_info.value.detail

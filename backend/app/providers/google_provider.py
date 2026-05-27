@@ -97,4 +97,3 @@ class GoogleOAuthProvider:
             "phone": user_metadata.get("phone"),
             "avatar_url": user_metadata.get("avatar_url"),
         }
-

@@ -61,7 +61,8 @@ def retry_on_connection_error(
 
             if attempt < max_retries - 1:
                 logger.warning(
-                    f"Error de conexión a BD (intento {attempt + 1}/{max_retries}): {error_msg}. "
+                    f"Error de conexión a BD (intento {
+    attempt + 1}/{max_retries}): {error_msg}. "
                     f"Reintentando en {delay}s..."
                 )
                 time.sleep(delay)
@@ -101,4 +102,3 @@ class ConnectionRetryDecorator:
                 **kwargs
             )
         return wrapper
-

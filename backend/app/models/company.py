@@ -23,4 +23,3 @@ class Company(Base):
     created_by_user = relationship("User", foreign_keys=[created_by_user_id])
     users = relationship("User", back_populates="company",
                          foreign_keys="User.company_id")
-

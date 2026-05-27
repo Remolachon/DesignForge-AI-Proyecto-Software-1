@@ -16,4 +16,3 @@ from app.models.notification import Notification  # noqa: F401
 from app.models.product_attribute import ProductAttribute  # noqa: F401
 from app.models.order_item_attribute import OrderItemAttribute  # noqa: F401
 from app.models.product_attribute_value import ProductAttributeValue  # noqa: F401
-

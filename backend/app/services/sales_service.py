@@ -37,7 +37,8 @@ def get_all_time_summary(db: Session) -> dict:
     total_transacciones = int(row.total_transacciones or 0)
     transacciones_aprobadas = int(row.transacciones_aprobadas or 0)
 
-    # Ganancias reales: (unit_price - base_price) * quantity para transacciones aprobadas
+    # Ganancias reales: (unit_price - base_price) * quantity para
+    # transacciones aprobadas
     profit_sql = text("""
         SELECT
             COALESCE(
@@ -336,7 +337,8 @@ def get_transactions_list(
 # ─── Funcionario: misma lógica pero filtrada por company_id ──────────────────
 
 
-def get_company_sales_summary(db: Session, filter: TimeFilter, company_id: int) -> SalesSummarySchema:
+def get_company_sales_summary(
+    db: Session, filter: TimeFilter, company_id: int) -> SalesSummarySchema:
     """
     Resumen de ventas y ganancias para una empresa específica.
     Solo considera transacciones cuyo pedido contiene productos de esa empresa.
@@ -382,7 +384,8 @@ def get_company_sales_summary(db: Session, filter: TimeFilter, company_id: int) 
     )
 
 
-def get_company_sales_chart(db: Session, filter: TimeFilter, company_id: int) -> SalesChartSchema:
+def get_company_sales_chart(
+    db: Session, filter: TimeFilter, company_id: int) -> SalesChartSchema:
     """
     Gráfica de ventas y ganancias para una empresa específica, agrupadas por período.
     """
@@ -533,4 +536,3 @@ def get_company_transactions_list(
         )
 
     return TransactionsListSchema(total=total, items=items)
-

@@ -63,7 +63,8 @@ async def upload_product_image(file: UploadFile = File(...)):
             file_options={"content-type": file.content_type}
         )
 
-        public_url = f"{settings.SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{file_path}"
+        public_url = f"{
+    settings.SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{file_path}"
 
         return {
             "bucket": bucket_name,
@@ -77,4 +78,3 @@ async def upload_product_image(file: UploadFile = File(...)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error al subir imagen de producto",
         )
-

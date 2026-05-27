@@ -19,4 +19,3 @@ class User(Base):
     company = relationship(
         "Company", back_populates="users", foreign_keys=[company_id])
     orders = relationship("Order", back_populates="user")
-

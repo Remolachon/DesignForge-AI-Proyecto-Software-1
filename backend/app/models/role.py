@@ -8,4 +8,3 @@ class Role(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(50), unique=True, nullable=False)
     is_active = Column(Boolean, default=True)
-

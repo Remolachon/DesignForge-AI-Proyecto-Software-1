@@ -19,7 +19,8 @@ def mock_db():
 
 def test_normalize_email():
     # Probamos el método estático privado indirectamente o directo
-    assert UserService._normalize_email("  TEST@LukArt.com  ") == "test@lukart.com"
+    assert UserService._normalize_email(
+        "  TEST@LukArt.com  ") == "test@lukart.com"
 
 
 def test_get_user_by_supabase_id(mock_db):
@@ -60,10 +61,17 @@ def test_create_user_success(mock_db):
 
 def test_create_user_integrity_error(mock_db):
     # Forzar el lanzamiento de IntegrityError al hacer commit
-    mock_db.commit.side_effect = IntegrityError("Duplicate key", {}, BaseException())
+    mock_db.commit.side_effect = IntegrityError(
+        "Duplicate key", {}, BaseException())
 
     with pytest.raises(HTTPException) as exc_info:
-        UserService.create_user(mock_db, "error@test.com", "A", "B", "123", "sb-0")
+        UserService.create_user(
+    mock_db,
+    "error@test.com",
+    "A",
+    "B",
+    "123",
+     "sb-0")
     
     assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
     assert exc_info.value.detail == "El correo ya existe"
@@ -90,15 +98,21 @@ def test_set_user_role_role_not_found(mock_db):
 
 
 def test_set_user_role_existing_active(mock_db):
-    # Caso donde el rol ya estaba activo (se apaga y se vuelve a encender en la lógica)
+    # Caso donde el rol ya estaba activo (se apaga y se vuelve a encender en
+    # la lógica)
     mock_role = Role(id=2, name="funcionario")
     mock_user_role = UserRole(user_id=1, role_id=2, is_active=True)
 
     # Configuramos el mock de get_role_by_name y luego el de active_roles
     mock_db.query.return_value.filter.return_value.first.return_value = mock_role
-    mock_db.query.return_value.filter.return_value.all.return_value = [mock_user_role]
+    mock_db.query.return_value.filter.return_value.all.return_value = [
+        mock_user_role]
 
-    UserService.set_user_role(mock_db, user_id=1, role_name="funcionario", commit=True)
+    UserService.set_user_role(
+    mock_db,
+    user_id=1,
+    role_name="funcionario",
+     commit=True)
     assert mock_user_role.is_active is True
     mock_db.commit.assert_called_once()
 
@@ -114,7 +128,11 @@ def test_set_user_role_existing_inactive(mock_db):
     ]
     mock_db.query.return_value.filter.return_value.all.return_value = [] # No hay activos
 
-    UserService.set_user_role(mock_db, user_id=1, role_name="funcionario", commit=False)
+    UserService.set_user_role(
+    mock_db,
+    user_id=1,
+    role_name="funcionario",
+     commit=False)
     assert mock_user_role_inactive.is_active is True
     mock_db.commit.assert_not_called()
 
@@ -156,7 +174,11 @@ def test_set_user_company_success(mock_db):
     mock_user = User(id=1, company_id=None)
     mock_db.query.return_value.filter.return_value.first.return_value = mock_user
 
-    UserService.set_user_company(mock_db, user_id=1, company_id=10, commit=True)
+    UserService.set_user_company(
+    mock_db,
+    user_id=1,
+    company_id=10,
+     commit=True)
     assert mock_user.company_id == 10
     mock_db.commit.assert_called_once()
 
@@ -166,10 +188,12 @@ def test_set_user_company_success(mock_db):
 @patch("app.services.user_service.UserService.set_user_role")
 @patch("app.services.user_service.UserService.set_user_company")
 def test_promote_user_to_funcionario(mock_set_company, mock_set_role, mock_db):
-    UserService.promote_user_to_funcionario(mock_db, user_id=1, company_id=10, commit=True)
+    UserService.promote_user_to_funcionario(
+    mock_db, user_id=1, company_id=10, commit=True)
     
     mock_set_company.assert_called_once_with(mock_db, 1, 10, commit=False)
-    mock_set_role.assert_called_once_with(mock_db, 1, "funcionario", commit=False)
+    mock_set_role.assert_called_once_with(
+    mock_db, 1, "funcionario", commit=False)
     mock_db.commit.assert_called_once()
 
 
@@ -197,4 +221,5 @@ def test_get_user_role_name_success(mock_db):
         mock_user_role,
         mock_role
     ]
-    assert UserService.get_user_role_name(mock_db, user_id=1) == "administrador"
+    assert UserService.get_user_role_name(
+    mock_db, user_id=1) == "administrador"

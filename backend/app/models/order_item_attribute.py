@@ -14,4 +14,3 @@ class OrderItemAttribute(Base):
     value = Column(Text, nullable=False)
 
     order_item = relationship("OrderItem", back_populates="attributes")
-

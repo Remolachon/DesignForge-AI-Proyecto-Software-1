@@ -17,4 +17,3 @@ class ProductAttribute(Base):
     sort_order = Column(Integer, default=0, nullable=False)
 
     product_shape = relationship("ProductShape", back_populates="attributes")
-

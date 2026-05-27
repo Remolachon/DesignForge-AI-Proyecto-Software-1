@@ -46,7 +46,8 @@ def _get_funcionario_user_with_retry(db: Session, current_user):
                 status_code=404, detail="Usuario no existe en DB")
 
         role_name = UserService.get_user_role_name(db, db_user.id)
-        if role_name not in ("funcionario", "funcionario_adm", "administrador"):
+        if role_name not in (
+            "funcionario", "funcionario_adm", "administrador"):
             raise HTTPException(status_code=403, detail="No autorizado")
 
         return db_user
@@ -129,7 +130,8 @@ def get_admin_products_page(
         else:
             raise HTTPException(status_code=403, detail="No autorizado")
 
-        return ProductService.get_admin_products_page(db=db, company_id=company_id, page=page, page_size=page_size, search=search)
+        return ProductService.get_admin_products_page(
+            db=db, company_id=company_id, page=page, page_size=page_size, search=search)
     except OperationalError as e:
         logger.error(f"Error de BD al obtener página de admin products: {e}")
         raise HTTPException(
@@ -191,7 +193,8 @@ def update_admin_product(
         )
 
 
-@router.patch("/admin/{product_id}/visibility", response_model=AdminProductResponse)
+@router.patch("/admin/{product_id}/visibility",
+              response_model=AdminProductResponse)
 def set_product_visibility(
     product_id: int,
     payload: AdminProductVisibilityRequest,
@@ -317,7 +320,8 @@ def get_product_shapes(
         )
 
 
-@router.get("/shapes/{shape_id}/attributes", response_model=list[ProductAttributeSchema])
+@router.get("/shapes/{shape_id}/attributes",
+            response_model=list[ProductAttributeSchema])
 def get_shape_attributes(
     shape_id: int,
     db: Session = Depends(get_db),
@@ -332,4 +336,3 @@ def get_shape_attributes(
             status_code=503,
             detail="Servicio de base de datos temporalmente no disponible"
         )
-

@@ -21,4 +21,3 @@ class Product(Base):
     product_shape = relationship("ProductShape", back_populates="products")
     file_assets = relationship(
         "FileAsset", back_populates="product", cascade="all, delete-orphan")
-

@@ -16,4 +16,3 @@ class Review(Base):
 
     product = relationship("Product")
     user = relationship("User")
-

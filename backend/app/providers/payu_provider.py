@@ -31,7 +31,8 @@ class PayUProvider:
         self.base_url = self.BASE_URL_SANDBOX if self.sandbox_mode else self.BASE_URL_PRODUCTION
         self.api_url = self.API_URL_SANDBOX if self.sandbox_mode else self.API_URL_PRODUCTION
 
-    def _generate_signature(self, merchant_id: str, reference_code: str, amount: str, currency: str, api_key: str) -> str:
+    def _generate_signature(self, merchant_id: str, reference_code: str,
+                            amount: str, currency: str, api_key: str) -> str:
         """
         Genera la firma MD5 necesaria para PayU WebCheckout.
         Formato: MD5(apiKey~merchantId~referenceCode~amount~currency)
@@ -40,12 +41,13 @@ class PayUProvider:
         signature = hashlib.md5(signature_string.encode()).hexdigest()
         return signature
 
-    def _generate_payment_signature(self, api_key: str, merchant_id: str, transaction_id: str, state: str, response_code_pol: str, reference_code: str, amount: str, currency: str) -> str:
+    def _generate_payment_signature(self, api_key: str, merchant_id: str, transaction_id: str,
+                                    state: str, response_code_pol: str, reference_code: str, amount: str, currency: str) -> str:  # noqa: E501
         """
         Genera la firma para validar las respuestas de PayU.
         Formato: MD5(apiKey~merchantId~transactionId~state~responseCodePol~referenceCode~amount~currency)
         """
-        signature_string = f"{api_key}~{merchant_id}~{transaction_id}~{state}~{response_code_pol}~{reference_code}~{amount}~{currency}"
+        signature_string = f"{api_key}~{merchant_id}~{transaction_id}~{state}~{response_code_pol}~{reference_code}~{amount}~{currency}"  # noqa: E501
         signature = hashlib.md5(signature_string.encode()).hexdigest()
         return signature
 
@@ -72,7 +74,8 @@ class PayUProvider:
         """
         try:
             # Generar referencia única para esta orden
-            reference_code = f"ORDER-{order_id}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+            reference_code = f"ORDER-{order_id}-{
+    datetime.now().strftime('%Y%m%d%H%M%S')}"
 
             # Formatear valores monetarios (2 decimales)
             amount = float(total_amount or 0)
@@ -143,7 +146,8 @@ class PayUProvider:
                 "status": "error"
             }
 
-    def validate_webhook_signature(self, signature: str, merchant_id: str, transaction_id: str, state: str, response_code_pol: str, reference_code: str, amount: str, currency: str) -> bool:
+    def validate_webhook_signature(self, signature: str, merchant_id: str, transaction_id: str,
+                                   state: str, response_code_pol: str, reference_code: str, amount: str, currency: str) -> bool:  # noqa: E501
         """
         Valida la firma del webhook recibido de PayU.
 
@@ -241,4 +245,3 @@ class PayUProvider:
 
 # Instancia global del proveedor
 payu_provider = PayUProvider()
-

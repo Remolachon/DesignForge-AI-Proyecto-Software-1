@@ -20,4 +20,3 @@ class StatusHistory(Base):
         "ProductionStage",
         foreign_keys=[production_stage_id]
     )
-

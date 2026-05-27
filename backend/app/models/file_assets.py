@@ -59,4 +59,3 @@ class FileAsset(Base):
 
     order_item = relationship("OrderItem", back_populates="assets")
     product = relationship("Product", back_populates="file_assets")
-

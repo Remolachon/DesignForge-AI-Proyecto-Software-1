@@ -66,14 +66,15 @@ def get_admin_dashboard(
                 db.query(User)
                 .join(UserRole, User.id == UserRole.user_id)
                 .filter(
-                    User.is_active == True,
-                    UserRole.is_active == True,
+                    User.is_active is True,
+                    UserRole.is_active is True,
                     UserRole.role_id == client_role.id,
                 )
                 .count()
             )
 
-        # Obtener métricas reales de ventas y ganancias (todas las empresas, todo el tiempo)
+        # Obtener métricas reales de ventas y ganancias (todas las empresas,
+        # todo el tiempo)
         sales_stats = get_all_time_summary(db)
 
         return {
@@ -124,4 +125,3 @@ def get_admin_orders_page(
             status_code=503,
             detail="Servicio de base de datos temporalmente no disponible"
         )
-

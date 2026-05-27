@@ -52,4 +52,3 @@ class CompanyAdminResponse(BaseModel):
 
 class CompanyAdminActionRequest(BaseModel):
     status: str
-

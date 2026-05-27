@@ -14,4 +14,3 @@ class ProductAttributeOption(Base):
     price_modifier = Column(Numeric(10, 2), default=0, nullable=False)
 
     attribute = relationship("ProductAttribute", back_populates="options")
-
