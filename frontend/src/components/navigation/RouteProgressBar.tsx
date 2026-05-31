@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Progress } from '@/components/ui/progress';
 
@@ -11,11 +11,13 @@ export function RouteProgressBar() {
   const [value, setValue] = useState(0);
   const progressTimerRef = useRef<number | null>(null);
   const safetyTimerRef = useRef<number | null>(null);
-  const startedAtRef = useRef<number | null>(null);
+  const minimumTimerRef = useRef<number | null>(null);
+  const canHideRef = useRef(false);
+  const pendingFinishRef = useRef(false);
   const didMountRef = useRef(false);
   const lastRouteRef = useRef(`${pathname}?${searchParams.toString()}`);
 
-  const clearTimers = () => {
+  const clearTimers = useCallback(() => {
     if (progressTimerRef.current) {
       window.clearInterval(progressTimerRef.current);
       progressTimerRef.current = null;
@@ -24,11 +26,31 @@ export function RouteProgressBar() {
       window.clearTimeout(safetyTimerRef.current);
       safetyTimerRef.current = null;
     }
-  };
+    if (minimumTimerRef.current) {
+      window.clearTimeout(minimumTimerRef.current);
+      minimumTimerRef.current = null;
+    }
+  }, []);
 
-  const start = () => {
+  const complete = useCallback(() => {
+    pendingFinishRef.current = true;
+
+    if (!canHideRef.current) {
+      return;
+    }
+
     clearTimers();
-    startedAtRef.current = Date.now();
+    setValue(100);
+    setVisible(false);
+    setValue(0);
+    pendingFinishRef.current = false;
+    canHideRef.current = false;
+  }, [clearTimers]);
+
+  const start = useCallback(() => {
+    clearTimers();
+    pendingFinishRef.current = false;
+    canHideRef.current = false;
     setVisible(true);
     setValue(14);
 
@@ -41,20 +63,18 @@ export function RouteProgressBar() {
       });
     }, 120);
 
-    safetyTimerRef.current = window.setTimeout(() => {
-      if (startedAtRef.current) {
+    minimumTimerRef.current = window.setTimeout(() => {
+      canHideRef.current = true;
+
+      if (pendingFinishRef.current) {
         complete();
       }
-    }, 8000);
-  };
+    }, 900);
 
-  const complete = () => {
-    clearTimers();
-    setValue(100);
-    setVisible(false);
-    setValue(0);
-    startedAtRef.current = null;
-  };
+    safetyTimerRef.current = window.setTimeout(() => {
+      complete();
+    }, 8000);
+  }, [clearTimers, complete]);
 
   useEffect(() => {
     const currentRoute = `${pathname}?${searchParams.toString()}`;
@@ -67,12 +87,15 @@ export function RouteProgressBar() {
 
     if (currentRoute !== lastRouteRef.current) {
       lastRouteRef.current = currentRoute;
-      if (!startedAtRef.current) {
-        start();
-      }
-      complete();
+      window.requestAnimationFrame(() => {
+        if (!visible && !pendingFinishRef.current) {
+          start();
+        }
+
+        complete();
+      });
     }
-  }, [pathname, searchParams]);
+  }, [complete, pathname, searchParams, start, visible]);
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
@@ -109,7 +132,7 @@ export function RouteProgressBar() {
       document.removeEventListener('click', handleClick, true);
       window.removeEventListener('popstate', handlePopState);
     };
-  }, []);
+  }, [clearTimers, start]);
 
   if (!visible) return null;
 

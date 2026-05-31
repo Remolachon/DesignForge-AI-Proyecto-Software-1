@@ -1,7 +1,8 @@
-import { type ProductType } from '@/types/product';
+import { type FileAsset, type ProductAttribute, type ProductType } from '@/types/product';
 import { type MarketplaceProduct } from '@/types/marketplace';
 import { normalizeProductType } from '@/constants/productCatalog';
 import { getApiBaseUrl } from '@/lib/utils/apiBaseUrl';
+import { cachedRequest, invalidateRequestCache } from '@/services/requestCache';
 
 const API_URL = getApiBaseUrl();
 
@@ -15,7 +16,7 @@ type AdminProductResponse = {
   productShape?: string | null;
   productShapeId?: number | null;
   imageUrl?: string | null;
-  media?: any[];
+  media?: MarketplaceMediaResponse[];
   inStock: boolean;
   stock: number;
   isActive: boolean;
@@ -23,8 +24,53 @@ type AdminProductResponse = {
   rating: number;
   reviews: number;
   createdAt: string;
-  attributes?: any[];
+  attributes?: MarketplaceAttributeResponse[];
 };
+
+type MarketplaceMediaResponse = {
+  id?: number;
+  storage_path: string;
+  media_kind: 'image' | 'video';
+  media_role?: string | null;
+  sort_order?: number | null;
+};
+
+type MarketplaceAttributeResponse = {
+  id?: number;
+  code?: string;
+  label?: string | null;
+  input_type?: 'text' | 'number' | 'color' | 'select' | string;
+  required?: boolean;
+  placeholder?: string | null;
+  default_value?: string | null;
+  sort_order?: number | null;
+  [key: string]: unknown;
+};
+
+function toFileAsset(media: MarketplaceMediaResponse): FileAsset {
+  return {
+    id: media.id,
+    storage_path: media.storage_path,
+    media_kind: media.media_kind,
+    media_role: media.media_role === 'main' ? 'main' : media.media_role === 'preview' ? 'preview' : media.media_role === 'attachment' ? 'attachment' : 'gallery',
+    sort_order: media.sort_order ?? 0,
+  };
+}
+
+function toProductAttribute(attribute: MarketplaceAttributeResponse): ProductAttribute {
+  return {
+    id: attribute.id ?? 0,
+    code: attribute.code || '',
+    label: attribute.label || attribute.code || '',
+    input_type: attribute.input_type === 'number' || attribute.input_type === 'color' || attribute.input_type === 'select'
+      ? attribute.input_type
+      : 'text',
+    required: Boolean(attribute.required),
+    placeholder: attribute.placeholder ?? null,
+    default_value: attribute.default_value ?? null,
+    sort_order: attribute.sort_order ?? 0,
+  };
+}
 
 export type MarketplaceSavePayload = {
   name: string;
@@ -49,7 +95,7 @@ function toMarketplaceProduct(product: AdminProductResponse): MarketplaceProduct
     productShape: product.productShape || null,
     productShapeId: product.productShapeId ?? null,
     imageUrl: product.imageUrl || undefined,
-    media: product.media || [],
+    media: (product.media || []).map(toFileAsset),
     inStock: product.inStock,
     stock: product.stock,
     isActive: product.isActive,
@@ -57,7 +103,7 @@ function toMarketplaceProduct(product: AdminProductResponse): MarketplaceProduct
     rating: product.rating,
     reviews: product.reviews,
     createdAt: product.createdAt,
-    attributes: product.attributes || [],
+    attributes: (product.attributes || []).map(toProductAttribute),
   };
 }
 
@@ -78,7 +124,7 @@ export const funcionarioMarketplaceService = {
     mediaRole: string,
     sortOrder: number,
     file: File
-  ): Promise<any> {
+  ): Promise<FileAsset> {
     const token = getToken();
     const formData = new FormData();
     formData.append('company_id', String(companyId));
@@ -100,24 +146,26 @@ export const funcionarioMarketplaceService = {
       throw new Error(err?.detail || 'No se pudo subir el archivo multimedia');
     }
 
-    return response.json();
+    return response.json(); // This line remains unchanged
   },
 
   async getProducts(): Promise<MarketplaceProduct[]> {
-    const token = getToken();
+    return cachedRequest('marketplace:funcionario:products', 10000, async () => {
+      const token = getToken();
 
-    const response = await fetch(`${API_URL}/products/admin`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      const response = await fetch(`${API_URL}/products/admin`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Error cargando productos');
+      }
+
+      const data: AdminProductResponse[] = await response.json();
+      return data.map(toMarketplaceProduct);
     });
-
-    if (!response.ok) {
-      throw new Error('Error cargando productos');
-    }
-
-    const data: AdminProductResponse[] = await response.json();
-    return data.map(toMarketplaceProduct);
   },
 
   async createProduct(payload: MarketplaceSavePayload): Promise<MarketplaceProduct> {
@@ -138,6 +186,9 @@ export const funcionarioMarketplaceService = {
     }
 
     const data: AdminProductResponse = await response.json();
+    invalidateRequestCache('marketplace:funcionario:products');
+    invalidateRequestCache('products-public');
+    invalidateRequestCache('product-public:');
     return toMarketplaceProduct(data);
   },
 
@@ -159,6 +210,9 @@ export const funcionarioMarketplaceService = {
     }
 
     const data: AdminProductResponse = await response.json();
+    invalidateRequestCache('marketplace:funcionario:products');
+    invalidateRequestCache('products-public');
+    invalidateRequestCache('product-public:');
     return toMarketplaceProduct(data);
   },
 
@@ -180,6 +234,9 @@ export const funcionarioMarketplaceService = {
     }
 
     const data: AdminProductResponse = await response.json();
+    invalidateRequestCache('marketplace:funcionario:products');
+    invalidateRequestCache('products-public');
+    invalidateRequestCache('product-public:');
     return toMarketplaceProduct(data);
   },
 
@@ -197,5 +254,9 @@ export const funcionarioMarketplaceService = {
       const err = await response.json().catch(() => ({}));
       throw new Error(err?.detail || 'No se pudo eliminar el producto');
     }
+
+    invalidateRequestCache('marketplace:funcionario:products');
+    invalidateRequestCache('products-public');
+    invalidateRequestCache('product-public:');
   },
 };

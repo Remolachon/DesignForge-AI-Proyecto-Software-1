@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { ProductReviewsModal } from '@/components/marketplace/modals/ProductReviewsModal';
@@ -18,6 +18,7 @@ export function ReviewModalHost() {
   const [loading, setLoading] = useState(false);
   const [notificationId, setNotificationId] = useState<number | null>(null);
   const [hasToken, setHasToken] = useState(false);
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     setHasToken(Boolean(localStorage.getItem('token')));
@@ -33,17 +34,30 @@ export function ReviewModalHost() {
         return;
       }
 
+      const requestId = ++requestIdRef.current;
+      setOpen(true);
       setLoading(true);
+      setProduct(null);
       setNotificationId(customEvent.detail?.notificationId ?? null);
 
       try {
         const productData = await ProductService.getProductById(String(productId));
+        if (requestIdRef.current !== requestId) {
+          return;
+        }
+
         setProduct(productData);
-        setOpen(true);
       } catch {
+        if (requestIdRef.current !== requestId) {
+          return;
+        }
+
         toast.error('No se pudo cargar el producto para valorar.');
+        setOpen(false);
       } finally {
-        setLoading(false);
+        if (requestIdRef.current === requestId) {
+          setLoading(false);
+        }
       }
     };
 
@@ -60,18 +74,20 @@ export function ReviewModalHost() {
         onOpenChange={(nextOpen) => {
           setOpen(nextOpen);
           if (!nextOpen) {
+            requestIdRef.current += 1;
+            setLoading(false);
+            setProduct(null);
             setNotificationId(null);
           }
         }}
         productId={product?.id ?? 0}
-        productTitle={product?.title ?? 'Producto'}
+        productTitle={loading ? 'Cargando valoración...' : product?.title ?? 'Producto'}
         summaryRating={Number(Number(product?.rating ?? 0).toFixed(1))}
         summaryReviews={product?.reviews ?? 0}
         allowReview={hasToken}
         initialMode={notificationId !== null ? 'review' : 'comments'}
+        loadingProduct={loading}
       />
-
-      {loading && null}
     </>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { MessageSquareText, RefreshCcw, Star } from 'lucide-react';
+import { Loader2, MessageSquareText, RefreshCcw, Star } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,19 @@ interface ProductReviewsModalProps {
   summaryReviews?: number;
   allowReview?: boolean;
   initialMode?: Mode;
+  loadingProduct?: boolean;
+}
+
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  if (typeof error === 'string' && error.trim().length > 0) {
+    return error;
+  }
+
+  return fallback;
 }
 
 // Componente arreglado: usa spans en lugar de divs para evitar error de hidratación
@@ -59,6 +72,7 @@ export function ProductReviewsModal({
   summaryReviews = 0,
   allowReview = false,
   initialMode = 'comments',
+  loadingProduct = false,
 }: ProductReviewsModalProps) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [reviews, setReviews] = useState<ProductReview[]>([]);
@@ -78,28 +92,29 @@ export function ProductReviewsModal({
   }, [initialMode, open]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || loadingProduct || !productId) return;
 
     const loadReviews = async () => {
       setLoading(true);
       try {
         const data = await interactionService.getProductReviews(productId);
         setReviews(data.items);
-      } catch (error: any) {
-        toast.error(error?.message || 'No se pudieron cargar los comentarios');
+      } catch (error: unknown) {
+        toast.error(getErrorMessage(error, 'No se pudieron cargar los comentarios'));
       } finally {
         setLoading(false);
       }
     };
 
     loadReviews();
-  }, [open, productId]);
+  }, [open, productId, loadingProduct]);
 
   const averageRating = useMemo(() => {
+    if (summaryReviews > 0) return summaryRating;
     if (reviews.length === 0) return 0;
     const total = reviews.reduce((acc, review) => acc + review.rating, 0);
     return total / reviews.length;
-  }, [reviews]);
+  }, [reviews, summaryRating, summaryReviews]);
 
   const visibleComments = useMemo(
     () => reviews.filter((review) => Boolean(review.comment && review.comment.trim().length > 0)),
@@ -124,8 +139,8 @@ export function ProductReviewsModal({
       setRatingError(null);
       setShowConfirm(false);
       onOpenChange(false);
-    } catch (error: any) {
-      toast.error(error?.message || 'No se pudo guardar la valoración');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'No se pudo guardar la valoración'));
     } finally {
       setSaving(false);
     }
@@ -133,106 +148,121 @@ export function ProductReviewsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[94vh] overflow-hidden p-0 gap-0">
-        <DialogHeader className="border-b border-border/60 px-6 py-5 text-left">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <DialogTitle className="text-xl">{productTitle}</DialogTitle>
+      <DialogContent className="flex h-[94vh] max-w-4xl flex-col overflow-hidden p-0 gap-0">
+        <div className="flex min-h-0 flex-1 flex-col">
+          <DialogHeader className="shrink-0 border-b border-border/60 px-6 py-5 text-left">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <DialogTitle className="text-xl">{productTitle}</DialogTitle>
 
-              <DialogDescription className="mt-1">
-                {summaryReviews > 0
-                  ? 'Resumen de valoraciones del producto.'
-                  : 'Todavía no hay valoraciones registradas.'}
-              </DialogDescription>
+                <DialogDescription className="mt-1">
+                  {loadingProduct
+                    ? 'Preparando la valoración y cargando la información del producto...'
+                    : summaryReviews > 0
+                    ? 'Resumen de valoraciones del producto.'
+                    : 'Todavía no hay valoraciones registradas.'}
+                </DialogDescription>
 
-              {summaryReviews > 0 && (
-                <div className="mt-2 inline-flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="font-semibold text-foreground">
-                    {averageRating.toFixed(1)}
-                  </span>
+                {!loadingProduct && summaryReviews > 0 && (
+                  <div className="mt-2 inline-flex items-center gap-2 text-sm text-muted-foreground">
+                    <span className="font-semibold text-foreground">
+                      {averageRating.toFixed(1)}
+                    </span>
 
-                  <StarDisplay value={averageRating} />
+                    <StarDisplay value={averageRating} />
 
-                  <span>({summaryReviews} valoraciones)</span>
-                </div>
-              )}
+                    <span>({summaryReviews} valoraciones)</span>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </DialogHeader>
+          </DialogHeader>
 
-        {mode === 'comments' ? (
-          <div className="flex flex-col max-h-[calc(94vh-88px)]">
-            <div className="border-b border-border/60 px-6 py-3 flex items-center justify-between">
-              <h3 className="font-semibold text-sm text-foreground">Comentarios ({visibleComments.length})</h3>
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-2 h-8"
-                disabled={loading}
-                onClick={async () => {
-                  setLoading(true);
-                  try {
-                    const data = await interactionService.getProductReviews(productId);
-                    setReviews(data.items);
-                    toast.success('Comentarios actualizados.');
-                  } catch (error: any) {
-                    toast.error(error?.message || 'No se pudieron actualizar los comentarios');
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-              >
-                <RefreshCcw className="h-3 w-3" />
-                Actualizar
-              </Button>
-            </div>
-            <ScrollArea className="flex-1 px-6 py-5">
-              {loading ? (
-                <div className="flex h-full min-h-[220px] items-center justify-center text-sm text-muted-foreground">
-                  Cargando comentarios...
-                </div>
-              ) : visibleComments.length === 0 ? (
-                <div className="flex min-h-[220px] flex-col items-center justify-center rounded-2xl border border-dashed border-border/70 bg-muted/20 px-6 text-center">
-                  <MessageSquareText className="mb-3 w-8 h-8 text-muted-foreground" />
-                  <h3 className="font-semibold text-foreground">Sin comentarios aún</h3>
-                  <p className="mt-1 text-sm text-muted-foreground max-w-sm">
-                    Cuando un cliente deje un comentario, aparecerá aquí.
+          {loadingProduct ? (
+            <div className="flex min-h-0 flex-1 items-center justify-center px-6 py-10 text-center">
+              <div className="flex max-w-sm flex-col items-center gap-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <div>
+                  <p className="font-semibold text-foreground">Cargando valoración...</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Estamos preparando los datos del producto para mostrar la reseña.
                   </p>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {visibleComments.map((review) => (
-                    <article key={review.id} className="rounded-2xl border border-border/70 bg-background p-4 shadow-sm">
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div>
-                          <div className="font-medium text-foreground">{review.userName}</div>
-                          <div className="mt-1 text-xs text-muted-foreground">
-                            {new Date(review.createdAt).toLocaleDateString('es-CO', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                            })}
+              </div>
+            </div>
+          ) : mode === 'comments' ? (
+            <div className="flex min-h-0 flex-1 flex-col">
+              <div className="flex items-center justify-between border-b border-border/60 px-6 py-3">
+                <h3 className="font-semibold text-sm text-foreground">Comentarios ({visibleComments.length})</h3>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-2 h-8"
+                  disabled={loading}
+                  onClick={async () => {
+                    setLoading(true);
+                    try {
+                      const data = await interactionService.getProductReviews(productId);
+                      setReviews(data.items);
+                      toast.success('Comentarios actualizados.');
+                    } catch (error: unknown) {
+                      toast.error(getErrorMessage(error, 'No se pudieron actualizar los comentarios'));
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                >
+                  <RefreshCcw className="h-3 w-3" />
+                  Actualizar
+                </Button>
+              </div>
+              <ScrollArea className="flex-1 px-6 py-5">
+                {loading ? (
+                  <div className="flex h-full min-h-[220px] items-center justify-center text-sm text-muted-foreground">
+                    Cargando comentarios...
+                  </div>
+                ) : visibleComments.length === 0 ? (
+                  <div className="flex min-h-[220px] flex-col items-center justify-center rounded-2xl border border-dashed border-border/70 bg-muted/20 px-6 text-center">
+                    <MessageSquareText className="mb-3 w-8 h-8 text-muted-foreground" />
+                    <h3 className="font-semibold text-foreground">Sin comentarios aún</h3>
+                    <p className="mt-1 text-sm text-muted-foreground max-w-sm">
+                      Cuando un cliente deje un comentario, aparecerá aquí.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {visibleComments.map((review) => (
+                      <article key={review.id} className="rounded-2xl border border-border/70 bg-background p-4 shadow-sm">
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div>
+                            <div className="font-medium text-foreground">{review.userName}</div>
+                            <div className="mt-1 text-xs text-muted-foreground">
+                              {new Date(review.createdAt).toLocaleDateString('es-CO', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                              })}
+                            </div>
                           </div>
+                          <StarDisplay value={review.rating} />
                         </div>
-                        <StarDisplay value={review.rating} />
-                      </div>
-                      {review.comment ? (
-                        <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
-                          {review.comment}
-                        </p>
-                      ) : (
-                        <p className="text-sm italic text-muted-foreground/80">
-                          Sin comentario adicional.
-                        </p>
-                      )}
-                    </article>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </div>
-        ) : (
-          <div className="flex-1 overflow-y-auto px-6 py-5 pb-8">
+                        {review.comment ? (
+                          <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
+                            {review.comment}
+                          </p>
+                        ) : (
+                          <p className="text-sm italic text-muted-foreground/80">
+                            Sin comentario adicional.
+                          </p>
+                        )}
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </div>
+          ) : (
+            <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 pb-6">
             <form
               className="space-y-4"
               onSubmit={(event) => {
@@ -291,24 +321,27 @@ export function ProductReviewsModal({
                     value={reviewComment}
                     onChange={(event) => setReviewComment(event.target.value)}
                     placeholder="Cuéntanos qué te pareció el producto..."
-                    rows={8}
+                    rows={6}
                     className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none transition-shadow focus:ring-2 focus:ring-primary/30"
                   />
                 </div>
               </div>
 
-              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end pt-4">
-                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                  Cancelar
-                </Button>
-                <Button type="submit" className="gap-2" disabled={saving}>
-                  <Star className="h-4 w-4" />
-                  {saving ? 'Guardando...' : 'Guardar valoración'}
-                </Button>
+              <div className="sticky bottom-0 -mx-6 border-t border-border/60 bg-background/95 px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/85">
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                  <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" className="gap-2" disabled={saving}>
+                    <Star className="h-4 w-4" />
+                    {saving ? 'Guardando...' : 'Guardar valoración'}
+                  </Button>
+                </div>
               </div>
             </form>
           </div>
         )}
+        </div>
       </DialogContent>
 
       <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>

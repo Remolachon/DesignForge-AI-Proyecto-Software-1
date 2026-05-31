@@ -1,5 +1,6 @@
 import { BaseOrder, AdminOrder } from '@/types/order';
 import { getApiBaseUrl } from '@/lib/utils/apiBaseUrl';
+import { cachedRequest, invalidateRequestCache } from '@/services/requestCache';
 
 const API_URL = getApiBaseUrl();
 
@@ -21,31 +22,37 @@ type DashboardResponse = {
 
 export const dashboardService = {
   async getDashboardData(role: DashboardRole): Promise<DashboardResponse> {
-    const token = localStorage.getItem('token');
+    return cachedRequest(`dashboard:${role}`, 8000, async () => {
+      const token = localStorage.getItem('token');
 
-    if (!token) {
-      return {
-        orders: [],
-        stats: { total: 0, pending_payment: 0, design: 0, production: 0, ready: 0, active: 0 },
-      };
-    }
+      if (!token) {
+        return {
+          orders: [],
+          stats: { total: 0, pending_payment: 0, design: 0, production: 0, ready: 0, active: 0 },
+        };
+      }
 
-    const res = await fetch(`${API_URL}/orders/dashboard`, {
-      cache: 'no-store',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'X-Dashboard-Role': role,
-      },
+      const res = await fetch(`${API_URL}/orders/dashboard`, {
+        cache: 'no-store',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'X-Dashboard-Role': role,
+        },
+      });
+
+      if (res.status === 401) {
+        throw new Error('SESSION_EXPIRED');
+      }
+
+      if (!res.ok) {
+        throw new Error('Error cargando dashboard');
+      }
+
+      return res.json();
     });
+  },
 
-    if (res.status === 401) {
-      throw new Error('SESSION_EXPIRED');
-    }
-
-    if (!res.ok) {
-      throw new Error('Error cargando dashboard');
-    }
-
-    return res.json();
+  invalidateDashboardCache() {
+    invalidateRequestCache('dashboard:');
   },
 };

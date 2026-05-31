@@ -5,8 +5,7 @@ import { funcionarioMarketplaceService } from '@/services/funcionario-marketplac
 export const uploadProductMedia = async (
     companyId: number,
     productId: number,
-    mediaItems: MediaUploadItem[],
-    userId?: number
+    mediaItems: MediaUploadItem[]
 ): Promise<FileAsset[] | null> => {
     try {
         const fileAssets: FileAsset[] = [];

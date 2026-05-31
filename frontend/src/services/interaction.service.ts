@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from '@/lib/utils/apiBaseUrl';
+import { cachedRequest, invalidateRequestCache } from '@/services/requestCache';
 
 const API_URL = getApiBaseUrl();
 
@@ -39,13 +40,15 @@ function getToken() {
 
 export const interactionService = {
   async getProductReviews(productId: number): Promise<ReviewsResponse> {
-    const response = await fetch(`${API_URL}/products/${productId}/reviews`);
+    return cachedRequest(`reviews:${productId}`, 20000, async () => {
+      const response = await fetch(`${API_URL}/products/${productId}/reviews`);
 
-    if (!response.ok) {
-      throw new Error('No se pudieron cargar los comentarios');
-    }
+      if (!response.ok) {
+        throw new Error('No se pudieron cargar los comentarios');
+      }
 
-    return response.json();
+      return response.json();
+    });
   },
 
   async createReview(productId: number, rating: number, comment: string): Promise<ProductReview> {
@@ -73,27 +76,30 @@ export const interactionService = {
       throw new Error(error?.detail || 'No se pudo guardar la valoración');
     }
 
+    invalidateRequestCache(`reviews:${productId}`);
     return response.json();
   },
 
   async getNotifications(): Promise<NotificationsResponse> {
-    const token = getToken();
+    return cachedRequest('notifications', 5000, async () => {
+      const token = getToken();
 
-    if (!token) {
-      return { items: [], unreadCount: 0 };
-    }
+      if (!token) {
+        return { items: [], unreadCount: 0 };
+      }
 
-    const response = await fetch(`${API_URL}/notifications`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      const response = await fetch(`${API_URL}/notifications`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('No se pudieron cargar las notificaciones');
+      }
+
+      return response.json();
     });
-
-    if (!response.ok) {
-      throw new Error('No se pudieron cargar las notificaciones');
-    }
-
-    return response.json();
   },
 
   async markNotificationAsRead(notificationId: number): Promise<NotificationItem> {
@@ -115,6 +121,7 @@ export const interactionService = {
       throw new Error(error?.detail || 'No se pudo marcar la notificación');
     }
 
+    invalidateRequestCache('notifications');
     return response.json();
   },
 };

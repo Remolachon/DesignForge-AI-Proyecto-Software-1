@@ -1,5 +1,6 @@
 import { Pedido } from '../types/pedido';
 import { getApiBaseUrl } from '@/lib/utils/apiBaseUrl';
+import { cachedRequest, invalidateRequestCache } from '@/services/requestCache';
 
 const API_URL = getApiBaseUrl();
 
@@ -38,33 +39,43 @@ export type PaginatedPedidos = {
 
 export const pedidosService = {
   async getMyOrders(): Promise<Pedido[]> {
-    const res = await fetch(`${API_URL}/orders/my-orders`, {
-      headers: getAuthHeaders(),
+    return cachedRequest('orders:my-orders', 8000, async () => {
+      const res = await fetch(`${API_URL}/orders/my-orders`, {
+        headers: getAuthHeaders(),
+      });
+
+      if (res.status === 401) throw new Error('SESSION_EXPIRED');
+      if (!res.ok) throw new Error('No se pudieron cargar los pedidos');
+
+      const data: DashboardOrder[] = await res.json();
+
+      return data.map((order) => ({
+        id: order.id,
+        title: order.title,
+        description: order.clientName ?? undefined,
+        status: order.status as Pedido['status'],
+        price: order.price,
+        imageUrl: order.imageUrl || '',
+        image: order.image,
+        createdAt: order.createdAt,
+        deliveryDate: order.deliveryDate,
+        clientName: order.clientName ?? undefined,
+      }));
     });
-
-    if (res.status === 401) throw new Error('SESSION_EXPIRED');
-    if (!res.ok) throw new Error('No se pudieron cargar los pedidos');
-
-    const data: DashboardOrder[] = await res.json();
-
-    return data.map((order) => ({
-      id: order.id,
-      title: order.title,
-      description: order.clientName ?? undefined,
-      status: order.status as Pedido['status'],
-      price: order.price,
-      imageUrl: order.imageUrl || '',
-      image: order.image,
-      createdAt: order.createdAt,
-      deliveryDate: order.deliveryDate,
-      clientName: order.clientName ?? undefined,
-    }));
   },
 
   async getMyOrdersPage(
     params: { page: number; pageSize: number; search?: string; status?: string },
     signal?: AbortSignal,
   ): Promise<PaginatedPedidos> {
+    const cacheKey = [
+      'orders:my-orders-page',
+      params.page,
+      params.pageSize,
+      params.search || '',
+      params.status || 'all',
+    ].join(':');
+
     const query = new URLSearchParams();
     query.set('page', String(params.page));
     query.set('page_size', String(params.pageSize));
@@ -72,15 +83,21 @@ export const pedidosService = {
     if (params.search) query.set('search', params.search);
     if (params.status && params.status !== 'all') query.set('status', params.status);
 
-    const response = await fetch(`${API_URL}/orders/my-orders/page?${query.toString()}`, {
-      method: 'GET',
-      headers: getAuthHeaders(),
-      signal,
+    return cachedRequest(cacheKey, 8000, async () => {
+      const response = await fetch(`${API_URL}/orders/my-orders/page?${query.toString()}`, {
+        method: 'GET',
+        headers: getAuthHeaders(),
+        signal,
+      });
+
+      if (response.status === 401) throw new Error('SESSION_EXPIRED');
+      if (!response.ok) throw new Error('No se pudieron cargar los pedidos');
+
+      return response.json();
     });
+  },
 
-    if (response.status === 401) throw new Error('SESSION_EXPIRED');
-    if (!response.ok) throw new Error('No se pudieron cargar los pedidos');
-
-    return response.json();
+  invalidatePedidosCache() {
+    invalidateRequestCache('orders:my-orders');
   },
 };
