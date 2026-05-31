@@ -154,6 +154,17 @@ class OrderService:
         return stage
 
     @staticmethod
+    def _resolve_default_product_shape(db: Session) -> ProductShape | None:
+        preferred_names = ["Predeterminado", "Default", "Genérico", "Generico", "Base"]
+
+        for shape_name in preferred_names:
+            shape = db.query(ProductShape).filter(ProductShape.name == shape_name).first()
+            if shape:
+                return shape
+
+        return db.query(ProductShape).order_by(ProductShape.id.asc()).first()
+
+    @staticmethod
     def _get_inventory(db: Session, product_id: int) -> Inventory | None:
         return (
             db.query(Inventory)
@@ -988,7 +999,10 @@ class OrderService:
             shape = db.query(ProductShape).filter(ProductShape.name == shape_name_attr.value).first()
 
         if not shape:
-            raise ValueError("No se encontró el shape asociado al pedido")
+            shape = OrderService._resolve_default_product_shape(db)
+
+        if not shape:
+            raise ValueError("No se encontró un shape disponible para el pedido")
 
         if not item.product_type_id:
             raise ValueError("El pedido no tiene tipo de producto asociado")

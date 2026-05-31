@@ -16,8 +16,8 @@ export function StatCard({ label, value, icon, colorClass }: StatCardProps) {
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
             <p className="text-3xl font-semibold tracking-tight text-foreground">{value}</p>
           </div>
-          <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${colorClass} shadow-sm`}>
-            {icon}
+          <div className={`flex h-12 w-12 items-center justify-center rounded-xl border border-white/50 shadow-sm dark:border-white/10 ${colorClass}`}>
+            <span className="[&>svg]:h-5 [&>svg]:w-5">{icon}</span>
           </div>
         </div>
       </CardContent>

@@ -1,7 +1,8 @@
 // /components/marketplace/Marketplace.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { DataPagination } from '@/components/ui/DataPagination';
 import { useProducts } from '@/hooks/useProducts';
 import { ProductType, Product } from '@/types/product';
 import { Filters } from './Filters';
@@ -21,27 +22,29 @@ export const Marketplace = () => {
     useMarketplaceBuy();
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<ProductType | 'all'>('all');
+  const [filterType, setFilterType] = useState<ProductType | 'all'>(() => {
+    const typeParam = searchParams.get('type');
+    return typeParam && ['bordado', 'neon-flex', 'acrilico', 'vinilo', 'sublimacion'].includes(typeParam)
+      ? (typeParam as ProductType)
+      : 'all';
+  });
+  const [page, setPage] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedReviewsProduct, setSelectedReviewsProduct] = useState<Product | null>(null);
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [hasToken, setHasToken] = useState(false);
+  const [hasToken] = useState(() => typeof window !== 'undefined' && Boolean(localStorage.getItem('token')));
+  const itemsPerPage = 15;
 
-  useEffect(() => {
-    const typeParam = searchParams.get('type');
-    if (typeParam) {
-      setFilterType(typeParam as ProductType);
-    }
-  }, [searchParams]);
+  const handleSearchTermChange = (value: string) => {
+    setPage(1);
+    setSearchTerm(value);
+  };
 
-  useEffect(() => {
-    setHasToken(Boolean(localStorage.getItem('token')));
-  }, []);
-
-  if (productsLoading) {
-    return <MarketplaceLoading isAdmin={false} />;
-  }
+  const handleFilterTypeChange = (value: ProductType | 'all') => {
+    setPage(1);
+    setFilterType(value);
+  };
 
   const filtered = products.filter((p) => {
     const matchesSearch =
@@ -53,6 +56,15 @@ export const Marketplace = () => {
 
     return matchesSearch && matchesFilter;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+  const safePage = Math.min(page, totalPages);
+  const startIndex = (safePage - 1) * itemsPerPage;
+  const paginatedProducts = filtered.slice(startIndex, startIndex + itemsPerPage);
+
+  if (productsLoading) {
+    return <MarketplaceLoading isAdmin={false} />;
+  }
 
   const handleBuy = (product: Product) => {
     const token = localStorage.getItem('token');
@@ -120,13 +132,13 @@ export const Marketplace = () => {
 
       <Filters
         searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
+        setSearchTerm={handleSearchTermChange}
         filterType={filterType}
-        setFilterType={setFilterType}
+        setFilterType={handleFilterTypeChange}
       />
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {filtered.map((p) => (
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+        {paginatedProducts.map((p) => (
           <ProductCard key={p.id} product={p} onBuy={() => handleBuy(p)} onViewReviews={() => handleViewReviews(p)} />
         ))}
       </div>
@@ -135,6 +147,16 @@ export const Marketplace = () => {
         <p className="text-center text-gray-500">
           No se encontraron productos
         </p>
+      )}
+
+      {filtered.length > 0 && (
+        <DataPagination
+          page={safePage}
+          totalPages={totalPages}
+          totalItems={filtered.length}
+          pageSize={itemsPerPage}
+          onPageChange={setPage}
+        />
       )}
 
       {/* Modal de parámetros */}

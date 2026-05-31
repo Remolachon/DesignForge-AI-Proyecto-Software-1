@@ -19,14 +19,6 @@ type DashboardOrder = {
   companyName?: string | null;
 };
 
-type OrdersPageResponse = {
-  items: DashboardOrder[];
-  page: number;
-  pageSize: number;
-  totalItems: number;
-  totalPages: number;
-};
-
 function getAuthHeaders() {
   const token = localStorage.getItem('token');
   if (!token) throw new Error('No hay token de autenticación');
@@ -59,9 +51,7 @@ export const pedidosService = {
       id: order.id,
       title: order.title,
       description: order.clientName ?? undefined,
-      status: order.status?.trim().toLowerCase() === 'pendiente de pago' && !order.companyName
-        ? 'Pendiente'
-        : (order.status as Pedido['status']),
+      status: order.status as Pedido['status'],
       price: order.price,
       imageUrl: order.imageUrl || '',
       image: order.image,

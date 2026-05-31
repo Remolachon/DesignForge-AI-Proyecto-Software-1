@@ -39,6 +39,13 @@ class EmailService:
         return settings.FRONTEND_URL.rstrip("/")
 
     @classmethod
+    def _dashboard_url(cls) -> str | None:
+        frontend_url = cls._frontend_url()
+        if not frontend_url:
+            return None
+        return f"{frontend_url}/cliente/dashboard"
+
+    @classmethod
     def _normalize_recipient(cls, email_address: str | None) -> str | None:
         if not email_address:
             return None
@@ -295,6 +302,52 @@ class EmailService:
         return cls._send_message(recipient_email, subject, plain_text, html_body)
 
     @classmethod
+    def send_custom_order_created_email(
+        cls,
+        recipient_email: str,
+        first_name: str | None,
+        order_id: int,
+        order_name: str,
+        quantity: int,
+        total_amount: float,
+    ) -> dict:
+        safe_name = cls._safe_text(first_name, "cliente")
+        safe_order_name = cls._safe_text(order_name, "tu pedido personalizado")
+        safe_quantity = max(1, int(quantity or 1))
+        safe_total = f"{float(total_amount or 0):,.2f} COP"
+        subject = f"Hemos recibido tu pedido personalizado #{order_id}"
+        plain_text = (
+            f"Hola {safe_name}:\n\n"
+            f"Confirmamos la recepción de tu pedido personalizado #{order_id} para {safe_order_name}.\n"
+            f"Cantidad: {safe_quantity}\n"
+            f"Valor estimado: {safe_total}\n\n"
+            "Tu solicitud quedó registrada y ahora permanece pendiente hasta que una empresa la acepte.\n\n"
+            f"Equipo de {cls._brand_name()}"
+        )
+        html_body = cls._wrap_html(
+            title=subject,
+            heading=f"Pedido personalizado #{order_id} registrado",
+            body_html=f"""
+                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Hola {escape(safe_name)},</p>
+                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Confirmamos la recepción de tu pedido personalizado <strong>#{order_id}</strong> para <strong>{escape(safe_order_name)}</strong>.</p>
+                <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"margin:24px 0;border-collapse:collapse;\">
+                  <tr>
+                    <td style=\"padding:12px 0;border-bottom:1px solid #e2e8f0;color:#64748b;\">Cantidad</td>
+                    <td style=\"padding:12px 0;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:700;\">{safe_quantity}</td>
+                  </tr>
+                  <tr>
+                    <td style=\"padding:12px 0;border-bottom:1px solid #e2e8f0;color:#64748b;\">Valor estimado</td>
+                    <td style=\"padding:12px 0;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:700;\">{safe_total}</td>
+                  </tr>
+                </table>
+                <p style=\"margin:0;font-size:16px;line-height:1.7;\">Tu solicitud quedó registrada y ahora permanece pendiente hasta que una empresa la acepte.</p>
+            """,
+            cta_label="Ir a mi dashboard",
+            cta_url=cls._dashboard_url(),
+        )
+        return cls._send_message(recipient_email, subject, plain_text, html_body)
+
+    @classmethod
     def send_order_accepted_email(
         cls,
         recipient_email: str,
@@ -306,11 +359,11 @@ class EmailService:
         safe_name = cls._safe_text(first_name, "cliente")
         safe_order = cls._safe_text(order_name, "tu pedido")
         safe_company = cls._safe_text(company_name, "la empresa asignada")
-        subject = "Tu pedido fue aceptado"
+        subject = "Tu pedido personalizado fue aceptado"
         plain_text = (
             f"Hola {safe_name}:\n\n"
             f"Tu pedido #{order_id} ({safe_order}) fue aceptado por {safe_company}.\n"
-            "Ya puedes revisarlo desde tu panel de pedidos.\n\n"
+            "Ya puedes revisarlo desde tu dashboard.\n\n"
             f"Equipo de {cls._brand_name()}"
         )
         html_body = cls._wrap_html(
@@ -319,10 +372,10 @@ class EmailService:
             body_html=f"""
                 <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Hola {escape(safe_name)},</p>
                 <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Tu pedido <strong>#{order_id}</strong> ({escape(safe_order)}) fue aceptado por <strong>{escape(safe_company)}</strong>.</p>
-                <p style=\"margin:0;font-size:16px;line-height:1.7;\">Ya puedes revisar el estado del pedido desde tu panel. Cuando quede habilitado para pago, verás la opción allí mismo.</p>
+                <p style=\"margin:0;font-size:16px;line-height:1.7;\">Ya puedes revisar el estado del pedido desde tu dashboard. Cuando quede habilitado para pago, verás la opción allí mismo.</p>
             """,
-            cta_label="Ver mis pedidos",
-            cta_url=f"{cls._frontend_url()}/cliente/pedidos" if cls._frontend_url() else None,
+            cta_label="Ir al dashboard",
+            cta_url=cls._dashboard_url(),
         )
         return cls._send_message(recipient_email, subject, plain_text, html_body)
 

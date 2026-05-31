@@ -52,6 +52,30 @@ def _send_order_created_email(db: Session, db_user: User, order: Order, payment_
         logger.warning("No se pudo preparar el correo de pedido creado: %s", exc)
 
 
+def _send_custom_order_created_email(db: Session, db_user: User, order: Order) -> None:
+    try:
+        role_name = UserService.get_user_role_name(db, db_user.id)
+        order_detail = OrderService.get_order_detail(
+            db=db,
+            order_id=order.id,
+            user_id=db_user.id,
+            role_name=role_name,
+            company_id=db_user.company_id,
+        )
+        result = EmailService.send_custom_order_created_email(
+            recipient_email=db_user.email,
+            first_name=db_user.first_name,
+            order_id=order.id,
+            order_name=order_detail.get("title") or "tu pedido personalizado",
+            quantity=int(order_detail.get("quantity") or 1),
+            total_amount=float(order_detail.get("price") or order.total_amount or 0),
+        )
+        if result.get("status") == "error":
+            logger.warning("No se pudo enviar el correo de pedido personalizado creado: %s", result.get("error"))
+    except Exception as exc:
+        logger.warning("No se pudo preparar el correo de pedido personalizado creado: %s", exc)
+
+
 def _get_db_user_with_retry(db: Session, current_user):
     """Obtiene usuario con reintentos automáticos en errores de conexión"""
     def _query():
@@ -83,6 +107,12 @@ def create_order(
             db=db,
             user_id=db_user.id,
             data=data
+        )
+
+        _send_custom_order_created_email(
+            db=db,
+            db_user=db_user,
+            order=order,
         )
 
         return {

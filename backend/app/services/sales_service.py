@@ -26,9 +26,9 @@ def get_all_time_summary(db: Session) -> dict:
     """
     summary_sql = text("""
         SELECT
-            COALESCE(SUM(t.amount), 0)                       AS total_ventas,
-            COUNT(t.id)                                       AS total_transacciones,
-            COUNT(t.id) FILTER (WHERE t.status = 'approved') AS transacciones_aprobadas
+            COALESCE(SUM(CASE WHEN t.status = 'approved' THEN t.amount ELSE 0 END), 0) AS total_ventas,
+            COUNT(t.id)                                                               AS total_transacciones,
+            COALESCE(SUM(CASE WHEN t.status = 'approved' THEN 1 ELSE 0 END), 0)       AS transacciones_aprobadas
         FROM transactions t
     """)
     row = db.execute(summary_sql).fetchone()
@@ -52,22 +52,8 @@ def get_all_time_summary(db: Session) -> dict:
     profit_row = db.execute(profit_sql).fetchone()
     total_ganancias = float(profit_row.total_ganancias or 0)
 
-    # Fallback: 30% sobre ventas aprobadas si ganancia <= 0
-    if total_ganancias <= 0 and total_ventas > 0:
-        approved_sql = text("""
-            SELECT COALESCE(SUM(t.amount), 0) AS ventas_aprobadas
-            FROM transactions t
-            WHERE t.status = 'approved'
-        """)
-        approved_row = db.execute(approved_sql).fetchone()
-        total_ganancias = float(approved_row.ventas_aprobadas or 0) * 0.30
-
     ticket_promedio = total_ventas / total_transacciones if total_transacciones > 0 else 0.0
-    tasa_aprobacion = (
-        (transacciones_aprobadas / total_transacciones * 100)
-        if total_transacciones > 0
-        else 0.0
-    )
+    tasa_aprobacion = (transacciones_aprobadas / total_transacciones * 100.0) if total_transacciones > 0 else 0.0
 
     return {
         "total_ventas": total_ventas,
@@ -105,9 +91,9 @@ def get_sales_summary(db: Session, filter: TimeFilter) -> SalesSummarySchema:
 
     summary_sql = text("""
         SELECT
-            COALESCE(SUM(t.amount), 0)                      AS total_ventas,
-            COUNT(t.id)                                      AS total_transacciones,
-            COUNT(t.id) FILTER (WHERE t.status = 'approved') AS transacciones_aprobadas
+                        COALESCE(SUM(CASE WHEN t.status = 'approved' THEN t.amount ELSE 0 END), 0) AS total_ventas,
+                        COUNT(t.id)                                                                AS total_transacciones,
+                        COALESCE(SUM(CASE WHEN t.status = 'approved' THEN 1 ELSE 0 END), 0)        AS transacciones_aprobadas
         FROM transactions t
         WHERE t.transaction_date >= :start
           AND t.transaction_date <= :end
@@ -137,25 +123,8 @@ def get_sales_summary(db: Session, filter: TimeFilter) -> SalesSummarySchema:
     profit_row = db.execute(profit_sql, {"start": start, "end": end}).fetchone()
     total_ganancias = float(profit_row.total_ganancias or 0)
 
-    # Fallback: si la ganancia real es <= 0, usar 30% sobre ventas aprobadas
-    if total_ganancias <= 0 and total_ventas > 0:
-        # calcular ventas aprobadas para el fallback
-        approved_sql = text("""
-            SELECT COALESCE(SUM(t.amount), 0) AS ventas_aprobadas
-            FROM transactions t
-            WHERE t.status = 'approved'
-              AND t.transaction_date >= :start
-              AND t.transaction_date <= :end
-        """)
-        approved_row = db.execute(approved_sql, {"start": start, "end": end}).fetchone()
-        total_ganancias = float(approved_row.ventas_aprobadas or 0) * 0.30
-
     ticket_promedio = total_ventas / total_transacciones if total_transacciones > 0 else 0.0
-    tasa_aprobacion = (
-        (transacciones_aprobadas / total_transacciones * 100)
-        if total_transacciones > 0
-        else 0.0
-    )
+    tasa_aprobacion = (transacciones_aprobadas / total_transacciones * 100.0) if total_transacciones > 0 else 0.0
 
     return SalesSummarySchema(
         total_ventas=total_ventas,
@@ -188,22 +157,18 @@ def get_sales_chart(db: Session, filter: TimeFilter) -> SalesChartSchema:
             DATE_TRUNC('{trunc_unit}', t.transaction_date) AS period,
             COALESCE(SUM(t.amount), 0)                      AS ventas,
             COUNT(t.id)                                      AS transacciones,
-            COALESCE(
-                SUM(
-                    CASE WHEN t.status = 'approved'
-                    THEN (
-                        SELECT COALESCE(SUM((oi.unit_price - p.base_price) * oi.quantity), 0)
-                        FROM order_items oi
-                        JOIN products p ON p.id = oi.product_id
-                        WHERE oi.order_id = t.order_id
-                    )
-                    ELSE 0 END
-                ),
-                0
-            ) AS ganancias
+            COALESCE(SUM(
+                (
+                    SELECT COALESCE(SUM((oi.unit_price - p.base_price) * oi.quantity), 0)
+                    FROM order_items oi
+                    JOIN products p ON p.id = oi.product_id
+                    WHERE oi.order_id = t.order_id
+                )
+            ), 0) AS ganancias
         FROM transactions t
         WHERE t.transaction_date >= :start
           AND t.transaction_date <= :end
+          AND t.status = 'approved'
         GROUP BY period
         ORDER BY period ASC
     """)
@@ -216,10 +181,6 @@ def get_sales_chart(db: Session, filter: TimeFilter) -> SalesChartSchema:
         ventas = float(row.ventas or 0)
         ganancias = float(row.ganancias or 0)
         transacciones = int(row.transacciones or 0)
-
-        # Fallback ganancia
-        if ganancias <= 0 and ventas > 0:
-            ganancias = ventas * 0.30
 
         # Formatear label según el tipo de agrupación
         if trunc_unit == "hour":
@@ -338,9 +299,9 @@ def get_company_sales_summary(db: Session, filter: TimeFilter, company_id: int) 
 
     summary_sql = text("""
         SELECT
-            COALESCE(SUM(t.amount), 0)                       AS total_ventas,
-            COUNT(DISTINCT t.id)                             AS total_transacciones,
-            COUNT(DISTINCT t.id) FILTER (WHERE t.status = 'approved') AS transacciones_aprobadas
+                        COALESCE(SUM(CASE WHEN t.status = 'approved' THEN t.amount ELSE 0 END), 0) AS total_ventas,
+                        COUNT(DISTINCT t.id)                                                       AS total_transacciones,
+                        COALESCE(SUM(CASE WHEN t.status = 'approved' THEN 1 ELSE 0 END), 0)       AS transacciones_aprobadas
         FROM transactions t
         JOIN orders o      ON o.id = t.order_id
         JOIN order_items oi ON oi.order_id = o.id
@@ -355,12 +316,25 @@ def get_company_sales_summary(db: Session, filter: TimeFilter, company_id: int) 
     total_transacciones = int(row.total_transacciones or 0)
     transacciones_aprobadas = int(row.transacciones_aprobadas or 0)
 
-    total_ganancias = 0.0
+    profit_sql = text("""
+        SELECT
+            COALESCE(
+                SUM((oi.unit_price - p.base_price) * oi.quantity), 0
+            ) AS total_ganancias
+        FROM transactions t
+        JOIN orders o      ON o.id = t.order_id
+        JOIN order_items oi ON oi.order_id = o.id
+        JOIN products p    ON p.id = oi.product_id
+        WHERE p.company_id = :company_id
+          AND t.transaction_date >= :start
+          AND t.transaction_date <= :end
+          AND t.status = 'approved'
+    """)
+    profit_row = db.execute(profit_sql, {"company_id": company_id, "start": start, "end": end}).fetchone()
+    total_ganancias = float(profit_row.total_ganancias or 0)
 
     ticket_promedio = total_ventas / total_transacciones if total_transacciones > 0 else 0.0
-    tasa_aprobacion = (
-        (transacciones_aprobadas / total_transacciones * 100) if total_transacciones > 0 else 0.0
-    )
+    tasa_aprobacion = (transacciones_aprobadas / total_transacciones * 100.0) if total_transacciones > 0 else 0.0
 
     return SalesSummarySchema(
         total_ventas=total_ventas,
@@ -398,6 +372,7 @@ def get_company_sales_chart(db: Session, filter: TimeFilter, company_id: int) ->
         WHERE p.company_id = :company_id
           AND t.transaction_date >= :start
           AND t.transaction_date <= :end
+                    AND t.status = 'approved'
         GROUP BY period
         ORDER BY period ASC
     """)
@@ -409,8 +384,6 @@ def get_company_sales_chart(db: Session, filter: TimeFilter, company_id: int) ->
         period: datetime = row.period
         ventas = float(row.ventas or 0)
         transacciones = int(row.transacciones or 0)
-        ganancias = 0.0
-
         if trunc_unit == "hour":
             label = period.strftime("%H:%M")
         elif trunc_unit == "day":
@@ -419,7 +392,7 @@ def get_company_sales_chart(db: Session, filter: TimeFilter, company_id: int) ->
             label = period.strftime("%b %Y")
 
         data_points.append(
-            ChartDataPointSchema(label=label, ventas=ventas, ganancias=ganancias, transacciones=transacciones)
+            ChartDataPointSchema(label=label, ventas=ventas, ganancias=0.0, transacciones=transacciones)
         )
 
     return SalesChartSchema(filter=filter, data=data_points)

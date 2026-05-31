@@ -15,24 +15,54 @@ interface Props {
 export const ProductCard = ({ product, onBuy, onViewReviews }: Props) => {
   const mainMedia = product.media?.find(m => m.media_role === 'main') || product.media?.[0];
   const displayUrl = mainMedia?.storage_path || product.imageUrl;
+  const isClickable = product.inStock;
 
   return (
-    <div className="rounded-2xl p-4 flex flex-col hover:shadow-xl transition-all duration-500 bg-background group relative overflow-hidden hover:-translate-y-1">
+    <div className={`rounded-2xl p-4 flex flex-col transition-all duration-500 bg-background group relative overflow-hidden ${isClickable ? 'hover:shadow-xl hover:-translate-y-1' : 'opacity-75 cursor-not-allowed'}`}>
       {/* Decorative hover effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
-      <Link href={`/marketplace/${product.id}`} className="relative aspect-square mb-4 overflow-hidden rounded-lg block">
-        {displayUrl ? (
-          mainMedia?.media_kind === 'video' ? (
-              <video
+      {isClickable ? (
+        <Link href={`/marketplace/${product.id}`} className="relative aspect-square mb-4 overflow-hidden rounded-lg block">
+          {displayUrl ? (
+            mainMedia?.media_kind === 'video' ? (
+                <video
+                    src={displayUrl}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                />
+            ) : (
+                <Image
                   src={displayUrl}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-              />
+                  alt={product.title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  loading="eager"
+                  unoptimized
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+            )
           ) : (
+            <div className="w-full h-full flex items-center justify-center bg-muted/50">
+              <span className="text-sm text-muted-foreground">Sin imagen</span>
+            </div>
+          )}
+        </Link>
+      ) : (
+        <div className="relative aspect-square mb-4 overflow-hidden rounded-lg block pointer-events-none">
+          {displayUrl ? (
+            mainMedia?.media_kind === 'video' ? (
+              <video
+                src={displayUrl}
+                className="w-full h-full object-cover grayscale"
+                muted
+                loop
+                playsInline
+              />
+            ) : (
               <Image
                 src={displayUrl}
                 alt={product.title}
@@ -40,20 +70,19 @@ export const ProductCard = ({ product, onBuy, onViewReviews }: Props) => {
                 sizes="(max-width: 768px) 100vw, 33vw"
                 loading="eager"
                 unoptimized
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
+                className="object-cover grayscale"
               />
-          )
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-muted/50">
-            <span className="text-sm text-muted-foreground">Sin imagen</span>
-          </div>
-        )}
-        {!product.inStock && (
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center">
+            )
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-muted/50">
+              <span className="text-sm text-muted-foreground">Sin imagen</span>
+            </div>
+          )}
+          <div className="absolute inset-0 bg-background/65 backdrop-blur-[1px] flex items-center justify-center">
             <span className="text-foreground font-semibold tracking-wider text-sm">AGOTADO</span>
           </div>
-        )}
-      </Link>
+        </div>
+      )}
 
       <div className="flex justify-between items-start mb-2">
         <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded-md font-medium tracking-wide">
@@ -65,9 +94,13 @@ export const ProductCard = ({ product, onBuy, onViewReviews }: Props) => {
         </div>
       </div>
 
-      <Link href={`/marketplace/${product.id}`} className="group-hover:text-primary transition-colors">
-        <h3 className="font-semibold text-lg line-clamp-1 mb-1">{product.title}</h3>
-      </Link>
+      {isClickable ? (
+        <Link href={`/marketplace/${product.id}`} className="group-hover:text-primary transition-colors">
+          <h3 className="font-semibold text-lg line-clamp-1 mb-1">{product.title}</h3>
+        </Link>
+      ) : (
+        <h3 className="font-semibold text-lg line-clamp-1 mb-1 text-muted-foreground">{product.title}</h3>
+      )}
       <p className="text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">{product.description}</p>
 
       <div className="mt-auto flex flex-col gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between">

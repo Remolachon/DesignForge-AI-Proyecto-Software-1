@@ -10,6 +10,7 @@ import { BuyOrderModal } from '@/components/marketplace/modals/BuyOrderModal';
 import { ConfirmBuyModal } from '@/components/marketplace/modals/ConfirmBuyModal';
 import { marketplaceCatalogService } from '@/services/marketplace-catalog.service';
 import { Star, ShoppingBag, Settings2, RefreshCcw, Leaf } from 'lucide-react';
+import { type FileAsset } from '@/types/product';
 
 interface Props {
   initialProduct: Product;
@@ -23,6 +24,7 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [resolvedShape, setResolvedShape] = useState(initialProduct.productShape || null);
 
+  const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
   useEffect(() => {
     let cancelled = false;
 
@@ -78,11 +80,43 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
     }
   };
 
-  const primaryMedia = useMemo(() => {
-    const media = initialProduct.media || [];
-    const mainMedia = media.find((item) => item.media_role === 'main');
-    return mainMedia || media[0] || null;
-  }, [initialProduct.media]);
+  const galleryMedia = useMemo(() => {
+    const media = [...(initialProduct.media || [])].sort((left, right) => {
+      const leftIsMain = (left.media_role || '').toLowerCase() === 'main' ? 0 : 1;
+      const rightIsMain = (right.media_role || '').toLowerCase() === 'main' ? 0 : 1;
+
+      if (leftIsMain !== rightIsMain) {
+        return leftIsMain - rightIsMain;
+      }
+
+      const leftOrder = left.sort_order ?? 9999;
+      const rightOrder = right.sort_order ?? 9999;
+      if (leftOrder !== rightOrder) {
+        return leftOrder - rightOrder;
+      }
+
+      return (left.id || 0) - (right.id || 0);
+    });
+
+    if (media.length > 0) {
+      return media;
+    }
+
+    if (initialProduct.imageUrl) {
+      return [
+        {
+          storage_path: initialProduct.imageUrl,
+          media_kind: 'image',
+          media_role: 'main',
+          sort_order: 0,
+        } as FileAsset,
+      ];
+    }
+
+    return [];
+  }, [initialProduct.imageUrl, initialProduct.media]);
+
+  const selectedMedia = galleryMedia[selectedMediaIndex] || galleryMedia[0] || null;
 
   const mediaCount = initialProduct.media?.length ?? 0;
   const attributeCount = initialProduct.attributes?.length ?? 0;
@@ -115,39 +149,86 @@ export const ProductDetailView = ({ initialProduct }: Props) => {
 
           {/* Left: Main Media */}
           <div className="lg:col-span-7 w-full">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-border bg-muted/30 shadow-sm">
-              {primaryMedia ? (
-                primaryMedia.media_kind === 'video' ? (
-                  <video
-                    src={primaryMedia.storage_path}
-                    className="h-full w-full object-cover"
-                    controls
-                    playsInline
-                  />
-                ) : (
-                  <Image
-                    src={primaryMedia.storage_path || initialProduct.imageUrl || ''}
-                    alt={initialProduct.title}
-                    fill
-                    unoptimized
-                    priority
-                    className="object-cover"
-                  />
-                )
-              ) : initialProduct.imageUrl ? (
-                <Image
-                  src={initialProduct.imageUrl}
-                  alt={initialProduct.title}
-                  fill
-                  unoptimized
-                  priority
-                  className="object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-muted text-sm text-muted-foreground">
-                  Sin vista previa
+            <div className="grid gap-4 lg:grid-cols-[112px_minmax(0,1fr)] lg:items-start">
+              <div className="order-2 flex gap-3 overflow-x-auto pb-1 lg:order-1 lg:flex-col lg:overflow-visible lg:pb-0">
+                {galleryMedia.map((mediaItem, index) => {
+                  const isSelected = index === selectedMediaIndex;
+
+                  return (
+                    <button
+                      key={`${mediaItem.storage_path}-${index}`}
+                      type="button"
+                      onClick={() => setSelectedMediaIndex(index)}
+                      className={`group relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border transition-all lg:h-24 lg:w-full ${isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/40'}`}
+                      aria-label={`Ver archivo ${index + 1}`}
+                    >
+                      {mediaItem.media_kind === 'video' ? (
+                        <div className="relative h-full w-full bg-black">
+                          <video
+                            src={mediaItem.storage_path}
+                            className="h-full w-full object-cover opacity-90"
+                            muted
+                            playsInline
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/25 text-white text-[10px] font-semibold uppercase tracking-[0.18em]">
+                            Video
+                          </div>
+                        </div>
+                      ) : (
+                        <Image
+                          src={mediaItem.storage_path}
+                          alt={`${initialProduct.title} archivo ${index + 1}`}
+                          fill
+                          unoptimized
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                      )}
+                      {index === 0 && (
+                        <div className="absolute left-1.5 top-1.5 rounded-full bg-background/85 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-foreground shadow-sm backdrop-blur">
+                          Principal
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="order-1 lg:order-2">
+                <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-border bg-muted/30 shadow-sm">
+                  {selectedMedia ? (
+                    selectedMedia.media_kind === 'video' ? (
+                      <video
+                        src={selectedMedia.storage_path}
+                        className="h-full w-full object-cover"
+                        controls
+                        playsInline
+                      />
+                    ) : (
+                      <Image
+                        src={selectedMedia.storage_path || initialProduct.imageUrl || ''}
+                        alt={initialProduct.title}
+                        fill
+                        unoptimized
+                        priority={selectedMediaIndex === 0}
+                        className="object-cover"
+                      />
+                    )
+                  ) : initialProduct.imageUrl ? (
+                    <Image
+                      src={initialProduct.imageUrl}
+                      alt={initialProduct.title}
+                      fill
+                      unoptimized
+                      priority
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-muted text-sm text-muted-foreground">
+                      Sin vista previa
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
 

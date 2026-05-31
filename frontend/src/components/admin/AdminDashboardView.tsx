@@ -174,25 +174,25 @@ export function AdminDashboardView() {
             label="Total Ventas"
             value={stats ? formatCurrency(stats.total_sales) : "—"}
             icon={<CircleDollarSign />}
-            colorClass="bg-rose-100"
+            colorClass="bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300"
           />
           <StatCard
             label="Ganancias Netas"
             value={stats ? formatCurrency(stats.income) : "—"}
             icon={<Rocket />}
-            colorClass="bg-amber-100"
+            colorClass="bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
           />
           <StatCard
             label="Empresas Activas"
             value={stats ? String(stats.active_companies) : "—"}
             icon={<Building2 />}
-            colorClass="bg-blue-100"
+            colorClass="bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300"
           />
           <StatCard
             label="Usuarios Registrados"
             value={stats ? String(stats.total_users) : "—"}
             icon={<Users />}
-            colorClass="bg-green-100"
+            colorClass="bg-green-100 text-green-700 dark:bg-green-950/60 dark:text-green-300"
           />
         </section>
 

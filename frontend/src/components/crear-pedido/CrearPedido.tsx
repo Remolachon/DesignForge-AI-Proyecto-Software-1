@@ -130,7 +130,7 @@ export default function CrearPedido() {
       reset();
 
       toast.success("Pedido creado. Quedará pendiente hasta que una empresa lo acepte.");
-      router.push("/cliente/pedidos");
+      router.replace("/cliente/dashboard");
     } catch (error) {
       const message = sanitizeUserMessage(error instanceof Error ? error.message : "No se pudo crear el pedido");
 
@@ -152,7 +152,7 @@ export default function CrearPedido() {
       {/* Progress Bar */}
       <div className="mb-12 sm:mb-16 relative w-full pt-2">
         {/* Línea de fondo */}
-        <div className="absolute top-8 left-6 right-6 sm:left-10 sm:right-10 h-1 bg-gray-200 -z-10 rounded">
+        <div className="absolute top-8 left-6 right-6 sm:left-10 sm:right-10 h-1 bg-muted -z-10 rounded">
           <div
             className="h-full bg-green-500 transition-all duration-300 rounded"
             style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
@@ -160,7 +160,7 @@ export default function CrearPedido() {
         </div>
 
         <div className="flex justify-between w-full">
-          {steps.map((step, index) => {
+          {steps.map((step) => {
             const Icon = step.icon;
             const isActive = currentStep === step.number;
             const isCompleted = currentStep > step.number;
@@ -173,7 +173,7 @@ export default function CrearPedido() {
                       ? "bg-accent text-primary-foreground"
                       : isCompleted
                       ? "bg-green-500 text-white"
-                      : "bg-gray-200 text-gray-500"
+                      : "bg-muted text-muted-foreground"
                   }`}
                 >
                   <Icon className="w-5 h-5" />
