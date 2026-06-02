@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bell, CheckCheck, LogIn, RefreshCcw } from 'lucide-react';
 import { toast } from 'sonner';
@@ -36,6 +36,7 @@ export function NotificationBell() {
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [hasToken, setHasToken] = useState(false);
+  const isInitialFetch = useRef(true);
 
   const [displayName, setDisplayName] = useState('Usuario');
 
@@ -58,18 +59,27 @@ export function NotificationBell() {
     setLoading(true);
     try {
       const data = await interactionService.getNotifications();
-      setItems((data.items || []).slice(0, 10));
-      setUnreadCount((prevCount) => {
-        if (data.unreadCount > prevCount) {
+      const newItems = data.items || [];
+      setItems(newItems.slice(0, 10));
+      
+      const newestId = newItems.length > 0 ? Math.max(...newItems.map((n: NotificationItem) => n.id)) : 0;
+      const lastNotifiedIdStr = localStorage.getItem('last_notified_id');
+      const lastNotifiedId = lastNotifiedIdStr ? Number(lastNotifiedIdStr) : 0;
+
+      if (newestId > lastNotifiedId) {
+        if (!isInitialFetch.current && lastNotifiedId !== 0) {
           audioService.playNewNotification();
         }
-        return data.unreadCount;
-      });
+        localStorage.setItem('last_notified_id', newestId.toString());
+      }
+
+      setUnreadCount(data.unreadCount);
     } catch {
       setItems([]);
       setUnreadCount(0);
     } finally {
       setLoading(false);
+      isInitialFetch.current = false;
     }
   };
 

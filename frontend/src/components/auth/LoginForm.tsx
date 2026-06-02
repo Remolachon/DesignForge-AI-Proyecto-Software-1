@@ -24,6 +24,7 @@ export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get("next");
+  const isNewAccount = searchParams.get("registered") === "true";
 
   useEffect(() => {
     const googleError = localStorage.getItem("google_auth_error");
@@ -66,7 +67,7 @@ export default function LoginForm() {
     try {
       const res = await login(email, password);
       audioService.playLoginBell();
-      toast.success("¡Bienvenido de vuelta!");
+      toast.success(isNewAccount ? "¡Bienvenido a la plataforma!" : "¡Bienvenido de vuelta!");
 
       const redirectPath = localStorage.getItem("redirect_after_login");
 

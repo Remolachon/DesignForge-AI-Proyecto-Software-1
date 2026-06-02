@@ -89,6 +89,23 @@ const getShapeAttributePlaceholder = (attribute: MarketplaceShapeAttribute, disp
   return attribute.placeholder || `Escribe ${displayLabel.toLowerCase()}`;
 };
 
+const getSelectOptions = (attribute: MarketplaceShapeAttribute): string[] | null => {
+  const normalizedCode = attribute.code.toLowerCase();
+  const normalizedLabel = attribute.label.toLowerCase();
+
+  if (normalizedCode.includes("talla") || normalizedLabel.includes("talla")) {
+    return ["XS", "S", "M", "L", "XL", "XXL"];
+  }
+  if (normalizedCode.includes("genero") || normalizedCode.includes("género") || normalizedLabel.includes("genero") || normalizedLabel.includes("género")) {
+    return ["Unisex", "Hombre", "Mujer", "Niño", "Niña"];
+  }
+  if (normalizedCode.includes("corte") || normalizedLabel.includes("corte")) {
+    return ["Regular", "Oversize", "Ajustado"];
+  }
+  
+  return null;
+};
+
 export default function Step5Confirm({
   productType,
   quantity,
@@ -342,6 +359,7 @@ export default function Step5Confirm({
                 visibleShapeAttributes.map((attribute) => {
                   const currentValue = shapeAttributeValues[attribute.code] || "";
                   const displayLabel = formatShapeAttributeLabel(attribute.label, attribute.code);
+                  const selectOptions = getSelectOptions(attribute);
 
                   return (
                     <div key={attribute.id} className="space-y-2">
@@ -349,13 +367,28 @@ export default function Step5Confirm({
                         {displayLabel}
                         {attribute.required && <span className="ml-1 text-red-500">*</span>}
                       </label>
-                      <input
-                        type={attribute.input_type === "number" ? "number" : "text"}
-                        value={currentValue}
-                        placeholder={getShapeAttributePlaceholder(attribute, displayLabel)}
-                        onChange={(event) => handleChange(attribute.code, event.target.value)}
-                        className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-accent focus:ring-2 focus:ring-accent/30"
-                      />
+                      {selectOptions ? (
+                        <select
+                          value={currentValue}
+                          onChange={(event) => handleChange(attribute.code, event.target.value)}
+                          className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground shadow-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
+                        >
+                          <option value="">Selecciona una opción</option>
+                          {selectOptions.map((opt) => (
+                            <option key={opt} value={opt}>
+                              {opt}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type={attribute.input_type === "number" ? "number" : "text"}
+                          value={currentValue}
+                          placeholder={getShapeAttributePlaceholder(attribute, displayLabel)}
+                          onChange={(event) => handleChange(attribute.code, event.target.value)}
+                          className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-accent focus:ring-2 focus:ring-accent/30"
+                        />
+                      )}
                       {attribute.required && !currentValue.trim() && (
                         <p className="text-xs text-amber-600 dark:text-amber-400">Este campo es obligatorio.</p>
                       )}
