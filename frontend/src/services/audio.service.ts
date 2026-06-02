@@ -24,7 +24,7 @@ class AudioService {
 
     this.loginBell = this.createSound('/sounds/happy-bell-alert.ogg', 0.5);
     this.successOrder = this.createSound('/sounds/elevator-bell.ogg', 0.6);
-    this.newNotification = this.createSound('/sounds/new-notification.ogg', 0.5);
+    this.newNotification = this.createSound('/sounds/elevator-bell.ogg', 0.5);
 
     this.initialized = true;
   }
