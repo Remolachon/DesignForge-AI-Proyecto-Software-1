@@ -2,12 +2,13 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
-import { Eye, CreditCard } from 'lucide-react';
+import { Eye, CreditCard, Download } from 'lucide-react';
 import { Pedido } from '@/components/Pedidos/types/pedido';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { OrderDetailsModal } from '@/components/modals/OrderDetailsModal';
 import { paymentService } from '@/services/payment.service';
+import { pedidosService } from '@/components/Pedidos/services/pedidos.service';
 
 interface Props {
   pedido: Pedido;
@@ -35,6 +36,7 @@ function getStatusStyles(status: string) {
 export function PedidoCard({ pedido }: Props) {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
 
   const handlePay = async () => {
     try {
@@ -130,6 +132,27 @@ export function PedidoCard({ pedido }: Props) {
               <span className="text-xl font-semibold text-primary">${pedido.price.toLocaleString()}</span>
 
               <div className="flex gap-2">
+                {pedido.status !== 'Pendiente' && pedido.status !== 'Pendiente de pago' && (
+                  <Button
+                    onClick={async () => {
+                      try {
+                        setDownloadingInvoice(true);
+                        await pedidosService.downloadInvoice(pedido.id);
+                      } catch (error: any) {
+                        alert(error.message || 'Error al descargar la factura');
+                      } finally {
+                        setDownloadingInvoice(false);
+                      }
+                    }}
+                    disabled={downloadingInvoice}
+                    variant="secondary"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    {downloadingInvoice ? 'Descargando...' : 'Factura'}
+                  </Button>
+                )}
                 {pedido.status === 'Pendiente de pago' && (
                   <Button
                     onClick={handlePay}

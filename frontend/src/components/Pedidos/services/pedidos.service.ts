@@ -100,4 +100,27 @@ export const pedidosService = {
   invalidatePedidosCache() {
     invalidateRequestCache('orders:my-orders');
   },
+
+  async downloadInvoice(orderId: string | number): Promise<void> {
+    const response = await fetch(`${API_URL}/orders/${orderId}/invoice`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+
+    if (response.status === 401) throw new Error('SESSION_EXPIRED');
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Error al descargar la factura');
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `factura_pedido_${orderId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  },
 };

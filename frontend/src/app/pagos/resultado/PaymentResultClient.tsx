@@ -3,10 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Download, Loader2 } from "lucide-react";
 
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { getApiBaseUrl } from "@/lib/utils/apiBaseUrl";
+import { pedidosService } from "@/components/Pedidos/services/pedidos.service";
 
 const API_URL = getApiBaseUrl();
 
@@ -32,6 +34,7 @@ function normalizePayuState(raw: string | null): string {
 export default function PaymentResultClient() {
   const searchParams = useSearchParams();
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const referenceCode = searchParams.get("referenceCode");
   const transactionState = searchParams.get("transactionState") || searchParams.get("state_pol");
@@ -72,6 +75,19 @@ export default function PaymentResultClient() {
 
     syncPaymentStatus();
   }, [referenceCode, searchParams]);
+
+  const handleDownloadInvoice = async () => {
+    if (!orderId) return;
+    try {
+      setIsDownloading(true);
+      await pedidosService.downloadInvoice(orderId);
+    } catch (error) {
+      console.error("Error al descargar la factura:", error);
+      alert(error instanceof Error ? error.message : "Error al descargar la factura");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const ui = useMemo(() => {
     if (state === "approved") {
@@ -140,6 +156,22 @@ export default function PaymentResultClient() {
             <Link href="/cliente/dashboard">
               <Button>Ir al dashboard</Button>
             </Link>
+            
+            {state === "approved" && orderId && (
+              <Button 
+                onClick={handleDownloadInvoice} 
+                disabled={isDownloading}
+                className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+              >
+                {isDownloading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+                Descargar Factura
+              </Button>
+            )}
+
             <Link href="/marketplace">
               <Button variant="outline">Volver al marketplace</Button>
             </Link>

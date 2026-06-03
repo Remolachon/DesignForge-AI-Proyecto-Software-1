@@ -1,5 +1,6 @@
 import logging
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError
 
@@ -7,6 +8,7 @@ from app.database.database import get_db
 from app.database.connection_retry import retry_on_connection_error
 from app.services.email_service import EmailService
 from app.services.order_service import OrderService
+from app.services.invoice_service import InvoiceService
 from app.schemas.order_schema import (
     CreateOrderRequest,
     CreateMarketplaceOrderRequest,
@@ -400,6 +402,10 @@ def get_order_detail(
     db_user = _get_db_user_with_retry(db, current_user)
 
     role_name = UserService.get_user_role_name(db, db_user.id)
+    
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if order and order.user_id == db_user.id:
+        role_name = "cliente"
 
     order_detail = OrderService.get_order_detail(
         db=db,
@@ -536,3 +542,41 @@ async def payu_response_sync(
             "status": "error",
             "message": f"Error procesando retorno de pago: {str(e)}"
         }
+
+
+@router.get("/{order_id}/invoice")
+def download_invoice(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Descarga la factura de un pedido pagado en PDF"""
+    db_user = _get_db_user_with_retry(db, current_user)
+    role_name = UserService.get_user_role_name(db, db_user.id)
+    
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if order and order.user_id == db_user.id:
+        role_name = "cliente"
+
+    order_detail = OrderService.get_order_detail(
+        db=db,
+        order_id=order_id,
+        user_id=db_user.id,
+        role_name=role_name,
+        company_id=db_user.company_id,
+    )
+
+    if not order_detail:
+        raise HTTPException(status_code=404, detail="Pedido no encontrado o sin permiso")
+
+    status = order_detail.get("status", "").lower()
+    if status in {"pendiente", "pendiente de pago"}:
+        raise HTTPException(status_code=400, detail="El pedido no ha sido pagado")
+
+    pdf_buffer = InvoiceService.generate_invoice_pdf(order_detail)
+
+    return StreamingResponse(
+        pdf_buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=factura_pedido_{order_id}.pdf"}
+    )
