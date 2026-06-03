@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Loader2, MessageSquareText, RefreshCcw, Star } from 'lucide-react';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -74,6 +75,7 @@ export function ProductReviewsModal({
   initialMode = 'comments',
   loadingProduct = false,
 }: ProductReviewsModalProps) {
+  const router = useRouter();
   const [mode, setMode] = useState<Mode>(initialMode);
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [loading, setLoading] = useState(false);
@@ -82,8 +84,6 @@ export function ProductReviewsModal({
   const [saving, setSaving] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [ratingError, setRatingError] = useState<string | null>(null);
-
-  const canReview = allowReview;
 
   useEffect(() => {
     if (open) {
@@ -140,7 +140,13 @@ export function ProductReviewsModal({
       setShowConfirm(false);
       onOpenChange(false);
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error, 'No se pudo guardar la valoración'));
+      const message = getErrorMessage(error, 'No se pudo guardar la valoración');
+      if (message === 'AUTH_REQUIRED') {
+        localStorage.setItem('redirect_after_login', `/marketplace/${productId}?review=1`);
+        router.push('/login');
+        return;
+      }
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -267,10 +273,6 @@ export function ProductReviewsModal({
               className="space-y-4"
               onSubmit={(event) => {
                 event.preventDefault();
-                if (!canReview) {
-                  toast.error('Solo el comprador de un pedido entregado puede dejar una valoración.');
-                  return;
-                }
                 if (reviewRating === null) {
                   toast.error('La puntuación es obligatoria.');
                   return;

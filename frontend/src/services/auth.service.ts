@@ -226,8 +226,13 @@ export const syncRoleFromBackend = async (): Promise<string | null> => {
       localStorage.setItem("role", role);
     }
     return role ?? null;
-  } catch {
-    clearAuthSession();
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      if (status === 401 || status === 403) {
+        clearAuthSession();
+      }
+    }
     return null;
   }
 };

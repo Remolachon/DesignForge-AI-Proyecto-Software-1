@@ -753,8 +753,14 @@ class OrderService:
 
         delivered_status = OrderService._canonical_status(target_stage.name)
         product_item = next((order_item for order_item in order.items if order_item.product_id), item)
+        is_marketplace_product = bool(
+            product_item
+            and product_item.product_id
+            and product_item.product
+            and product_item.product.is_public
+        )
 
-        if delivered_status == "Entregado" and product_item and product_item.product_id:
+        if delivered_status == "Entregado" and product_item:
             try:
                 product_name = None
                 if product_item.product and product_item.product.name:
@@ -770,14 +776,15 @@ class OrderService:
                         first_name=user.first_name,
                         order_id=order.id,
                         order_name=product_name or "tu pedido",
-                        product_id=product_item.product_id,
+                        product_id=product_item.product_id if is_marketplace_product else None,
+                        include_review_cta=is_marketplace_product,
                     )
                     if result.get("status") == "error":
                         logger.warning("No se pudo enviar el correo de pedido entregado: %s", result.get("error"))
             except Exception:
                 logger.exception("Error al enviar correo de entrega")
 
-        if delivered_status == "Entregado" and product_item and product_item.product_id:
+        if delivered_status == "Entregado" and is_marketplace_product and product_item and product_item.product_id:
             try:
                 product_name = None
                 if product_item.product and product_item.product.name:
@@ -792,6 +799,27 @@ class OrderService:
                     product_id=product_item.product_id,
                     product_name=product_name,
                 )
+                db.commit()
+            except Exception:
+                db.rollback()
+
+        if delivered_status == "Entregado" and not is_marketplace_product:
+            try:
+                product_name = None
+                if product_item and product_item.product and product_item.product.name:
+                    product_name = product_item.product.name
+                elif product_item and product_item.product_type and product_item.product_type.name:
+                    product_name = product_item.product_type.name
+
+                notification = Notification(
+                    user_id=order.user_id,
+                    title="Tu pedido fue entregado",
+                    message=f"Tu pedido #{order.id} para {product_name or 'tu producto'} ya fue entregado.",
+                    type="order-delivered",
+                    is_read=False,
+                    link_url=None,
+                )
+                db.add(notification)
                 db.commit()
             except Exception:
                 db.rollback()

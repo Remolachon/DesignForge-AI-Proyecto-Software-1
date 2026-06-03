@@ -46,6 +46,13 @@ class EmailService:
         return f"{frontend_url}/cliente/dashboard"
 
     @classmethod
+    def _orders_url(cls) -> str | None:
+        frontend_url = cls._frontend_url()
+        if not frontend_url:
+            return None
+        return f"{frontend_url}/cliente/pedidos"
+
+    @classmethod
     def _normalize_recipient(cls, email_address: str | None) -> str | None:
         if not email_address:
             return None
@@ -418,29 +425,53 @@ class EmailService:
         order_id: int,
         order_name: str,
         product_id: int | None = None,
+        include_review_cta: bool = True,
     ) -> dict:
         safe_name = cls._safe_text(first_name, "cliente")
         safe_order_name = cls._safe_text(order_name, "tu pedido")
         subject = f"Tu pedido #{order_id} ha sido entregado"
-        plain_text = (
-            f"Hola {safe_name}:\n\n"
-            f"Tu pedido #{order_id} de {safe_order_name} ya fue entregado.\n"
-            "Si deseas compartir tu experiencia, puedes dejar una valoración desde tu panel.\n\n"
-            f"Equipo de {cls._brand_name()}"
-        )
         review_url = None
-        if cls._frontend_url() and product_id is not None:
+        if include_review_cta and cls._frontend_url() and product_id is not None:
             review_url = f"{cls._frontend_url()}/marketplace/{product_id}?review=1"
+
+        if include_review_cta:
+            plain_text = (
+                f"Hola {safe_name}:\n\n"
+                f"Tu pedido #{order_id} de {safe_order_name} ya fue entregado.\n"
+                "Si deseas compartir tu experiencia, puedes dejar una valoración desde tu panel.\n\n"
+                f"Equipo de {cls._brand_name()}"
+            )
+            body_html = (
+                f"""
+                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Hola {escape(safe_name)},</p>
+                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Tu pedido <strong>#{order_id}</strong> de <strong>{escape(safe_order_name)}</strong> ya fue entregado.</p>
+                <p style=\"margin:0;font-size:16px;line-height:1.7;\">Si deseas compartir tu experiencia, puedes dejar una valoración desde tu panel.</p>
+                """
+            )
+            cta_label = "Dejar valoración"
+            cta_url = review_url or cls._frontend_url()
+        else:
+            plain_text = (
+                f"Hola {safe_name}:\n\n"
+                f"Tu pedido #{order_id} de {safe_order_name} ya fue entregado.\n"
+                "Puedes revisar el detalle y el estado desde tu panel de pedidos.\n\n"
+                f"Equipo de {cls._brand_name()}"
+            )
+            body_html = (
+                f"""
+                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Hola {escape(safe_name)},</p>
+                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Tu pedido <strong>#{order_id}</strong> de <strong>{escape(safe_order_name)}</strong> ya fue entregado.</p>
+                <p style=\"margin:0;font-size:16px;line-height:1.7;\">Puedes revisar el detalle y el estado desde tu panel de pedidos.</p>
+                """
+            )
+            cta_label = "Ver mis pedidos"
+            cta_url = cls._orders_url() or cls._dashboard_url()
 
         html_body = cls._wrap_html(
             title=subject,
             heading=f"Pedido #{order_id} entregado",
-            body_html=f"""
-                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Hola {escape(safe_name)},</p>
-                <p style=\"margin:0 0 16px;font-size:16px;line-height:1.7;\">Tu pedido <strong>#{order_id}</strong> de <strong>{escape(safe_order_name)}</strong> ya fue entregado.</p>
-                <p style=\"margin:0;font-size:16px;line-height:1.7;\">Si deseas compartir tu experiencia, puedes dejar una valoración desde tu panel.</p>
-            """,
-            cta_label="Dejar valoración",
-            cta_url=review_url or cls._frontend_url(),
+            body_html=body_html,
+            cta_label=cta_label,
+            cta_url=cta_url,
         )
         return cls._send_message(recipient_email, subject, plain_text, html_body)

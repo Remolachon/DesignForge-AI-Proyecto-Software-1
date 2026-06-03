@@ -20,9 +20,18 @@ type DashboardOrder = {
   companyName?: string | null;
 };
 
-function getAuthHeaders() {
-  const token = localStorage.getItem('token');
-  if (!token) throw new Error('No hay token de autenticación');
+async function getAuthHeaders() {
+  let token = localStorage.getItem('token');
+
+  if (!token) {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 60));
+      token = localStorage.getItem('token');
+      if (token) break;
+    }
+  }
+
+  if (!token) throw new Error('SESSION_EXPIRED');
 
   return {
     Authorization: `Bearer ${token}`,
@@ -40,8 +49,9 @@ export type PaginatedPedidos = {
 export const pedidosService = {
   async getMyOrders(): Promise<Pedido[]> {
     return cachedRequest('orders:my-orders', 8000, async () => {
+      const headers = await getAuthHeaders();
       const res = await fetch(`${API_URL}/orders/my-orders`, {
-        headers: getAuthHeaders(),
+        headers,
       });
 
       if (res.status === 401) throw new Error('SESSION_EXPIRED');
@@ -84,9 +94,10 @@ export const pedidosService = {
     if (params.status && params.status !== 'all') query.set('status', params.status);
 
     return cachedRequest(cacheKey, 8000, async () => {
+      const headers = await getAuthHeaders();
       const response = await fetch(`${API_URL}/orders/my-orders/page?${query.toString()}`, {
         method: 'GET',
-        headers: getAuthHeaders(),
+        headers,
         signal,
       });
 
@@ -102,9 +113,10 @@ export const pedidosService = {
   },
 
   async downloadInvoice(orderId: string | number): Promise<void> {
+    const headers = await getAuthHeaders();
     const response = await fetch(`${API_URL}/orders/${orderId}/invoice`, {
       method: 'GET',
-      headers: getAuthHeaders(),
+      headers,
     });
 
     if (response.status === 401) throw new Error('SESSION_EXPIRED');

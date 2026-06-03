@@ -68,20 +68,13 @@ class InteractionService:
         if not product:
             raise ValueError("Producto no encontrado")
 
-        delivered_stage = (
-            db.query(ProductionStage)
-            .filter(func.lower(ProductionStage.name) == "entregado")
-            .first()
-        )
-        if not delivered_stage:
-            raise ValueError("Solo puedes valorar productos de pedidos entregados")
-
         has_delivered_order = (
             db.query(Order.id)
             .join(Order.items)
+            .join(OrderItem.current_stage)
             .filter(Order.user_id == user_id)
             .filter(OrderItem.product_id == product_id)
-            .filter(OrderItem.current_stage_id == delivered_stage.id)
+            .filter(func.lower(ProductionStage.name).in_(["entregado", "delivered"]))
             .first()
         )
 
@@ -175,7 +168,6 @@ class InteractionService:
             message=message,
             type="order-delivered-review",
             is_read=False,
-            created_at=InteractionService._now_local(),
         )
         db.add(notification)
         db.flush()
