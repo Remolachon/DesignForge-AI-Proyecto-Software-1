@@ -4,10 +4,11 @@ import { getImageUrl } from '@/lib/supabase/getImageUrl';
 import { Card, CardContent } from '@/components/ui/card';
 import { getStatusColor } from '@/lib/utils/statusColors';
 import { BaseOrder  } from '@/types/order';
-import { Eye, CreditCard } from 'lucide-react';
+import { Eye, CreditCard, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { OrderDetailsModal } from '@/components/modals/OrderDetailsModal';
 import { paymentService } from '@/services/payment.service';
+import { pedidosService } from '@/components/Pedidos/services/pedidos.service';
 
 interface OrderCardProps {
   order: BaseOrder ;
@@ -17,6 +18,7 @@ export function OrderCard({ order }: OrderCardProps) {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [paying, setPaying] = useState(false);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
 
   const handlePay = async () => {
     try {
@@ -121,7 +123,28 @@ export function OrderCard({ order }: OrderCardProps) {
                     ${order.price.toLocaleString()}
                   </span>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap justify-end">
+                    {order.status !== 'Pendiente' && order.status !== 'Pendiente de pago' && (
+                      <Button
+                        onClick={async () => {
+                          try {
+                            setDownloadingInvoice(true);
+                            await pedidosService.downloadInvoice(order.id);
+                          } catch (error: any) {
+                            alert(error.message || 'Error al descargar la factura');
+                          } finally {
+                            setDownloadingInvoice(false);
+                          }
+                        }}
+                        disabled={downloadingInvoice}
+                        variant="secondary"
+                        size="sm"
+                        className="flex items-center gap-2"
+                      >
+                        <Download className="w-4 h-4" />
+                        {downloadingInvoice ? 'Descargando...' : 'Factura'}
+                      </Button>
+                    )}
                     {order.status === 'Pendiente de pago' && (
                     <Button
                       onClick={handlePay}

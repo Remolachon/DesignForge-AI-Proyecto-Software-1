@@ -80,8 +80,8 @@ export function PedidoCard({ pedido }: Props) {
   return (
     <>
       <Card className="p-5 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all min-h-[180px] flex">
-        <div className="flex gap-5 w-full">
-          <div className="shrink-0">
+        <div className="flex flex-col sm:flex-row gap-5 w-full">
+          <div className="shrink-0 w-full sm:w-auto flex justify-center sm:block">
             {pedido.imageUrl ? (
               <Image
                 src={pedido.imageUrl}
@@ -89,15 +89,15 @@ export function PedidoCard({ pedido }: Props) {
                 width={180}
                 height={140}
                 unoptimized
-                className="object-cover rounded-xl w-[180px] h-[140px]"
+                className="object-cover rounded-xl w-full sm:w-[180px] h-[200px] sm:h-[140px]"
               />
             ) : (
-              <div className="w-[180px] h-[140px] rounded-xl bg-muted/50" />
+              <div className="w-full sm:w-[180px] h-[200px] sm:h-[140px] rounded-xl bg-muted/50" />
             )}
           </div>
 
           <div className="flex-1 flex flex-col justify-between">
-            <div className="flex justify-between items-start mb-2">
+            <div className="flex flex-col sm:flex-row justify-between items-start mb-2 gap-2 sm:gap-0">
               <div>
                 <h3 className="text-lg font-semibold">{pedido.title}</h3>
                 <p className="text-sm text-muted-foreground">Pedido #{pedido.id}</p>
@@ -128,10 +128,10 @@ export function PedidoCard({ pedido }: Props) {
               </div>
             </div>
 
-            <div className="flex justify-between items-center border-t pt-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-t pt-4 gap-4 sm:gap-0 mt-auto">
               <span className="text-xl font-semibold text-primary">${pedido.price.toLocaleString()}</span>
 
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                 {pedido.status !== 'Pendiente' && pedido.status !== 'Pendiente de pago' && (
                   <Button
                     onClick={async () => {
