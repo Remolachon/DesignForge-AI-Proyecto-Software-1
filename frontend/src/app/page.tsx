@@ -18,8 +18,8 @@ export default function Landing() {
 
       {/* Hero Section */}
       <InfiniteGrid className="py-24 sm:py-32 px-4 min-h-[85vh]">
-        <div className="max-w-5xl mx-auto text-center">
-          <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-primary mb-6 tracking-tight drop-shadow-sm flex flex-col items-center justify-center space-y-2">
+        <div className="max-w-5xl mx-auto text-center px-4 sm:px-6">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-primary mb-6 tracking-tight drop-shadow-sm flex flex-col items-center justify-center space-y-2 text-balance">
             <TextEffect
               per='char'
               delay={0}
@@ -39,22 +39,22 @@ export default function Landing() {
               únicos y personalizados
             </TextEffect>
           </h1>
-          <div className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto font-medium flex flex-col items-center">
+          <div className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto font-medium flex flex-col items-center text-center text-pretty px-2 space-y-2 sm:space-y-1">
             <TextEffect per='char' delay={0.8} preset='blur'>
-              Bordados, letreros neon y productos acrílicos diseñados IA.
+              Bordados, letreros neon y productos acrílicos diseñados con IA.
             </TextEffect>
             <TextEffect per='char' delay={1} preset='blur'>
               Tu imaginación, nuestra artesanía.
             </TextEffect>
           </div>
-          <FadeIn delay={2.5} className="flex flex-col sm:flex-row gap-4 justify-center items-center pointer-events-auto">
+          <FadeIn delay={2.5} className="flex flex-col sm:flex-row gap-4 justify-center items-center pointer-events-auto w-full px-2 sm:px-0">
             <Link href="/cliente/crear-pedido" className="sm:w-auto w-full">
-              <Button size="lg" className="w-full sm:w-auto text-md px-8 py-6 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 hover:-translate-y-1">
+              <Button size="lg" className="w-full sm:w-auto text-base sm:text-md px-6 sm:px-8 py-6 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 hover:-translate-y-1 whitespace-normal text-center h-auto">
                 Crear mi primer pedido
               </Button>
             </Link>
             <Link href="/marketplace" className="sm:w-auto w-full">
-              <Button variant="secondary" size="lg" className="w-full sm:w-auto text-md px-8 py-6 bg-background/80 backdrop-blur-md border border-border shadow-md hover:shadow-lg hover:bg-accent hover:text-accent-foreground transition-all duration-300 hover:-translate-y-1">
+              <Button variant="secondary" size="lg" className="w-full sm:w-auto text-base sm:text-md px-6 sm:px-8 py-6 bg-background/80 backdrop-blur-md border border-border shadow-md hover:shadow-lg hover:bg-accent hover:text-accent-foreground transition-all duration-300 hover:-translate-y-1 whitespace-normal text-center h-auto">
                 Explorar Marketplace
               </Button>
             </Link>
@@ -81,8 +81,8 @@ export default function Landing() {
           />
         </div>
 
-        <div className="max-w-6xl mx-auto relative z-10 w-full">
-          <h2 className="text-3xl font-semibold text-center mb-16 text-primary drop-shadow-sm">
+        <div className="max-w-6xl mx-auto relative z-10 w-full px-4 sm:px-6">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-center mb-12 sm:mb-16 text-primary drop-shadow-sm text-balance">
             Nuestros productos
           </h2>
 
@@ -107,11 +107,11 @@ export default function Landing() {
       {/* CTA Section */}
       <section className="relative w-full">
         <BackgroundLines className="py-20 px-4 flex items-center justify-center flex-col bg-primary dark:bg-background text-white h-[30rem] md:h-[35rem] overflow-hidden">
-          <div className="max-w-4xl mx-auto text-center relative z-20 pointer-events-auto">
-            <h2 className="text-4xl font-semibold mb-6 drop-shadow-sm">
+          <div className="max-w-4xl mx-auto text-center relative z-20 pointer-events-auto px-4 sm:px-6">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold mb-4 sm:mb-6 drop-shadow-sm text-balance">
               ¿Quieres vender tus productos con nosotros?
             </h2>
-            <p className="text-xl mb-8 opacity-90 font-medium">
+            <p className="text-lg sm:text-xl mb-8 opacity-90 font-medium text-pretty px-2 sm:px-0">
               Registra tu empresa y empieza a publicar tu catálogo en nuestra plataforma.
             </p>
             <Link href="/crear-empresa" className="inline-block relative z-50 mt-8 pointer-events-auto">
@@ -121,7 +121,7 @@ export default function Landing() {
                   <div className="pointer-events-none absolute top-0 -left-[100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12 group-hover:[animation:shine-sweep_2.5s_ease-in-out_infinite] z-0" />
 
                   <Magnetic intensity={0.06} actionArea='global' range={250} springOptions={{ stiffness: 80, damping: 10, mass: 0.5 }}>
-                    <span className="relative z-10">Comenzar ahora</span>
+                    <span className="relative z-10 text-wrap text-center">Comenzar ahora</span>
                   </Magnetic>
                 </Button>
               </Magnetic>

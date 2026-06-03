@@ -1,222 +1,117 @@
-# Web Platform Mockups
+# DesignForge-AI - Embroidery Marketplace 🚀
 
-Este repositorio contiene el código base del proyecto **Web Platform Mockups**, desarrollado a partir de un diseño inicial en Figma.
+![DesignForge-AI Logo](https://img.shields.io/badge/DesignForge-AI-blue.svg)
+![Frontend](https://img.shields.io/badge/Frontend-Next.js-black?logo=next.js)
+![Backend](https://img.shields.io/badge/Backend-FastAPI-009688?logo=fastapi)
+![Database](https://img.shields.io/badge/Database-PostgreSQL-336791?logo=postgresql)
 
-El diseño original se encuentra disponible en el siguiente enlace:  
-https://www.figma.com/design/Sy7XkFWKQcMYtuX6wW9ozD/Web-platform-mockups
-
----
-
-## 📌 Descripción del proyecto
-
-El objetivo de este proyecto es servir como base para el desarrollo de una plataforma web, partiendo de mockups definidos previamente.  
-El repositorio se encuentra en una etapa temprana de desarrollo y seguirá evolucionando de forma incremental.
+DesignForge-AI es una plataforma integral de Marketplace. Está diseñada para conectar a empresas, diseñadores y clientes a través de un sistema unificado que gestiona productos, pedidos, ventas tambien esta pensado para
+escalar al diseño de productos con una herramienta avanzada de IA.
 
 ---
 
-## ▶️ Ejecución del proyecto
+## 📁 Estructura del Proyecto
 
-# ▶️ Ejecución del Frontend
+El proyecto está organizado en una arquitectura de monorepo con el frontend y el backend claramente separados.
 
-Antes de ejecutar el proyecto, asegúrate de tener instalado **Node.js**.
-
-1. Instalar las dependencias:
-   ```bash
-   npm install
-   ```
-
-2. Iniciar el servidor de desarrollo:
-   ```bash
-   npm run dev
-   ```
-
-## 🔄 Cambiar entre Backend Local y Render
-
-El frontend puede conectarse a dos backends diferentes:
-
-### 📍 Backend Local (tu PC - Recomendado para desarrollo)
-```bash
-# 1. Edita frontend/.env.local
-NEXT_PUBLIC_API_URL=http://localhost:8000
-
-# 2. Frontend se recargará automáticamente en http://localhost:3000
+```text
+DesignForge-AI-Proyecto-Software-1/
+├── frontend/       # Aplicación web construida con Next.js, Tailwind CSS y TypeScript
+├── backend/        # API RESTful construida con FastAPI y Python
+├── docs/           # Documentación técnica, requisitos, planeación y Supabase
+└── README.md       # Este archivo
 ```
 
-### ☁️ Backend en Render (Servidor remoto)
-```bash
-# 1. Edita frontend/.env.local
-NEXT_PUBLIC_API_URL=https://designforge-ai-proyecto-software-1.onrender.com
+## 🛠️ Tecnologías Principales
 
-# 2. Frontend se recargará automáticamente en http://localhost:3000
-```
+### Frontend
+- **Framework:** Next.js
+- **Estilos:** Tailwind CSS
+- **Lenguaje:** TypeScript
+- **Entorno:** Node.js
 
-✅ **Ambos funcionan sin problemas** - El CORS está configurado en el backend.
-
-### 🔍 Verificar Conectividad
-Windows (PowerShell):
-```bash
-.\test_backends.ps1
-```
-
-Linux/Mac (Bash):
-```bash
-bash test_backends.sh
-```
+### Backend
+- **Framework:** FastAPI
+- **Lenguaje:** Python
+- **Base de Datos:** Configurada para integración con bases de datos relacionales (Supabase/PostgreSQL)
+- **Módulos y Rutas:** Autenticación, Gestión de Usuarios, Productos, Pedidos, IA, Ventas.
 
 ---
 
-# ▶️ Ejecución del Backend
+## 🚀 Requisitos Previos
 
-1. Activar el entorno virtual:
-   ```bash
-   venv\Scripts\activate
-   ```
-
-2. Instalar las dependencias:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. Iniciar el servidor de desarrollo:
-   ```bash
-   python -m app.main
-   ```
-   O con uvicorn:
-   ```bash
-   uvicorn app.main:app --reload
-   ```
-
-El backend estará disponible en **http://localhost:8000**
-- Documentación interactiva: http://localhost:8000/docs
-- Documentación alternativa: http://localhost:8000/redoc
+Asegúrate de tener instalados los siguientes componentes antes de iniciar el proyecto:
+- [Node.js](https://nodejs.org/) (versión recomendada LTS)
+- [Python 3.9+](https://www.python.org/downloads/)
+- [Git](https://git-scm.com/)
 
 ---
 
-## 🚀 Flujo Recomendado para Desarrollo
+## ⚙️ Instalación y Configuración
 
-**Terminal 1 (Frontend):**
+### 1. Clonar el Repositorio
+
+```bash
+git clone <https://github.com/Remolachon/DesignForge-AI-Proyecto-Software-1.git>
+cd DesignForge-AI-Proyecto-Software-1
+```
+
+### 2. Configurar el Frontend
+
+Navega a la carpeta del frontend y ejecuta la instalación de dependencias:
+
 ```bash
 cd frontend
-npm run dev
-# Abierto en http://localhost:3000
+npm install
 ```
 
-**Terminal 2 (Backend):**
+Para levantar el entorno de desarrollo del frontend:
+
+```bash
+npm run dev
+```
+La aplicación web estará disponible en `http://localhost:3000`.
+
+### 3. Configurar el Backend
+
+Abre una nueva terminal, navega a la carpeta del backend y crea un entorno virtual (opcional pero recomendado):
+
 ```bash
 cd backend
+python -m venv venv
+# Activar entorno virtual
+# En Windows:
 venv\Scripts\activate
-python -m app.main
-# Abierto en http://localhost:8000
+# En Linux/Mac:
+source venv/bin/activate
 ```
 
-**Configuración:**
+Instala las dependencias y corre el servidor de desarrollo:
+
 ```bash
-# frontend/.env.local
-NEXT_PUBLIC_API_URL=http://localhost:8000
+pip install -r requirements.txt
+uvicorn app.main:app --reload
 ```
-
-**Resultado:**
-- Frontend en `http://localhost:3000` ✅
-- Backend en `http://localhost:8000` ✅
-- Base de datos: Supabase ✅
-- Todo funcionando localmente 🎉
+La API estará disponible en `http://localhost:8000`. Puedes consultar la documentación interactiva (Swagger) en `http://localhost:8000/docs`.
 
 ---
 
-## 🌿 Estructura de ramas
+## 📚 Documentación
 
-Este repositorio utiliza el siguiente esquema de ramas:
+La carpeta `/docs` contiene los recursos más importantes sobre la arquitectura y la toma de decisiones:
+- **DOCUMENTACIÓN TÉCNICA — MÓDULO MARKETPLACE.pdf:** Detalles profundos sobre los módulos del marketplace.
+- **Requisitos y casos de uso.pdf:** Funcionalidades detalladas que definen la plataforma.
+- **planeacion proyecto.pdf:** Hitos de desarrollo.
+- **Supabase/:** Archivos de configuración de la base de datos.
 
-- **main**  
-  Rama estable.  
-  Se mantiene limpia y solo recibe cambios cuando el código es considerado estable o entregable.
+## 🤝 Contribuciones
 
-- **develop**  
-  Rama de desarrollo activo.  
-  Contiene el estado actual del proyecto y el trabajo en curso.
-
-- **Features**  
-  Ramas de desarrollo activo para cada funcion.  
-  Contiene los ultimos avances individuales de cada desarrollador.
-
----
-
-## 📂 Estructura de carpetas Backend
-
-   ```bash
-    backend/
-    │
-    ├── app/                     
-    │   ├── config/              
-    │   │   └── settings.py       # Configuración global (variables de entorno, DB, API keys)
-    │   │
-    │   ├── controllers/          
-    │   │   ├── auth_controller.py # Endpoints de autenticación (login, registro, tokens)
-    │   │   └── user_controller.py # Endpoints relacionados con usuarios
-    │   │
-    │   ├── database/             
-    │   │   └── database.py        # Conexión a la base de datos y sesión SQLAlchemy
-    │   │
-    │   ├── models/               
-    │   │   ├── user.py            # Modelo de usuario
-    │   │   ├── role.py            # Modelo de roles
-    │   │   ├── user_role.py       # Relación usuario-rol
-    │   │   └── company.py         # Modelo de empresa
-    │   │
-    │   ├── providers/             
-    │   │   └── supabase_provider.py # Integración con Supabase (auth, storage, realtime)
-    │   │
-    │   ├── schemas/               
-    │   │   └── user_schema.py     # Esquemas Pydantic para validación de datos de usuario
-    │   │
-    │   ├── security/              
-    │   │   └── token_validator.py # Validación de JWT y lógica de seguridad
-    │   │
-    │   ├── services/              
-    │   │   ├── main.py            # Punto de entrada alternativo / servicios generales
-    │   │   └── user_service.py    # Lógica de negocio para usuarios
-    │   │
-    │   └── __pycache__/           # Archivos compilados automáticamente
-    │
-    ├── venv/                      # Entorno virtual con dependencias instaladas
-    │   ├── Lib/site-packages/     # Librerías externas (FastAPI, SQLAlchemy, Supabase, etc.)
-    │   └── Scripts/               # Ejecutables del entorno virtual
-    │
-    ├── requirements.txt           # Lista de dependencias del proyecto
-    └── .env                       # Variables de entorno (configuración sensible)
-                          # Variables de entorno (configuración sensible)
-   ```
----
-
-## 🔁 Flujo de trabajo
-
-- No se realizan commits directos a la rama **main**.
-- Todo el desarrollo se realiza sobre la rama **develop**.
-- Las ramas de nuevas funcionalidades (feature branches) deben crearse a partir de **develop**.
-- La rama **main** solo recibe merges cuando el código es estable.
-
-Este flujo permite mantener una base estable mientras el proyecto se encuentra en desarrollo.
+Si deseas contribuir a este proyecto, por favor crea una rama para tu feature o bugfix:
+```bash
+git checkout -b feature/mi-nueva-funcionalidad
+```
+Realiza tus cambios y genera un Pull Request.
 
 ---
 
-## 🧪 Comandos útiles de Git
-
-- Ver el estado del repositorio:  
-  ```bash
-  git status
-  ```
-- Ver las ramas y su estado:  
-  ```bash
-  git branch -vv
-  ```
-- Ver el historial de commits:  
-  ```bash
-  git log --oneline --graph --all
-  ```
----
-
-## 📄 Consideraciones finales
-
-- La rama **main** puede no contener código funcional hasta que se alcance una versión estable.
-- Todas las contribuciones deben seguir el flujo de trabajo descrito anteriormente.
-- De nuevo, la rama sobre la que se trabaja es **develop** bajo ninguna circunstancia se ejecutan commits directos a la rama **main**.
+**© 2026 DesignForge-AI Team** - Proyecto de Arquitectura de Software.

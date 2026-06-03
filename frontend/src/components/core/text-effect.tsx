@@ -83,16 +83,6 @@ export function TextEffect({
   preset,
   delay = 0,
 }: TextEffectProps) {
-  let segments: string[] = [];
-
-  if (per === 'word') {
-    segments = children.split(/(\s+)/);
-  } else if (per === 'char') {
-    segments = children.split('');
-  } else if (per === 'line') {
-    segments = children.split('\n');
-  }
-
   const MotionTag = motion[as as keyof typeof motion] as any;
   const selectedVariants = preset ? presetVariants[preset] : null;
 
@@ -112,6 +102,58 @@ export function TextEffect({
     }
   }
 
+  const renderContent = () => {
+    if (per === 'word') {
+      return children.split(/(\s+)/).map((segment, index) => (
+        <motion.span
+          key={`word-${index}`}
+          variants={itemVariants}
+          className="inline-block"
+        >
+          {segment}
+        </motion.span>
+      ));
+    } else if (per === 'char') {
+      const words = children.split(/(\s+)/);
+      let charIndex = 0;
+      return words.map((word, wordIndex) => {
+        if (word.match(/^\s+$/)) {
+          return (
+            <span key={`space-${wordIndex}`} className="inline-block whitespace-pre">
+              {word}
+            </span>
+          );
+        }
+        return (
+          <span key={`word-${wordIndex}`} className="inline-block whitespace-nowrap">
+            {word.split('').map((char) => {
+              const currentIdx = charIndex++;
+              return (
+                <motion.span
+                  key={`char-${currentIdx}`}
+                  variants={itemVariants}
+                  className="inline-block"
+                >
+                  {char}
+                </motion.span>
+              );
+            })}
+          </span>
+        );
+      });
+    } else if (per === 'line') {
+      return children.split('\n').map((segment, index) => (
+        <motion.span
+          key={`line-${index}`}
+          variants={itemVariants}
+          className="inline-block"
+        >
+          {segment}
+        </motion.span>
+      ));
+    }
+  };
+
   return (
     <AnimatePresence>
       <MotionTag
@@ -121,15 +163,7 @@ export function TextEffect({
         variants={containerVariants}
         className={cn("whitespace-pre-wrap", className)}
       >
-        {segments.map((segment, index) => (
-          <motion.span
-            key={`${per}-${index}`}
-            variants={itemVariants}
-            className="inline-block"
-          >
-            {segment}
-          </motion.span>
-        ))}
+        {renderContent()}
       </MotionTag>
     </AnimatePresence>
   );
